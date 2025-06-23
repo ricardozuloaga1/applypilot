@@ -39,3 +39,5 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+MANTIKS_API_KEY=gAAAAABoWV_5NvZEI-ef2fGrSjIEEMk3rTGryYsv29XMFE55BRMnSUGlhfgAAVQkLU4UPcaTm-Lwf2POlHHpdQVmS7j7jR3kWQ==

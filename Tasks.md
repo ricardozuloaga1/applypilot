@@ -77,6 +77,9 @@
 - [ ] **ENHANCE: Job Source Diversification** - Over-reliant on Adzuna API
   - Add: Indeed API, LinkedIn Jobs API, ZipRecruiter API
   - Implement: Smart source rotation and result aggregation
+- [ ] **BLOCKED: ZipRecruiter Playwright Scraper** - Playwright-based scraper implemented, but blocked by anti-bot measures (Cloudflare, etc.). No jobs returned.
+- [ ] **BLOCKED: LinkedIn Playwright Scraper** - Playwright-based scraper attempted (headless and non-headless, with manual login), but job data is obfuscated/minified and not accessible. No reliable scraping possible.
+- [ ] **IN PROGRESS: Mantiks API Integration** - Next step: Integrate Mantiks API for LinkedIn and other job board data. Free trial available for testing.
 
 ### 🔄 **Future Enhancements:**
 - [ ] **Add more specialized job sources** - Legal-specific job boards, industry sites

@@ -1,35 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { JobListing } from '@/types';
 import { generateId } from '@/lib/utils';
-import { scrapeIndeedJobs, scrapeMultipleSites, scrapeWithPuppeteer } from '@/lib/jobScrapers';
+import { scrapeIndeedJobs, scrapeMultipleSites, scrapeWithPlaywright } from '@/lib/jobScrapers';
 import { scrapeAlternativeSources, scrapeRemoteOKJobs } from '@/lib/alternativeJobSources';
 
-// Apify client for job scraping
-const APIFY_API_KEY = process.env.APIFY_API_KEY;
-
-// Actor IDs for different job platforms
-const ACTORS = {
-  LINKEDIN_FETCHCLUB: 'fetchclub/linkedin-jobs-scraper',
-  LINKEDIN_CURIOUS: 'curious_coder/linkedin-jobs-scraper',
-  INDEED_MEMO23: 'memo23/apify-indeed-cheerio',
-  INDEED_VALIG: 'valig/indeed-jobs-scraper',
-  INDEED_CURIOUS: 'curious_coder/indeed-scraper',
-  INDEED_CAPROLOK: 'caprolok/indeed-jobs-scraper'
-};
-
-interface LinkedInJobResult {
-  title?: string;
-  company_name?: string;
-  location?: string;
-  job_url?: string;
-  description_text?: string;
-  posted_time_ago?: string;
-  applicants?: string;
-  base_salary?: string;
-  seniority_level?: string;
-  employment_type?: string;
-  apply_url?: string;
-}
+// Note: LinkedIn jobs are now provided through Mantiks API in alternativeJobSources.ts
+// No need for separate Apify-based LinkedIn scraping
 
 interface IndeedJobResult {
   title?: string;
@@ -45,102 +21,6 @@ interface IndeedJobResult {
   posted?: string;
 }
 
-const scrapeJobsFromLinkedIn = async (jobTitle: string, location: string): Promise<JobListing[]> => {
-  const actorsToTry = [ACTORS.LINKEDIN_FETCHCLUB, ACTORS.LINKEDIN_CURIOUS];
-  
-  for (const actorId of actorsToTry) {
-    try {
-      console.log(`Trying LinkedIn scraper: ${actorId}`);
-      
-      // Construct LinkedIn search URL
-      const searchUrl = `https://www.linkedin.com/jobs/search?keywords=${encodeURIComponent(jobTitle)}&location=${encodeURIComponent(location)}&f_TPR=&position=1&pageNum=0`;
-      
-      // Prepare input for the LinkedIn scraper
-      const apifyInput = {
-        include_company_details: true,
-        max_results: 25,
-        search_url: searchUrl,
-        proxy_group: "DATACENTER"
-      };
-
-      // Make request to Apify API
-      const response = await fetch(`https://api.apify.com/v2/acts/${actorId}/runs?token=${APIFY_API_KEY}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          input: apifyInput,
-          timeout: 300,
-        }),
-      });
-
-      if (!response.ok) {
-        console.log(`LinkedIn scraper ${actorId} failed with status: ${response.status}`);
-        continue;
-      }
-
-      const runData = await response.json();
-      console.log(`LinkedIn run started: ${runData.id}`);
-
-      // Wait for the run to complete
-      let runStatus = 'RUNNING';
-      let attempts = 0;
-      const maxAttempts = 30; // Reduced timeout for faster fallback
-
-      while (runStatus === 'RUNNING' && attempts < maxAttempts) {
-        await new Promise(resolve => setTimeout(resolve, 5000));
-        
-        const statusResponse = await fetch(`https://api.apify.com/v2/acts/${actorId}/runs/${runData.id}?token=${APIFY_API_KEY}`);
-        const statusData = await statusResponse.json();
-        runStatus = statusData.status;
-        attempts++;
-      }
-
-      if (runStatus !== 'SUCCEEDED') {
-        console.log(`LinkedIn run ${runData.id} status: ${runStatus}`);
-        continue;
-      }
-
-      // Get the results
-      const resultsResponse = await fetch(`https://api.apify.com/v2/acts/${actorId}/runs/${runData.id}/dataset/items?token=${APIFY_API_KEY}`);
-      const results: LinkedInJobResult[] = await resultsResponse.json();
-
-      if (results && results.length > 0) {
-        console.log(`LinkedIn scraper ${actorId} found ${results.length} jobs`);
-        
-        // Transform the results to our JobListing format
-        const jobListings: JobListing[] = results
-          .filter(job => job.title && job.company_name)
-          .map((job): JobListing => ({
-            id: generateId(),
-            title: job.title || 'Unknown Title',
-            company: job.company_name || 'Unknown Company',
-            location: job.location || location,
-            url: job.job_url || job.apply_url || '#',
-            description: job.description_text || 'No description available',
-            dateScraped: new Date().toISOString(),
-            source: 'linkedin',
-            salaryRange: job.base_salary || undefined,
-            jobType: job.employment_type || undefined,
-            experienceLevel: job.seniority_level || undefined,
-            postedDate: job.posted_time_ago || undefined,
-            applicantCount: job.applicants || undefined,
-          }));
-
-        return jobListings;
-      }
-
-    } catch (error) {
-      console.error(`Error with LinkedIn scraper ${actorId}:`, error);
-      continue;
-    }
-  }
-
-  console.log('All LinkedIn scrapers failed');
-  return [];
-};
-
 const scrapeJobsFromIndeed = async (jobTitle: string, location: string): Promise<JobListing[]> => {
   console.log(`Trying custom Indeed scraper for: ${jobTitle}`);
   
@@ -153,87 +33,7 @@ const scrapeJobsFromIndeed = async (jobTitle: string, location: string): Promise
       return customJobs;
     }
     
-    console.log('Custom Indeed scraper returned no results, trying Apify scrapers...');
-    
-    // Fall back to Apify scrapers if custom scraper fails
-    const actorsToTry = [
-      ACTORS.INDEED_MEMO23,
-      ACTORS.INDEED_VALIG,
-      ACTORS.INDEED_CURIOUS,
-      ACTORS.INDEED_CAPROLOK
-    ];
-    
-    for (const actorId of actorsToTry) {
-      try {
-        console.log(`Trying Apify Indeed scraper: ${actorId}`);
-        
-        // Different input formats for different scrapers
-        const inputVariations = [
-          {
-            position: jobTitle,
-            location: location,
-            maxItems: 25
-          },
-          {
-            jobTitle: jobTitle,
-            location: location,
-            maxResults: 25
-          },
-          {
-            query: jobTitle,
-            location: location,
-            limit: 25
-          }
-        ];
-
-        for (const inputFormat of inputVariations) {
-          try {
-            const syncResponse = await fetch(`https://api.apify.com/v2/acts/${actorId}/run-sync-get-dataset-items?token=${APIFY_API_KEY}`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify(inputFormat),
-            });
-
-            if (syncResponse.ok) {
-              const results: IndeedJobResult[] = await syncResponse.json();
-              
-              if (results && Array.isArray(results) && results.length > 0) {
-                console.log(`Apify Indeed scraper ${actorId} found ${results.length} jobs`);
-                
-                const jobListings: JobListing[] = results
-                  .filter(job => job.title && (job.company || job.companyName))
-                  .map((job): JobListing => ({
-                    id: generateId(),
-                    title: job.title || 'Unknown Title',
-                    company: job.company || job.companyName || 'Unknown Company',
-                    location: job.location || location,
-                    url: job.url || job.jobUrl || '#',
-                    description: job.description || 'No description available',
-                    dateScraped: new Date().toISOString(),
-                    source: 'indeed-apify',
-                    salaryRange: job.salary || undefined,
-                    jobType: job.jobType || undefined,
-                    postedDate: job.postedAt || job.posted || undefined,
-                  }));
-
-                return jobListings;
-              }
-            }
-          } catch (inputError) {
-            console.log(`Input format failed for ${actorId}:`, inputError instanceof Error ? inputError.message : 'Unknown error');
-            continue;
-          }
-        }
-
-      } catch (error) {
-        console.error(`Error with Apify Indeed scraper ${actorId}:`, error);
-        continue;
-      }
-    }
-
-    console.log('All Indeed scrapers failed');
+    console.log('Custom Indeed scraper returned no results');
     return [];
     
   } catch (error) {
@@ -319,7 +119,7 @@ export async function POST(request: NextRequest) {
         } else if (platform === 'scraping-only') {
           // Only use Puppeteer scraping
           console.log(`Using scraping only for: ${jobTitle}`);
-          const puppeteerJobs = await scrapeWithPuppeteer(jobTitle, location, 25);
+          const puppeteerJobs = await scrapeWithPlaywright(jobTitle, location, 25);
           
           if (puppeteerJobs.length > 0) {
             console.log(`Found ${puppeteerJobs.length} Puppeteer jobs for "${jobTitle}"`);
@@ -353,7 +153,7 @@ export async function POST(request: NextRequest) {
           // Try Puppeteer scraping if APIs didn't find enough jobs
           if (!jobsFound || alternativeJobs.length < 5) {
             console.log(`Trying Puppeteer scraping for: ${jobTitle}`);
-            const puppeteerJobs = await scrapeWithPuppeteer(jobTitle, location, 25);
+            const puppeteerJobs = await scrapeWithPlaywright(jobTitle, location, 25);
             
             if (puppeteerJobs.length > 0) {
               console.log(`Found ${puppeteerJobs.length} Puppeteer jobs for "${jobTitle}"`);
@@ -362,17 +162,8 @@ export async function POST(request: NextRequest) {
             }
           }
 
-          // Try LinkedIn Apify as last resort (requires subscription)
-          if (!jobsFound) {
-            console.log(`Trying LinkedIn for: ${jobTitle}`);
-            const linkedInJobs = await scrapeJobsFromLinkedIn(jobTitle, location);
-            
-            if (linkedInJobs.length > 0) {
-              console.log(`Found ${linkedInJobs.length} LinkedIn jobs for "${jobTitle}"`);
-              allJobs.push(...linkedInJobs);
-              jobsFound = true;
-            }
-          }
+          // LinkedIn jobs are already included via Mantiks API in alternativeJobs above
+          console.log(`LinkedIn jobs provided through Mantiks API for: ${jobTitle}`);
         }
 
         // If no real jobs found, use mock data as fallback

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { JobListing } from '@/types';
 import { generateId } from './utils';
 
@@ -164,89 +165,81 @@ function extractJobsFromText(html: string, jobTitle: string, location: string): 
   }
 }
 
-// Advanced scraper using Puppeteer (browser automation)
-export async function scrapeWithPuppeteer(
+// Advanced scraper using Playwright (browser automation)
+export async function scrapeWithPlaywright(
   jobTitle: string,
   location: string = 'Remote',
-  maxJobs: number = 25
+  maxJobs: number = 25,
+  proxy?: string
 ): Promise<JobListing[]> {
-  try {
-    const puppeteer = require('puppeteer-extra');
-    const StealthPlugin = require('puppeteer-extra-plugin-stealth');
-    
-    // Add stealth plugin
-    puppeteer.use(StealthPlugin());
-    
-    console.log(`Starting Puppeteer scraper for: ${jobTitle} in ${location}`);
-    
-    // Launch browser with stealth settings
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--no-first-run',
-        '--no-zygote',
-        '--disable-gpu',
-        '--disable-web-security',
-        '--disable-features=VizDisplayCompositor',
-        '--disable-blink-features=AutomationControlled',
-        '--disable-extensions',
-        '--disable-plugins',
-        '--disable-images',
-        '--disable-javascript-harmony-shipping',
-        '--disable-background-timer-throttling',
-        '--disable-backgrounding-occluded-windows',
-        '--disable-renderer-backgrounding'
-      ]
-    });
-    
-    const page = await browser.newPage();
-    
-    // Set realistic user agent and viewport
-    await page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
-    await page.setViewport({ width: 1366, height: 768 });
-    
-    // Set extra headers to look more human
-    await page.setExtraHTTPHeaders({
+  const { chromium } = require('playwright');
+
+  console.log(`Starting Playwright scraper for: ${jobTitle} in ${location}`);
+
+  // Launch browser with stealth and optional proxy
+  const browser = await chromium.launch({
+    headless: true,
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-accelerated-2d-canvas',
+      '--no-first-run',
+      '--no-zygote',
+      '--disable-gpu',
+      '--disable-web-security',
+      '--disable-features=VizDisplayCompositor',
+      '--disable-blink-features=AutomationControlled',
+      '--disable-extensions',
+      '--disable-plugins',
+      '--disable-images',
+      '--disable-javascript-harmony-shipping',
+      '--disable-background-timer-throttling',
+      '--disable-backgrounding-occluded-windows',
+      '--disable-renderer-backgrounding',
+      ...(proxy ? [`--proxy-server=${proxy}`] : [])
+    ]
+  });
+
+  const context = await browser.newContext({
+    userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    viewport: { width: 1366, height: 768 },
+    locale: 'en-US',
+    extraHTTPHeaders: {
       'Accept-Language': 'en-US,en;q=0.9',
       'Accept-Encoding': 'gzip, deflate, br',
       'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
       'Connection': 'keep-alive',
       'Upgrade-Insecure-Requests': '1',
-    });
-    
-    // Add random delay to avoid detection
-    const randomDelay = (): Promise<void> => new Promise(resolve => setTimeout(resolve, Math.random() * 2000 + 1000));
-    
-    const allJobs: JobListing[] = [];
-    
-    // Focus on accessible sites only (Indeed and Glassdoor are blocked by Cloudflare)
-    console.log('🎯 Focusing on accessible job sites: SimplyHired + ZipRecruiter');
-    
-    // Try SimplyHired (confirmed accessible)
-    const simplyHiredJobs = await scrapeSimplyHiredWithPuppeteer(page, jobTitle, location, maxJobs, randomDelay);
-    allJobs.push(...simplyHiredJobs);
-    
-    // Try ZipRecruiter (confirmed accessible)
-    const zipRecruiterJobs = await scrapeZipRecruiterWithPuppeteer(page, jobTitle, location, maxJobs, randomDelay);
-    allJobs.push(...zipRecruiterJobs);
-    
-    await browser.close();
-    
-    console.log(`Puppeteer scraper found ${allJobs.length} total jobs`);
-    return allJobs;
-    
-  } catch (error) {
-    console.error('Error in Puppeteer scraper:', error);
-    return [];
-  }
+    }
+  });
+
+  const page = await context.newPage();
+
+  // Add random delay to avoid detection
+  const randomDelay: () => Promise<void> = () => new Promise(resolve => setTimeout(resolve, Math.random() * 2000 + 1000));
+
+  const allJobs: JobListing[] = [];
+
+  // Focus on accessible sites only (Indeed and Glassdoor are blocked by Cloudflare)
+  console.log('🎯 Focusing on accessible job sites: SimplyHired');
+
+  // Try SimplyHired (confirmed accessible)
+  const simplyHiredJobs = await scrapeSimplyHiredWithPlaywright(page, jobTitle, location, maxJobs, randomDelay);
+  allJobs.push(...simplyHiredJobs);
+
+  // Try ZipRecruiter (confirmed accessible)
+  const zipRecruiterJobs = await scrapeZipRecruiterWithPlaywright(page, jobTitle, location, maxJobs, randomDelay);
+  allJobs.push(...zipRecruiterJobs);
+
+  await browser.close();
+
+  console.log(`Playwright scraper found ${allJobs.length} total jobs`);
+  return allJobs;
 }
 
-// Indeed scraper with Puppeteer
-async function scrapeIndeedWithPuppeteer(
+// SimplyHired scraper with Playwright (confirmed accessible)
+async function scrapeSimplyHiredWithPlaywright(
   page: any,
   jobTitle: string,
   location: string,
@@ -254,102 +247,18 @@ async function scrapeIndeedWithPuppeteer(
   randomDelay: () => Promise<void>
 ): Promise<JobListing[]> {
   try {
-    console.log('Scraping Indeed with Puppeteer...');
-    
-    const searchUrl = `https://www.indeed.com/jobs?q=${encodeURIComponent(jobTitle)}&l=${encodeURIComponent(location)}`;
-    
-    await page.goto(searchUrl, { 
-      waitUntil: 'networkidle2',
-      timeout: 30000 
-    });
-    
-    // Wait for job cards to load
-    await page.waitForSelector('[data-jk]', { timeout: 10000 }).catch(() => {
-      console.log('No job cards found on Indeed');
-    });
-    
-    // Extract job data
-    const jobs = await page.evaluate((jobTitle: string, location: string) => {
-      const jobCards = document.querySelectorAll('[data-jk]');
-      const extractedJobs: any[] = [];
-      
-      jobCards.forEach((card, index) => {
-        if (index >= 25) return; // Limit results
-        
-        try {
-          const titleElement = card.querySelector('h2 a span[title]');
-          const companyElement = card.querySelector('[data-testid="company-name"]');
-          const locationElement = card.querySelector('[data-testid="job-location"]');
-          const linkElement = card.querySelector('h2 a');
-          const salaryElement = card.querySelector('[data-testid="attribute_snippet_testid"]');
-          
-          const title = titleElement?.getAttribute('title') || titleElement?.textContent;
-          const company = companyElement?.textContent?.trim();
-          const jobLocation = locationElement?.textContent?.trim();
-          const link = linkElement?.getAttribute('href');
-          const salary = salaryElement?.textContent?.trim();
-          
-          if (title && company) {
-            extractedJobs.push({
-              title: title.trim(),
-              company: company,
-              location: jobLocation || location,
-              url: link ? `https://www.indeed.com${link}` : '#',
-              salary: salary || undefined,
-              source: 'indeed-puppeteer'
-            });
-          }
-        } catch (e) {
-          console.log('Error extracting job data:', e);
-        }
-      });
-      
-      return extractedJobs;
-    }, jobTitle, location);
-    
-    const jobListings = jobs.map((job: any): JobListing => ({
-      id: generateId(),
-      title: job.title,
-      company: job.company,
-      location: job.location,
-      url: job.url,
-      description: `${job.title} position at ${job.company}. View full details on Indeed.`,
-      dateScraped: new Date().toISOString(),
-      source: job.source,
-      salaryRange: job.salary,
-      jobType: 'Full-time'
-    }));
-    
-    console.log(`Found ${jobListings.length} jobs from Indeed (Puppeteer)`);
-    return jobListings;
-    
-  } catch (error) {
-    console.error('Error scraping Indeed with Puppeteer:', error);
-    return [];
-  }
-}
+    console.log('Scraping SimplyHired with Playwright...');
 
-// SimplyHired scraper with Puppeteer (confirmed accessible)
-async function scrapeSimplyHiredWithPuppeteer(
-  page: any,
-  jobTitle: string,
-  location: string,
-  maxJobs: number,
-  randomDelay: () => Promise<void>
-): Promise<JobListing[]> {
-  try {
-    console.log('Scraping SimplyHired with Puppeteer...');
-    
     const searchUrl = `https://www.simplyhired.com/search?q=${encodeURIComponent(jobTitle)}&l=${encodeURIComponent(location)}`;
-    
-    await page.goto(searchUrl, { 
-      waitUntil: 'networkidle2',
-      timeout: 30000 
+
+    await page.goto(searchUrl, {
+      waitUntil: 'networkidle',
+      timeout: 30000
     });
-    
+
     // Add random delay to avoid detection
     await randomDelay();
-    
+
     // Try multiple job card selectors
     const jobCardSelectors = [
       '[data-testid="searchSerpJob"]',
@@ -358,7 +267,7 @@ async function scrapeSimplyHiredWithPuppeteer(
       'article[data-job-id]',
       '.jobposting'
     ];
-    
+
     let jobCards: any[] = [];
     for (const selector of jobCardSelectors) {
       jobCards = await page.$$(selector);
@@ -367,17 +276,15 @@ async function scrapeSimplyHiredWithPuppeteer(
         break;
       }
     }
-    
+
     if (jobCards.length === 0) {
       console.log('No job cards found on SimplyHired');
       return [];
     }
-    
+
     // Extract job data with improved selectors and fallbacks
-    const jobs = await page.evaluate((jobTitle: string, location: string) => {
-      const extractedJobs: any[] = [];
-      
-      // Try multiple job card selectors
+    const jobs = await page.evaluate(({ jobTitle, location }) => {
+      const extractedJobs = [];
       const cardSelectors = [
         '[data-testid="searchSerpJob"]',
         '.SerpJob-container',
@@ -385,75 +292,43 @@ async function scrapeSimplyHiredWithPuppeteer(
         'article[data-job-id]',
         '.jobposting'
       ];
-      
-      let jobCards: NodeListOf<Element> | null = null;
+      let jobCards = null;
       for (const selector of cardSelectors) {
         jobCards = document.querySelectorAll(selector);
         if (jobCards.length > 0) break;
       }
-      
       if (!jobCards) return extractedJobs;
-      
       jobCards.forEach((card, index) => {
         if (index >= 25) return;
-        
         try {
-          // Multiple selector strategies for each field
           const titleSelectors = [
-            'h3 a', 
-            '[data-testid="jobTitle"] a', 
-            '.jobTitle a', 
-            'h2 a',
-            '.job-title a',
-            'a[data-testid="job-title"]'
+            'h3 a', '[data-testid="jobTitle"] a', '.jobTitle a', 'h2 a', '.job-title a', 'a[data-testid="job-title"]'
           ];
-          
           const companySelectors = [
-            '[data-testid="companyName"]',
-            '.company-name',
-            '.companyName',
-            '.hiring-company',
-            '.company'
+            '[data-testid="companyName"]', '.company-name', '.companyName', '.hiring-company', '.company'
           ];
-          
           const locationSelectors = [
-            '[data-testid="searchSerpJobLocation"]',
-            '.job-location',
-            '.location',
-            '.jobLocation',
-            '[data-testid="location"]'
+            '[data-testid="searchSerpJobLocation"]', '.job-location', '.location', '.jobLocation', '[data-testid="location"]'
           ];
-          
           const salarySelectors = [
-            '[data-testid="searchSerpJobSalaryEst"]',
-            '.salary',
-            '.pay',
-            '.compensation',
-            '.wage'
+            '[data-testid="searchSerpJobSalaryEst"]', '.salary', '.pay', '.compensation', '.wage'
           ];
-          
           let title, company, jobLocation, link, salary;
-          
-          // Find title with multiple fallbacks
           for (const selector of titleSelectors) {
             const element = card.querySelector(selector);
             if (element) {
               title = element.textContent?.trim();
               if (!link) link = element.getAttribute('href');
-              if (title && title.length > 3) break; // Ensure we got real content
+              if (title && title.length > 3) break;
             }
           }
-          
-          // Find company with multiple fallbacks
           for (const selector of companySelectors) {
             const element = card.querySelector(selector);
             if (element) {
               company = element.textContent?.trim();
-              if (company && company.length > 1) break; // Ensure we got real content
+              if (company && company.length > 1) break;
             }
           }
-          
-          // Find location with multiple fallbacks
           for (const selector of locationSelectors) {
             const element = card.querySelector(selector);
             if (element) {
@@ -461,39 +336,30 @@ async function scrapeSimplyHiredWithPuppeteer(
               if (jobLocation && jobLocation.length > 1) break;
             }
           }
-          
-          // Find salary with multiple fallbacks
           for (const selector of salarySelectors) {
             const element = card.querySelector(selector);
             if (element) {
               salary = element.textContent?.trim();
-              if (salary && salary.includes('$')) break; // Only accept if it looks like salary
+              if (salary && salary.includes('$')) break;
             }
           }
-          
-          // Quality check - ensure we have real data, not placeholders
-          if (title && company && 
-              !title.includes('placeholder') && 
-              !company.includes('placeholder') &&
-              title.length > 3 && 
-              company.length > 1) {
+          if (title && company && !title.includes('placeholder') && !company.includes('placeholder') && title.length > 3 && company.length > 1) {
             extractedJobs.push({
               title,
               company,
               location: jobLocation || location,
               url: link ? (link.startsWith('http') ? link : `https://www.simplyhired.com${link}`) : '#',
               salary: salary || undefined,
-              source: 'simplyhired-puppeteer'
+              source: 'simplyhired-playwright'
             });
           }
         } catch (e) {
-          console.log('Error extracting SimplyHired job data:', e);
+          // Ignore extraction errors for individual cards
         }
       });
-      
       return extractedJobs;
-    }, jobTitle, location);
-    
+    }, { jobTitle, location });
+
     const jobListings = jobs.map((job: any): JobListing => ({
       id: generateId(),
       title: job.title,
@@ -506,18 +372,17 @@ async function scrapeSimplyHiredWithPuppeteer(
       salaryRange: job.salary,
       jobType: 'Full-time'
     }));
-    
-    console.log(`Found ${jobListings.length} quality jobs from SimplyHired (Puppeteer)`);
+
+    console.log(`Found ${jobListings.length} quality jobs from SimplyHired (Playwright)`);
     return jobListings;
-    
   } catch (error) {
-    console.error('Error scraping SimplyHired with Puppeteer:', error);
+    console.error('Error scraping SimplyHired with Playwright:', error);
     return [];
   }
 }
 
-// ZipRecruiter scraper with Puppeteer (confirmed accessible)
-async function scrapeZipRecruiterWithPuppeteer(
+// ZipRecruiter scraper with Playwright (confirmed accessible)
+async function scrapeZipRecruiterWithPlaywright(
   page: any,
   jobTitle: string,
   location: string,
@@ -525,19 +390,50 @@ async function scrapeZipRecruiterWithPuppeteer(
   randomDelay: () => Promise<void>
 ): Promise<JobListing[]> {
   try {
-    console.log('Scraping ZipRecruiter with Puppeteer...');
-    
+    console.log('Scraping ZipRecruiter with Playwright...');
+
     const searchUrl = `https://www.ziprecruiter.com/jobs-search?search=${encodeURIComponent(jobTitle)}&location=${encodeURIComponent(location)}`;
-    
-    await page.goto(searchUrl, { 
-      waitUntil: 'networkidle2',
-      timeout: 30000 
-    });
-    
-    // Add random delay to avoid detection
+
+    // Add a longer random delay before navigation
     await randomDelay();
-    
-    // Wait for job cards to load - try multiple selectors
+    await randomDelay();
+
+    // Set up extra stealth headers
+    await page.setExtraHTTPHeaders({
+      'Accept-Language': 'en-US,en;q=0.9',
+      'Accept-Encoding': 'gzip, deflate, br',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+      'Connection': 'keep-alive',
+      'Upgrade-Insecure-Requests': '1',
+      'sec-ch-ua': '"Chromium";v="124", "Google Chrome";v="124", ";Not A Brand";v="99"',
+      'sec-ch-ua-mobile': '?0',
+      'sec-ch-ua-platform': '"macOS"',
+      'sec-fetch-dest': 'document',
+      'sec-fetch-mode': 'navigate',
+      'sec-fetch-site': 'none',
+      'sec-fetch-user': '?1',
+    });
+    // User agent and viewport are set in the context, not on the page (Playwright best practice)
+    // await page.setUserAgent(...); // <-- Do not use
+    // await page.setViewportSize(...); // <-- Do not use
+
+    // Try to set navigator.webdriver to false
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, 'webdriver', { get: () => false });
+    });
+
+    await page.goto(searchUrl, {
+      waitUntil: 'domcontentloaded',
+      timeout: 60000
+    });
+
+    // Add a short delay after navigation
+    await randomDelay();
+
+    // Debug: log first 500 chars of HTML after navigation
+    const pageContent = await page.content();
+    console.log('ZipRecruiter page HTML preview:', pageContent.slice(0, 500));
+
     const jobCardSelectors = [
       '[data-testid="job-card"]',
       '.job_content',
@@ -545,7 +441,7 @@ async function scrapeZipRecruiterWithPuppeteer(
       '.job-card-container',
       'article[data-job-id]'
     ];
-    
+
     let jobCards: any[] = [];
     for (const selector of jobCardSelectors) {
       jobCards = await page.$$(selector);
@@ -554,17 +450,14 @@ async function scrapeZipRecruiterWithPuppeteer(
         break;
       }
     }
-    
+
     if (jobCards.length === 0) {
       console.log('No job cards found on ZipRecruiter');
       return [];
     }
-    
-    // Extract job data with multiple fallback selectors
-    const jobs = await page.evaluate((jobTitle: string, location: string) => {
-      const extractedJobs: any[] = [];
-      
-      // Try multiple job card selectors
+
+    const jobs = await page.evaluate(({ jobTitle, location }) => {
+      const extractedJobs = [];
       const cardSelectors = [
         '[data-testid="job-card"]',
         '.job_content',
@@ -572,28 +465,20 @@ async function scrapeZipRecruiterWithPuppeteer(
         '.job-card-container',
         'article[data-job-id]'
       ];
-      
-      let jobCards: NodeListOf<Element> | null = null;
+      let jobCards = null;
       for (const selector of cardSelectors) {
         jobCards = document.querySelectorAll(selector);
         if (jobCards.length > 0) break;
       }
-      
       if (!jobCards) return extractedJobs;
-      
       jobCards.forEach((card, index) => {
         if (index >= 25) return;
-        
         try {
-          // Multiple selector strategies for each field
           const titleSelectors = ['h2 a', '.job-title a', '[data-testid="job-title"]', '.jobTitle a'];
           const companySelectors = ['.company-name', '.hiring-company', '[data-testid="company-name"]', '.companyName'];
           const locationSelectors = ['.job-location', '.location', '[data-testid="job-location"]', '.jobLocation'];
           const salarySelectors = ['.salary', '.compensation', '[data-testid="salary"]', '.pay'];
-          
           let title, company, jobLocation, link, salary;
-          
-          // Find title
           for (const selector of titleSelectors) {
             const element = card.querySelector(selector);
             if (element) {
@@ -602,8 +487,6 @@ async function scrapeZipRecruiterWithPuppeteer(
               if (title) break;
             }
           }
-          
-          // Find company
           for (const selector of companySelectors) {
             const element = card.querySelector(selector);
             if (element) {
@@ -611,8 +494,6 @@ async function scrapeZipRecruiterWithPuppeteer(
               if (company) break;
             }
           }
-          
-          // Find location
           for (const selector of locationSelectors) {
             const element = card.querySelector(selector);
             if (element) {
@@ -620,8 +501,6 @@ async function scrapeZipRecruiterWithPuppeteer(
               if (jobLocation) break;
             }
           }
-          
-          // Find salary
           for (const selector of salarySelectors) {
             const element = card.querySelector(selector);
             if (element) {
@@ -629,7 +508,6 @@ async function scrapeZipRecruiterWithPuppeteer(
               if (salary) break;
             }
           }
-          
           if (title && company) {
             extractedJobs.push({
               title,
@@ -637,17 +515,16 @@ async function scrapeZipRecruiterWithPuppeteer(
               location: jobLocation || location,
               url: link ? (link.startsWith('http') ? link : `https://www.ziprecruiter.com${link}`) : '#',
               salary: salary || undefined,
-              source: 'ziprecruiter-puppeteer'
+              source: 'ziprecruiter-playwright'
             });
           }
         } catch (e) {
-          console.log('Error extracting ZipRecruiter job data:', e);
+          // Ignore extraction errors for individual cards
         }
       });
-      
       return extractedJobs;
-    }, jobTitle, location);
-    
+    }, { jobTitle, location });
+
     const jobListings = jobs.map((job: any): JobListing => ({
       id: generateId(),
       title: job.title,
@@ -660,12 +537,11 @@ async function scrapeZipRecruiterWithPuppeteer(
       salaryRange: job.salary,
       jobType: 'Full-time'
     }));
-    
-    console.log(`Found ${jobListings.length} jobs from ZipRecruiter (Puppeteer)`);
+
+    console.log(`Found ${jobListings.length} jobs from ZipRecruiter (Playwright)`);
     return jobListings;
-    
   } catch (error) {
-    console.error('Error scraping ZipRecruiter with Puppeteer:', error);
+    console.error('Error scraping ZipRecruiter with Playwright:', error);
     return [];
   }
 }

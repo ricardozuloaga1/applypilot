@@ -415,6 +415,82 @@ export async function scrapeJobRSSFeeds(
   }
 }
 
+// Mantiks API (production-ready, robust job search)
+export async function scrapeMantiksJobs(
+  jobTitle: string,
+  location: string = 'Remote'
+): Promise<JobListing[]> {
+  try {
+    const API_KEY = process.env.MANTIKS_API_KEY;
+    const JOB_AGE_IN_DAYS = 30;
+    if (!API_KEY) {
+      console.log('Mantiks API key not configured');
+      return [];
+    }
+
+    // Step 1: Get location ID from Mantiks
+    const locRes = await fetch(`https://api.mantiks.io/location/search?name=${encodeURIComponent(location)}`,
+      {
+        headers: {
+          'x-api-key': API_KEY,
+          'accept': 'application/json'
+        }
+      }
+    );
+    if (!locRes.ok) {
+      console.log('Mantiks location search failed:', locRes.status);
+      return [];
+    }
+    const locData = await locRes.json();
+    const locationId = locData?.results?.[0]?.id;
+    if (!locationId) {
+      console.log('No Mantiks location ID found for', location);
+      return [];
+    }
+
+    // Step 2: Query jobs by title and location ID
+    const url = `https://api.mantiks.io/company/search?job_title=${encodeURIComponent(jobTitle)}&job_location_ids=${locationId}&job_age_in_days=${JOB_AGE_IN_DAYS}`;
+    const jobRes = await fetch(url, {
+      headers: {
+        'x-api-key': API_KEY,
+        'accept': 'application/json'
+      }
+    });
+    if (!jobRes.ok) {
+      console.log('Mantiks job search failed:', jobRes.status);
+      return [];
+    }
+    const jobData = await jobRes.json();
+    const companies = jobData?.companies || [];
+    const allJobs: JobListing[] = [];
+    companies.forEach((company: any) => {
+      if (company.jobs && company.jobs.length) {
+        company.jobs.forEach((job: any) => {
+          allJobs.push({
+            id: generateId(),
+            title: job.job_title || jobTitle,
+            company: company.name || 'Unknown Company',
+            location: job.location || location,
+            url: job.job_board_url || '#',
+            description: job.description || `${job.job_title} at ${company.name} via ${job.job_board}.`,
+            dateScraped: new Date().toISOString(),
+            source: 'mantiks',
+            salaryRange: job.salary || undefined,
+            jobType: job.job_type || undefined,
+            postedDate: job.posted_at ? new Date(job.posted_at).toLocaleDateString() : undefined,
+            experienceLevel: job.experience_level || undefined,
+            applicantCount: job.applicant_count ? String(job.applicant_count) : undefined
+          });
+        });
+      }
+    });
+    return allJobs;
+  } catch (error) {
+    console.error('Error fetching Mantiks jobs:', error);
+    return [];
+  }
+}
+
 // Combine reliable alternative sources only
 export async function scrapeAlternativeSources(
   jobTitle: string,
@@ -424,14 +500,11 @@ export async function scrapeAlternativeSources(
   
   const allJobs: JobListing[] = [];
   
-  // Only use reliable sources - removed broken ones
+  // Add Mantiks as the first source (most robust)
   const sources = [
+    scrapeMantiksJobs(jobTitle, location),
     scrapeRemoteOKJobs(jobTitle, location),
     scrapeAdzunaJobs(jobTitle, location)
-    // Removed broken sources:
-    // - scrapeHackerNewsJobs (returning irrelevant links)
-    // - scrapeAngelListJobs (API issues)
-    // - scrapeJobRSSFeeds (low quality mock data)
   ];
   
   const results = await Promise.allSettled(sources);
