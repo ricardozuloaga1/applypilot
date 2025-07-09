@@ -433,7 +433,7 @@ class AutoApplyAI {
                                     <ul>${job.matchAnalysis.recommendations.map(r => `<li>${this.escapeHtml(r)}</li>`).join('')}</ul>
                                 </div>
                                 <div class="match-reasoning">
-                                    <strong>Analysis:</strong> ${this.escapeHtml(job.matchAnalysis.reasoning)}
+                                    <strong>Analysis:</strong> ${this.formatAnalysisReasoning(job.matchAnalysis.reasoning)}
                                 </div>
                             </div>
                         </div>
@@ -1546,6 +1546,8 @@ ANALYSIS INSTRUCTIONS:
 
 Be harsh but fair. Don't give sympathy scores. If there are major gaps, reflect this in a low score. Most candidates should score below 70 unless they're truly exceptional matches. Use the full range from 0-100.
 
+CRITICAL: You MUST respond with ONLY valid JSON. Do not include any text before or after the JSON. 
+
 Format response as JSON:
 {
   "overallScore": 45,
@@ -1676,6 +1678,27 @@ Format response as JSON:
     getMatchColor(score) {
         if (score === null || score === undefined) return this.matchColors.unscored;
         return this.matchColors[this.getMatchLevel(score)];
+    }
+
+    formatAnalysisReasoning(reasoning) {
+        // Check if reasoning contains JSON (happens when parsing fails)
+        if (reasoning.trim().startsWith('{') && reasoning.trim().endsWith('}')) {
+            try {
+                const parsed = JSON.parse(reasoning);
+                if (parsed.reasoning) {
+                    return this.escapeHtml(parsed.reasoning);
+                }
+                // If it's a JSON response, format it nicely
+                return `<div class="json-fallback">
+                    <strong>Score:</strong> ${parsed.overallScore || 'N/A'}<br>
+                    <strong>Analysis:</strong> ${this.escapeHtml(parsed.reasoning || 'No detailed analysis available')}
+                </div>`;
+            } catch (e) {
+                // If JSON parsing fails, treat as regular text
+                return this.escapeHtml(reasoning);
+            }
+        }
+        return this.escapeHtml(reasoning);
     }
 
     async scoreAllJobs() {
