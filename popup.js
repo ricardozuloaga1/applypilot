@@ -1546,7 +1546,7 @@ ANALYSIS INSTRUCTIONS:
 
 Be harsh but fair. Don't give sympathy scores. If there are major gaps, reflect this in a low score. Most candidates should score below 70 unless they're truly exceptional matches. Use the full range from 0-100.
 
-CRITICAL: You MUST respond with ONLY valid JSON. Do not include any text before or after the JSON. 
+CRITICAL: You MUST respond with ONLY valid JSON. Do not include any text before or after the JSON. Do not use markdown formatting like \`\`\`json. Just return the raw JSON object.
 
 Format response as JSON:
 {
@@ -1602,7 +1602,13 @@ Format response as JSON:
                 
                 // Parse the JSON response
                 try {
-                    const matchData = JSON.parse(content);
+                    // Clean up the response - remove markdown formatting if present
+                    let cleanContent = content.trim();
+                    if (cleanContent.startsWith('```json')) {
+                        cleanContent = cleanContent.replace(/```json\s*/, '').replace(/\s*```$/, '');
+                    }
+                    
+                    const matchData = JSON.parse(cleanContent);
                     
                     return {
                         score: Math.max(0, Math.min(100, matchData.overallScore || 0)),
@@ -1682,9 +1688,16 @@ Format response as JSON:
 
     formatAnalysisReasoning(reasoning) {
         // Check if reasoning contains JSON (happens when parsing fails)
-        if (reasoning.trim().startsWith('{') && reasoning.trim().endsWith('}')) {
+        let cleanReasoning = reasoning.trim();
+        
+        // Handle markdown-formatted JSON
+        if (cleanReasoning.startsWith('```json')) {
+            cleanReasoning = cleanReasoning.replace(/```json\s*/, '').replace(/\s*```$/, '');
+        }
+        
+        if (cleanReasoning.startsWith('{') && cleanReasoning.endsWith('}')) {
             try {
-                const parsed = JSON.parse(reasoning);
+                const parsed = JSON.parse(cleanReasoning);
                 if (parsed.reasoning) {
                     return this.escapeHtml(parsed.reasoning);
                 }
@@ -1695,10 +1708,10 @@ Format response as JSON:
                 </div>`;
             } catch (e) {
                 // If JSON parsing fails, treat as regular text
-                return this.escapeHtml(reasoning);
+                return this.escapeHtml(cleanReasoning);
             }
         }
-        return this.escapeHtml(reasoning);
+        return this.escapeHtml(cleanReasoning);
     }
 
     async scoreAllJobs() {
