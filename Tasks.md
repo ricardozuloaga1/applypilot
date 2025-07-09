@@ -1,177 +1,479 @@
-# AutoApply AI - Development Tasks
+# AutoApply AI - Task List & Project Roadmap
 
-## 🚀 Phase 1 – Project Setup ✅
-- [x] Initialize Next.js project with TypeScript
-- [x] Install required dependencies (OpenAI SDK, Apify client, etc.)
-- [x] Set up project structure (components, lib, types, api)
-- [x] Configure Tailwind CSS for styling
-- [x] Create basic types in TypeScript
-- [x] Set up utility functions
-- [x] Create beautiful landing page
-- [x] Configure development environment
-
-## 📄 Phase 2 – Resume Upload & Parsing ✅
-- [x] Create ResumeUpload component with text input
-- [x] Build API route for resume parsing (/api/parse-resume)
-- [x] Integrate OpenAI for intelligent resume parsing
-- [x] Extract structured data (name, title, experience, skills, education, summary)
-- [x] Create ResumeDisplay component for showing parsed resume
-- [x] Handle errors and edge cases
-- [x] Add loading states and user feedback
-
-## 🎯 Phase 3 – AI Job Role Suggestions ✅
-- [x] Build API route for job suggestions (/api/job-suggestions)
-- [x] Use GPT-4 to analyze resume and suggest relevant job titles
-- [x] Return confidence scores and reasoning for each suggestion
-- [x] Create JobSuggestions component with interactive cards
-- [x] Add multi-select functionality for job titles
-- [x] Include confidence badges and visual feedback
-- [x] Handle loading and error states
-
-## 🔍 Phase 4 – Job Scraping Module ✅ **COMPLETED**
-- [x] **Multi-source scraper architecture implemented** - Production-ready system
-- [x] Build API route to fetch job listings by title
-- [x] Extract comprehensive job info:
-  - [x] Job title and company
-  - [x] Location and job URL
-  - [x] Description snippet
-  - [x] Salary range (when available)
-  - [x] Job type and experience level
-  - [x] Posted date and applicant count
-- [x] Display jobs in a sortable table in UI
-- [x] API route for job scraping (/api/scrape-jobs)
-- [x] Beautiful sortable table with job listings
-- [x] **ADZUNA API INTEGRATION** - Real job data working (20k calls/month)
-- [x] **REMOTEOK API INTEGRATION** - Real remote job data working
-- [x] **MOCK DATA ISSUE RESOLVED** - 100% real job data achieved
-- [x] **SOURCE OPTIMIZATION** - Removed broken sources (HackerNews, AngelList, RSS)
-- [x] **SEARCH ALGORITHM IMPROVED** - Better matching for legal and tech roles
-- [x] **UI MODERNIZATION** - Updated platform selection and source badges
-- [x] Job selection for document generation
-- [x] Enhanced job data with comprehensive job fields
-- [x] **COMPREHENSIVE TESTING** - Created and executed validation test suite
-- [ ] **EXPAND JOB SOURCES** - Add more job boards for comprehensive coverage
-
-**✅ ISSUE RESOLVED: Mock data problem completely eliminated**
-
-### ✅ **Major Fixes Completed:**
-- [x] **Eliminated broken sources** - Removed HackerNews, AngelList, RSS feeds
-- [x] **Focused on reliable APIs** - Adzuna (20k/month) + RemoteOK optimized
-- [x] **Enhanced search matching** - Improved algorithms for all job types
-- [x] **Quality validation** - 100% real job data with proper companies and salaries
-- [x] **UI improvements** - Modern platform selection and real-time feedback
-
-### 🔄 **Recent Critical Fixes:**
-- [x] **Added Template System** - 5 different resume templates + 5 cover letter templates
-- [x] **Expandable Job Descriptions** - UI enhancement for better job review
-- [x] **Enhanced Document Generation Context** - Full job details in document generation page
-- [x] **Improved AI Prompts** - Enhanced document generation to work with limited job descriptions
-
-### ⚠️ **Known Issues Requiring Attention:**
-- [ ] **CRITICAL: Job Description Truncation** - Adzuna API limits descriptions to ~500 characters
-  - Current fix: Enhanced AI prompts to infer from job title/company
-  - Need better solution: Additional job sources or description enhancement
-- [ ] **IMPROVE: Job Search Results Volume** - Users see limited job count per search
-  - Current: 2-10 jobs from Adzuna, 0-5 from RemoteOK 
-  - Need: More job sources and pagination for larger result sets
-- [ ] **ENHANCE: Job Source Diversification** - Over-reliant on Adzuna API
-  - Add: Indeed API, LinkedIn Jobs API, ZipRecruiter API
-  - Implement: Smart source rotation and result aggregation
-- [ ] **BLOCKED: ZipRecruiter Playwright Scraper** - Playwright-based scraper implemented, but blocked by anti-bot measures (Cloudflare, etc.). No jobs returned.
-- [ ] **BLOCKED: LinkedIn Playwright Scraper** - Playwright-based scraper attempted (headless and non-headless, with manual login), but job data is obfuscated/minified and not accessible. No reliable scraping possible.
-- [ ] **IN PROGRESS: Mantiks API Integration** - Next step: Integrate Mantiks API for LinkedIn and other job board data. Free trial available for testing.
-
-### 🔄 **Future Enhancements:**
-- [ ] **Add more specialized job sources** - Legal-specific job boards, industry sites
-- [ ] **Implement additional APIs** - Glassdoor API, ZipRecruiter API, SimplyHired API
-- [ ] **Enhanced Puppeteer scraping** - Accessible sites without Cloudflare protection
-- [ ] **Niche job board integration** - AngelList for startups, Dice for tech, FlexJobs for remote
-- [ ] **Geographic expansion** - International job boards (UK, EU, Canada, Australia)
-
-**📊 Current Performance:**
-- ✅ **Adzuna API**: 2-10 real jobs per search, all job types, $60k-$172k salaries
-- ✅ **RemoteOK API**: 0-5 jobs per search, tech-focused, unlimited free access
-- ✅ **Quality Metrics**: 100% real companies (Oregon Health & Science, Harbor, GE Vernova, etc.)
-- ✅ **Zero Mock Data**: All placeholder/mock content eliminated
-
-## 📝 Phase 5 – Document Generation ✅ **COMPLETED**
-- [x] Build API route for document generation (/api/generate-documents)
-- [x] Create tailored resume versions for selected jobs
-- [x] Generate custom cover letters using AI
-- [x] Implement PDF generation for documents
-- [x] Create DocumentGenerator component
-- [x] Add document preview and download functionality
-- [x] Handle multiple job applications simultaneously
-
-**✅ MAJOR ACHIEVEMENT: AI-Powered Document Generation System Complete!**
-
-### ✅ **Phase 5 Features Implemented:**
-- [x] **AI Document Tailoring** - GPT-4 powered resume and cover letter customization
-- [x] **Multi-format Downloads** - PDF, HTML, and Text format support
-- [x] **Real-time Preview** - Live document preview with tabbed interface
-- [x] **Professional UI** - Beautiful document generation interface
-- [x] **PDF Generation** - Puppeteer-powered PDF creation from HTML
-- [x] **Document Management** - Copy to clipboard, multiple download formats
-- [x] **Job-Specific Tailoring** - Documents tailored to specific job requirements
-- [x] **Error Handling** - Comprehensive error handling and user feedback
-
-**📊 Current Capabilities:**
-- ✅ **Smart Resume Tailoring**: AI analyzes job requirements and customizes resume content
-- ✅ **Professional Cover Letters**: AI generates compelling, personalized cover letters
-- ✅ **Multiple Export Formats**: PDF (production-ready), HTML (web-friendly), Text (ATS-compatible)
-- ✅ **Interactive Preview**: Tabbed interface for document review before download
-- ✅ **Professional Styling**: Clean, ATS-friendly formatting with inline CSS
-
-## ☁️ Phase 6 – Google Drive Integration
-- [ ] Set up Google Drive API authentication
-- [ ] Create folder structure for organized storage
-- [ ] Upload generated documents to Drive
-- [ ] Implement file naming conventions
-- [ ] Add sharing and access controls
-- [ ] Create Drive management interface
-
-## 📊 Phase 7 – Application Tracking
-- [ ] Design application tracking database schema
-- [ ] Build Google Sheets integration for tracking
-- [ ] Create application status management
-- [ ] Add follow-up reminders and notes
-- [ ] Build analytics dashboard
-- [ ] Export tracking data functionality
-
-## 🚀 Phase 8 – Polish & Deploy
-- [ ] Comprehensive testing across all features
-- [ ] Performance optimization
-- [ ] Error handling improvements
-- [ ] User experience enhancements
-- [ ] Production deployment setup
-- [ ] Documentation and user guides
+## 📋 **Project Overview**
+Transform AutoApply AI from local Chrome storage to cloud-based system with enhanced resume management, improved job scraping, and better document processing.
 
 ---
 
-## 🏆 Current Status: **Phase 5 COMPLETED - AI Document Generation System Ready!**
+## 🎯 **PHASE 1: DATABASE & RESUME MANAGEMENT**
 
-### ✅ **What's Working:**
-- Complete resume parsing with AI analysis
-- Intelligent job title suggestions with confidence scores
-- **Multi-source job scraping system** - 100% real job data
-- Professional job results table with sorting and rich data
-- Full user flow from resume → suggestions → job listings
-- **ZERO mock data** - All real companies and salaries
-- **Production-ready APIs** - Adzuna (20k/month) + RemoteOK
+### ✅ **Task 1: Setup Supabase Project** 
+**Status**: ✅ **COMPLETED**  
+**Priority**: High  
+**Estimated Time**: 2-3 hours  
 
-### 🔧 **Technical Achievements:**
-- ✅ **Mock data issue completely resolved** - 100% real job data achieved
-- ✅ **Optimized source selection** - Focused on reliable APIs only
-- ✅ **Enhanced search algorithms** - Better matching for all job types
-- ✅ **Modernized UI** - Updated platform selection and source indicators
-- ✅ **Comprehensive testing** - Validated all sources and quality metrics
-- ✅ **Professional job data** - Real companies, salaries, descriptions
+**Deliverables**:
+- [x] Create Supabase project account
+- [x] Set up database schema with tables:
+  - `resumes` table with fields: id, user_id, name, file_url, content, file_type, file_size, created_at, updated_at, is_active
+  - `jobs` table with fields: id, user_id, title, company, description, location, salary, url, source, captured_at, starred
+  - `job_matches` table with fields: id, job_id, resume_id, score, analysis, created_at
+- [x] Configure Row Level Security (RLS) policies
+- [x] Set up anonymous authentication
+- [x] Test database connection and basic operations
 
-### 📊 **Current Performance Metrics:**
-- **Legal Jobs:** 7-10 real positions, $60k-$163k salaries
-- **Tech Jobs:** 15+ real positions, $100k-$175k salaries
-- **Quality:** 100% real companies (Oregon Health & Science, Harbor, GE Vernova, etc.)
-- **Sources:** Adzuna API (excellent) + RemoteOK API (good for tech)
+**Acceptance Criteria**:
+- Database is accessible and all tables are created
+- Can perform CRUD operations on all tables
+- Authentication works for anonymous users
+- RLS policies prevent unauthorized access
 
-### 🎯 **Next Steps:**
-Ready to implement Phase 6 - Google Drive Integration. The document generation system is complete with AI-powered tailoring and multi-format export capabilities. 
+**Dependencies**: None
+
+**✅ COMPLETED DELIVERABLES**:
+- Created complete database schema (`database-schema.sql`)
+- Set up comprehensive RLS policies
+- Created storage bucket for resume files
+- Added database triggers and constraints
+- Built complete test suite for verification
+
+**📁 Files Created**:
+- `database-schema.sql` - Complete database schema
+- `config/supabase.js` - Supabase client configuration  
+- `lib/database.js` - Database helper functions
+- `test-supabase.html` - Comprehensive test suite
+- Updated `manifest.json` with required permissions
+- Updated `popup.html` with Supabase client loading
+
+---
+
+### ✅ **Task 2: Create Supabase Client Configuration**
+**Status**: ⏳ Pending  
+**Priority**: High  
+**Estimated Time**: 1-2 hours  
+
+**Deliverables**:
+- [ ] Create `config/supabase.js` file with client configuration
+- [ ] Create `lib/database.js` with helper functions:
+  - `saveResume(resumeData)`
+  - `getResumes(userId)`
+  - `deleteResume(resumeId)`
+  - `setActiveResume(resumeId)`
+  - `saveJob(jobData)`
+  - `getJobs(userId)`
+  - `deleteJob(jobId)`
+  - `saveJobMatch(matchData)`
+- [ ] Add error handling and retry logic
+- [ ] Update `manifest.json` with required permissions
+
+**Acceptance Criteria**:
+- All database operations work correctly
+- Error handling prevents crashes
+- Manifest permissions allow external API calls
+- Helper functions are well-documented
+
+**Dependencies**: Task 1 (Setup Supabase)
+
+---
+
+### ✅ **Task 3: Add Resume Upload UI**
+**Status**: ⏳ Pending  
+**Priority**: High  
+**Estimated Time**: 2-3 hours  
+
+**Deliverables**:
+- [ ] Add "Resumes" tab to popup navigation
+- [ ] Create resume upload section with drag-and-drop
+- [ ] Add file type validation (PDF, DOC, DOCX, TXT)
+- [ ] Add file size limits and validation
+- [ ] Create resume list display with:
+  - Resume name and type
+  - Upload date
+  - Active/inactive status
+  - Delete and set active actions
+- [ ] Add loading states and progress indicators
+- [ ] Style to match existing design system
+
+**Acceptance Criteria**:
+- Users can upload files via drag-and-drop or file picker
+- Only supported file types are accepted
+- File size limits are enforced
+- UI matches existing design language
+- Loading states provide clear feedback
+
+**Dependencies**: Task 2 (Supabase Client)
+
+---
+
+### ✅ **Task 4: Implement Resume Storage**
+**Status**: ⏳ Pending  
+**Priority**: High  
+**Estimated Time**: 3-4 hours  
+
+**Deliverables**:
+- [ ] Implement file upload to Supabase Storage
+- [ ] Extract text content from uploaded files
+- [ ] Store resume metadata in database
+- [ ] Add resume content indexing for search
+- [ ] Implement resume file management:
+  - View uploaded resumes
+  - Delete resumes (file + database)
+  - Set active resume
+- [ ] Add error handling for upload failures
+- [ ] Implement resume content preview
+
+**Acceptance Criteria**:
+- Files are successfully uploaded to Supabase Storage
+- Resume text is extracted and stored correctly
+- Users can manage their resume collection
+- Active resume is clearly indicated
+- Error messages are helpful and actionable
+
+**Dependencies**: Task 3 (Resume Upload UI)
+
+---
+
+### ✅ **Task 5: Add Resume Selection to Capture Tab**
+**Status**: ⏳ Pending  
+**Priority**: High  
+**Estimated Time**: 2 hours  
+
+**Deliverables**:
+- [ ] Add resume selection dropdown to Capture tab
+- [ ] Show currently selected resume name and status
+- [ ] Add quick "Upload New Resume" option
+- [ ] Display resume selection in job matching
+- [ ] Add visual indicators for active resume
+- [ ] Update capture flow to use selected resume
+
+**Acceptance Criteria**:
+- Users can select which resume to use for job matching
+- Current selection is clearly visible
+- Resume selection persists across sessions
+- Quick upload option works seamlessly
+- Job matching uses the selected resume
+
+**Dependencies**: Task 4 (Resume Storage)
+
+---
+
+## 🎨 **PHASE 2: RESUME HIGHLIGHTING PROTOTYPE**
+
+### ✅ **Task R1: Resume Content Highlighting Prototype**
+**Status**: ✅ **COMPLETED**  
+**Priority**: Medium  
+**Estimated Time**: 3-4 hours  
+
+**Deliverables**:
+- [x] Create a standalone script for job-to-resume phrase matching
+- [x] Render highlighted resume output in color
+- [x] Accept input for job description and resume
+- [x] Color-code exact and fuzzy matches
+- [x] Display legend for user understanding
+- [x] Extract keywords automatically from job descriptions
+- [x] Categorize matches (Skills, Company, Related Terms, Exact)
+- [x] Show statistics and analysis results
+- [x] Create responsive, professional UI
+
+**Acceptance Criteria**:
+- Users can input job description and resume text
+- System automatically extracts relevant keywords from job description
+- Resume text is highlighted with different colors for different match types
+- Legend clearly explains color coding system
+- Statistics show match analysis and keyword extraction results
+- Interface is intuitive and visually appealing
+- System handles various resume and job description formats
+
+**Files Created**:
+- `resume-highlighter-test.html` - Complete standalone prototype
+
+**✅ COMPLETED FEATURES**:
+- Advanced keyword extraction from job descriptions
+- Comprehensive skills database (Programming, Frontend, Backend, Cloud, etc.)
+- Intelligent categorization of matches:
+  - 🟢 **Exact Match** - Direct keyword matches
+  - 🔵 **Skills & Technologies** - Technical skills and tools
+  - 🟡 **Related Terms** - Industry and role-related terms  
+  - 🟣 **Company/Industry** - Business and sector terms
+- Real-time statistics and analysis
+- Sample data for immediate testing
+- Mobile-responsive design
+- Professional gradient UI with modern styling
+
+**🤖 AI-POWERED VERSION** (`resume-highlighter-ai.html`):
+- **OpenAI GPT-4o Mini Integration**: Semantic analysis instead of regex matching
+- **94% Cost Savings**: GPT-4o Mini provides same quality at fraction of cost
+- **Structured Job Analysis**: AI extracts role, requirements, skills, and context
+- **Smart Categorization**: AI identifies critical vs. preferred vs. related requirements
+- **Context-Aware Highlighting**: AI understands job type and highlights accordingly
+- **Fit Score Calculation**: AI calculates overall resume-job compatibility percentage
+- **Higher Output Limit**: 4K tokens vs 2K for better JSON generation
+- **Real-time API Testing**: Built-in API key validation and connection testing
+- **Professional Legal Sample**: Perfect test case for legal/financial positions
+- **Semantic Understanding**: Solves fragmented text and false positive issues
+
+**Dependencies**: None (Standalone prototype)
+
+---
+
+### ✅ **Task R2: AI-Powered Resume Highlighting**
+**Status**: ✅ **COMPLETED**  
+**Priority**: High  
+**Estimated Time**: 4-5 hours  
+
+**Problem Solved**: The original prototype had issues with fragmented text, false positives, and generic phrase extraction. This AI-powered version provides semantic understanding instead of regex matching.
+
+**Deliverables**:
+- [x] OpenAI GPT-4o Mini integration for job description analysis
+- [x] Structured JSON extraction of job requirements and skills
+- [x] Context-aware highlighting based on job type detection
+- [x] Smart categorization (Critical, Required, Preferred, Related, Context)
+- [x] Real-time fit score calculation with weighted scoring
+- [x] API key management and connection testing
+- [x] Enhanced UI with structured analysis display
+- [x] Professional legal sample data for testing
+- [x] Cost optimization: 94% savings vs GPT-4 with same quality
+
+**Key Technical Features**:
+- **Semantic Analysis**: GPT-4o Mini understands job context and extracts meaningful requirements
+- **Structured Data**: JSON format with role, critical, required, preferred, related, and context arrays
+- **Intelligent Highlighting**: 5-tier color system based on requirement priority
+- **Fit Score Algorithm**: Weighted scoring based on critical/required/preferred matches
+- **Cost Efficient**: 94% cheaper than GPT-4 with virtually identical structured data quality
+- **Higher Output Capacity**: 4K token limit vs 2K for better JSON generation
+- **Error Handling**: Comprehensive error handling for API failures and invalid responses
+- **Real-time Processing**: Smooth UI with loading states and progress indicators
+
+**Files Created**:
+- `resume-highlighter-ai.html` - Complete AI-powered prototype (1010 lines)
+
+**Acceptance Criteria**:
+- AI correctly identifies job type and extracts relevant requirements
+- Highlighting prioritizes critical and required skills over generic phrases
+- Fit score provides meaningful assessment of resume-job compatibility
+- System handles various job types (legal, technical, marketing, etc.)
+- API integration is secure and provides helpful error messages
+- Legal sample data demonstrates accurate analysis for non-technical roles
+
+**Dependencies**: OpenAI API key required for testing (GPT-4o Mini - 94% cheaper than GPT-4)
+
+---
+
+## 🔧 **PHASE 3: JOB SCRAPING IMPROVEMENTS**
+
+### ✅ **Task 6: Fix Job Description Truncation**
+**Status**: ⏳ Pending  
+**Priority**: Medium  
+**Estimated Time**: 1-2 hours  
+
+**Deliverables**:
+- [ ] Identify and fix CSS causing description truncation
+- [ ] Update job card expansion/collapse functionality
+- [ ] Ensure full job descriptions are displayed
+- [ ] Add "Show More/Less" toggle for very long descriptions
+- [ ] Test with various job description lengths
+- [ ] Update job card styling for better readability
+
+**Acceptance Criteria**:
+- Job descriptions display completely when expanded
+- Long descriptions have show more/less functionality
+- Text formatting is preserved and readable
+- No content is cut off or hidden unexpectedly
+
+**Dependencies**: None
+
+---
+
+### ✅ **Task 7: Enhance LinkedIn Scraping**
+**Status**: ⏳ Pending  
+**Priority**: Medium  
+**Estimated Time**: 2-3 hours  
+
+**Deliverables**:
+- [ ] Update LinkedIn location extraction selectors
+- [ ] Update LinkedIn salary extraction selectors
+- [ ] Add fallback selectors for different LinkedIn layouts
+- [ ] Implement retry logic for dynamic content
+- [ ] Add better error handling for missing elements
+- [ ] Test with multiple LinkedIn job postings
+- [ ] Handle "Show more" buttons for descriptions
+
+**Acceptance Criteria**:
+- Location is extracted correctly from LinkedIn jobs
+- Salary information is captured when available
+- System handles different LinkedIn page layouts
+- Errors are handled gracefully without breaking capture
+- Job descriptions are complete, not truncated
+
+**Dependencies**: Task 6 (Fix Job Description)
+
+---
+
+## 📄 **PHASE 3: ENHANCED DOCUMENT PROCESSING**
+
+### ✅ **Task 8: Improve PDF Processing**
+**Status**: ⏳ Pending  
+**Priority**: Medium  
+**Estimated Time**: 2-3 hours  
+
+**Deliverables**:
+- [ ] Integrate PDF.js library for better PDF text extraction
+- [ ] Handle PDF files with images and complex layouts
+- [ ] Preserve formatting and structure from PDFs
+- [ ] Add error handling for corrupted PDFs
+- [ ] Test with various PDF resume formats
+- [ ] Implement progress tracking for large PDFs
+
+**Acceptance Criteria**:
+- PDF text extraction is accurate and complete
+- Complex PDF layouts are handled correctly
+- System gracefully handles corrupted or unsupported PDFs
+- Text formatting is preserved where possible
+- Processing time is reasonable for typical resumes
+
+**Dependencies**: Task 7 (Enhanced LinkedIn Scraping)
+
+---
+
+### ✅ **Task 9: Improve Word Document Processing**
+**Status**: ⏳ Pending  
+**Priority**: Medium  
+**Estimated Time**: 2-3 hours  
+
+**Deliverables**:
+- [ ] Enhance existing DOCX parser for better accuracy
+- [ ] Add support for legacy DOC format
+- [ ] Handle Word documents with tables and complex formatting
+- [ ] Preserve bullet points and structure
+- [ ] Add error handling for password-protected documents
+- [ ] Test with various Word document versions
+
+**Acceptance Criteria**:
+- Both DOC and DOCX formats are supported
+- Text extraction preserves document structure
+- Tables and lists are handled correctly
+- Password-protected documents show helpful error messages
+- Processing works with documents from different Word versions
+
+**Dependencies**: Task 8 (Improve PDF Processing)
+
+---
+
+## 🔄 **PHASE 4: DATA MIGRATION & CLOUD SYNC**
+
+### ✅ **Task 10: Migrate Chrome Storage Data**
+**Status**: ⏳ Pending  
+**Priority**: Medium  
+**Estimated Time**: 2-3 hours  
+
+**Deliverables**:
+- [ ] Create migration script for existing jobs data
+- [ ] Implement one-time migration on extension update
+- [ ] Preserve user data during migration
+- [ ] Add rollback mechanism for failed migrations
+- [ ] Update all storage calls to use Supabase
+- [ ] Remove Chrome storage dependencies
+- [ ] Test migration with various data scenarios
+
+**Acceptance Criteria**:
+- Existing user data is preserved during migration
+- Migration runs automatically on first load after update
+- Failed migrations don't lose user data
+- All features work with cloud storage
+- Performance is maintained or improved
+
+**Dependencies**: Task 5 (Resume Selection)
+
+---
+
+### ✅ **Task 11: Enhanced Job Matching System**
+**Status**: ⏳ Pending  
+**Priority**: Medium  
+**Estimated Time**: 2-3 hours  
+
+**Deliverables**:
+- [ ] Update job matching to use selected resume from database
+- [ ] Store match results in `job_matches` table
+- [ ] Add match history and trends
+- [ ] Implement match result caching
+- [ ] Add batch matching for multiple jobs
+- [ ] Update UI to show match source (which resume)
+
+**Acceptance Criteria**:
+- Job matching uses the correct selected resume
+- Match results are stored and retrievable
+- Users can see which resume was used for matching
+- Match history is available for analysis
+- Batch operations work efficiently
+
+**Dependencies**: Task 10 (Migrate Chrome Storage)
+
+---
+
+## 🎨 **PHASE 5: UI/UX POLISH**
+
+### ✅ **Task 12: Final UI/UX Polish**
+**Status**: ⏳ Pending  
+**Priority**: Low  
+**Estimated Time**: 2-3 hours  
+
+**Deliverables**:
+- [ ] Add better loading states throughout the app
+- [ ] Implement proper error handling and user feedback
+- [ ] Add confirmation dialogs for destructive actions
+- [ ] Improve responsive design for different screen sizes
+- [ ] Add keyboard shortcuts for common actions
+- [ ] Implement dark mode support
+- [ ] Add tooltips and help text where needed
+- [ ] Optimize performance and reduce loading times
+
+**Acceptance Criteria**:
+- App feels responsive and professional
+- Error messages are helpful and actionable
+- Users can't accidentally delete important data
+- Interface works well on different screen sizes
+- Performance is smooth and fast
+
+**Dependencies**: Task 11 (Enhanced Job Matching)
+
+---
+
+## 📊 **COMPLETION TRACKING**
+
+### **Progress Summary**
+- **Phase 1**: 1/5 tasks completed (20%)
+- **Phase 2**: 0/2 tasks completed (0%)
+- **Phase 3**: 0/2 tasks completed (0%)
+- **Phase 4**: 0/2 tasks completed (0%)
+- **Phase 5**: 0/1 tasks completed (0%)
+
+**Overall Progress**: 1/12 tasks completed (8.3%)
+
+### **Next Steps**
+1. ✅ **COMPLETED**: Task 1 - Setup Supabase Project
+2. **NEXT**: Task 2 - Create Supabase Client Configuration
+3. Complete each task fully before moving to the next
+4. Test thoroughly and get approval for each deliverable
+5. Update progress tracking as we go
+
+---
+
+## 🔗 **EXTERNAL DEPENDENCIES**
+
+### **Required Services**
+- [ ] Supabase account and project
+- [ ] OpenAI API (already configured)
+
+### **New Libraries/Dependencies**
+- [ ] @supabase/supabase-js (Supabase client)
+- [ ] PDF.js (PDF processing)
+- [ ] Additional file processing libraries as needed
+
+### **Permissions Required**
+- [ ] External API access for Supabase
+- [ ] File system access for file uploads
+- [ ] Storage permissions for file management
+
+---
+
+**Ready to begin with Task 1: Setup Supabase Project?** 

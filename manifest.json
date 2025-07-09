@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "AutoApply AI",
+  "version": "1.0.0",
+  "description": "AI-powered job application assistant",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "scripting"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*/*",
+        "http://*/*"
+      ],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "AutoApply AI"
+  },
+  "host_permissions": [
+    "https://api.openai.com/*"
+  ]
+}

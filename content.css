@@ -1,0 +1,379 @@
+/* Content CSS for AutoApply AI Chrome Extension */
+/* This file styles the elements injected into job sites */
+
+/* Floating capture button */
+.autoapply-floating-btn {
+    position: fixed !important;
+    top: 20px !important;
+    right: 20px !important;
+    z-index: 10000 !important;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+    color: white !important;
+    border-radius: 12px !important;
+    padding: 12px 16px !important;
+    cursor: pointer !important;
+    box-shadow: 0 4px 20px rgba(37, 99, 235, 0.4) !important;
+    transition: all 0.3s ease !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    border: none !important;
+    backdrop-filter: blur(10px) !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
+}
+
+.autoapply-floating-btn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 25px rgba(37, 99, 235, 0.6) !important;
+    background: linear-gradient(135deg, #1d4ed8, #1e40af) !important;
+}
+
+.autoapply-floating-btn.capturing {
+    background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+    animation: autoapply-pulse 2s infinite !important;
+}
+
+.autoapply-floating-btn.success {
+    background: linear-gradient(135deg, #10b981, #059669) !important;
+}
+
+.autoapply-floating-btn.error {
+    background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+    animation: autoapply-error-shake 0.5s ease-in-out !important;
+}
+
+@keyframes autoapply-error-shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-2px); }
+    75% { transform: translateX(2px); }
+}
+
+.autoapply-btn-content {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+
+.autoapply-btn-icon {
+    font-size: 16px !important;
+    line-height: 1 !important;
+}
+
+.autoapply-btn-text {
+    font-weight: 600 !important;
+    line-height: 1 !important;
+}
+
+/* Pulse animation for capturing state */
+@keyframes autoapply-pulse {
+    0%, 100% { 
+        opacity: 1 !important; 
+        transform: scale(1) !important;
+    }
+    50% { 
+        opacity: 0.9 !important;
+        transform: scale(1.02) !important;
+    }
+}
+
+/* Highlight overlay for detected job content */
+.autoapply-highlight {
+    background: rgba(37, 99, 235, 0.1) !important;
+    border: 2px solid rgba(37, 99, 235, 0.3) !important;
+    border-radius: 8px !important;
+    transition: all 0.3s ease !important;
+    position: relative !important;
+    animation: autoapply-highlight-pulse 2s ease-in-out !important;
+}
+
+.autoapply-highlight::before {
+    content: "🤖 " attr(data-autoapply-label) !important;
+    position: absolute !important;
+    top: -35px !important;
+    left: 0 !important;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+    color: white !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    padding: 6px 10px !important;
+    border-radius: 6px !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+    z-index: 9999 !important;
+    opacity: 1 !important;
+    white-space: nowrap !important;
+    box-shadow: 0 2px 12px rgba(37, 99, 235, 0.3) !important;
+}
+
+.autoapply-highlight::after {
+    content: '' !important;
+    position: absolute !important;
+    top: -7px !important;
+    left: 15px !important;
+    border: 4px solid transparent !important;
+    border-top-color: #2563eb !important;
+    z-index: 9999 !important;
+}
+
+@keyframes autoapply-highlight-pulse {
+    0% {
+        background: rgba(37, 99, 235, 0.05) !important;
+        border-color: rgba(37, 99, 235, 0.2) !important;
+    }
+    50% {
+        background: rgba(37, 99, 235, 0.15) !important;
+        border-color: rgba(37, 99, 235, 0.4) !important;
+    }
+    100% {
+        background: rgba(37, 99, 235, 0.1) !important;
+        border-color: rgba(37, 99, 235, 0.3) !important;
+    }
+}
+
+/* Notification styles */
+.autoapply-notification {
+    position: fixed !important;
+    top: 80px !important;
+    right: 20px !important;
+    z-index: 10001 !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+    color: #1f2937 !important;
+    border-radius: 12px !important;
+    padding: 16px 20px !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15) !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+    backdrop-filter: blur(10px) !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    max-width: 300px !important;
+    opacity: 0 !important;
+    transform: translateY(-10px) !important;
+    transition: all 0.3s ease !important;
+    line-height: 1.4 !important;
+    word-wrap: break-word !important;
+}
+
+.autoapply-notification.show {
+    opacity: 1 !important;
+    transform: translateY(0) !important;
+}
+
+.autoapply-notification.success {
+    border-left: 4px solid #10b981 !important;
+    background: rgba(209, 250, 229, 0.95) !important;
+    color: #065f46 !important;
+}
+
+.autoapply-notification.error {
+    border-left: 4px solid #ef4444 !important;
+    background: rgba(254, 226, 226, 0.95) !important;
+    color: #dc2626 !important;
+}
+
+.autoapply-notification.info {
+    border-left: 4px solid #2563eb !important;
+    background: rgba(219, 234, 254, 0.95) !important;
+    color: #1e40af !important;
+}
+
+.autoapply-notification.warning {
+    border-left: 4px solid #f59e0b !important;
+    background: rgba(254, 243, 199, 0.95) !important;
+    color: #d97706 !important;
+}
+
+/* Progress indicator for capture button */
+.autoapply-progress {
+    position: absolute !important;
+    bottom: -4px !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: 3px !important;
+    background: rgba(255, 255, 255, 0.3) !important;
+    border-radius: 0 0 12px 12px !important;
+    overflow: hidden !important;
+}
+
+.autoapply-progress-fill {
+    height: 100% !important;
+    background: rgba(255, 255, 255, 0.9) !important;
+    width: 0% !important;
+    transition: width 0.3s ease !important;
+}
+
+/* Tooltip for floating button */
+.autoapply-tooltip {
+    position: absolute !important;
+    bottom: 100% !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    background: rgba(31, 41, 55, 0.95) !important;
+    color: white !important;
+    padding: 8px 12px !important;
+    border-radius: 8px !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    white-space: nowrap !important;
+    margin-bottom: 8px !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+.autoapply-tooltip::after {
+    content: '' !important;
+    position: absolute !important;
+    top: 100% !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    border: 4px solid transparent !important;
+    border-top-color: rgba(31, 41, 55, 0.95) !important;
+}
+
+.autoapply-floating-btn:hover .autoapply-tooltip {
+    opacity: 1 !important;
+    transform: translateX(-50%) translateY(-2px) !important;
+}
+
+/* Site-specific adjustments */
+body[class*="linkedin"] .autoapply-floating-btn {
+    top: 60px !important;
+}
+
+body[class*="indeed"] .autoapply-floating-btn {
+    top: 60px !important;
+}
+
+body[class*="glassdoor"] .autoapply-floating-btn {
+    top: 60px !important;
+}
+
+.autoapply-floating-btn.with-header {
+    top: 80px !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .autoapply-floating-btn {
+        top: 10px !important;
+        right: 10px !important;
+        padding: 10px 14px !important;
+        font-size: 13px !important;
+    }
+    
+    .autoapply-btn-text {
+        display: none !important;
+    }
+    
+    .autoapply-notification {
+        top: 60px !important;
+        right: 10px !important;
+        left: 10px !important;
+        max-width: none !important;
+        padding: 14px 16px !important;
+        font-size: 13px !important;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .autoapply-notification {
+        background: rgba(31, 41, 55, 0.95) !important;
+        color: #f9fafb !important;
+        border-color: rgba(255, 255, 255, 0.1) !important;
+    }
+    
+    .autoapply-notification.success {
+        background: rgba(6, 95, 70, 0.95) !important;
+        color: #d1fae5 !important;
+    }
+    
+    .autoapply-notification.error {
+        background: rgba(153, 27, 27, 0.95) !important;
+        color: #fecaca !important;
+    }
+    
+    .autoapply-notification.info {
+        background: rgba(30, 64, 175, 0.95) !important;
+        color: #dbeafe !important;
+    }
+    
+    .autoapply-notification.warning {
+        background: rgba(180, 83, 9, 0.95) !important;
+        color: #fef3c7 !important;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .autoapply-floating-btn {
+        border: 2px solid white !important;
+    }
+    
+    .autoapply-notification {
+        border: 2px solid !important;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .autoapply-floating-btn,
+    .autoapply-notification,
+    .autoapply-highlight {
+        animation: none !important;
+        transition: none !important;
+    }
+    
+    .autoapply-floating-btn.capturing {
+        animation: none !important;
+    }
+}
+
+/* Ensure proper layering */
+.autoapply-floating-btn {
+    z-index: 2147483647 !important;
+}
+
+.autoapply-notification {
+    z-index: 2147483646 !important;
+}
+
+/* Prevent conflicts with site styles */
+.autoapply-floating-btn,
+.autoapply-notification {
+    all: initial !important;
+    position: fixed !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+}
+
+/* Enhanced button states */
+.autoapply-floating-btn {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.autoapply-floating-btn:active {
+    transform: translateY(-1px) scale(0.98) !important;
+}
+
+/* Modern shadow styles */
+.autoapply-floating-btn {
+    box-shadow: 
+        0 4px 20px rgba(37, 99, 235, 0.4),
+        0 2px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+.autoapply-floating-btn:hover {
+    box-shadow: 
+        0 6px 25px rgba(37, 99, 235, 0.6),
+        0 4px 16px rgba(0, 0, 0, 0.15) !important;
+}
+
+.autoapply-notification {
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.15),
+        0 4px 16px rgba(0, 0, 0, 0.1) !important;
+}

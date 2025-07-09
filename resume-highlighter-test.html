@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume Highlighter - Prototype Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2563eb, #1e40af);
+            color: white;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 16px;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            padding: 24px;
+        }
+
+        .input-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .input-group label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #374151;
+            font-size: 14px;
+        }
+
+        .input-group textarea {
+            padding: 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.5;
+            resize: vertical;
+            transition: border-color 0.2s ease;
+            font-family: inherit;
+        }
+
+        .input-group textarea:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        #jobDescription {
+            min-height: 150px;
+        }
+
+        #resumeText {
+            min-height: 300px;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .highlight-btn {
+            background: linear-gradient(135deg, #2563eb, #1e40af);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .highlight-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+        }
+
+        .highlight-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .stats {
+            background: #f8fafc;
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .stats h3 {
+            font-size: 14px;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+            font-size: 13px;
+        }
+
+        .stat-label {
+            color: #6b7280;
+        }
+
+        .stat-value {
+            font-weight: 600;
+            color: #2563eb;
+        }
+
+        .output-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .legend {
+            background: #f8fafc;
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .legend h3 {
+            font-size: 14px;
+            color: #374151;
+            margin-bottom: 12px;
+        }
+
+        .legend-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .highlighted-resume {
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 20px;
+            min-height: 400px;
+            line-height: 1.6;
+            font-size: 14px;
+            color: #374151;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-y: auto;
+            max-height: 600px;
+        }
+
+        .highlighted-resume.empty {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #9ca3af;
+            font-style: italic;
+        }
+
+        /* Highlight Styles */
+        .match-exact {
+            background: linear-gradient(120deg, #dcfce7, #bbf7d0);
+            color: #166534;
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-weight: 600;
+            border: 1px solid #86efac;
+        }
+
+        .match-skill {
+            background: linear-gradient(120deg, #dbeafe, #bfdbfe);
+            color: #1e40af;
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-weight: 500;
+            border: 1px solid #93c5fd;
+        }
+
+        .match-related {
+            background: linear-gradient(120deg, #fef3c7, #fde68a);
+            color: #92400e;
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-weight: 500;
+            border: 1px solid #fcd34d;
+        }
+
+        .match-company {
+            background: linear-gradient(120deg, #f3e8ff, #e9d5ff);
+            color: #6b21a8;
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-weight: 500;
+            border: 1px solid #c4b5fd;
+        }
+
+        .keywords-section {
+            background: #f8fafc;
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .keywords-section h3 {
+            font-size: 14px;
+            color: #374151;
+            margin-bottom: 12px;
+        }
+
+        .keyword-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .keyword-tag {
+            background: #e5e7eb;
+            color: #374151;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .keyword-tag.found {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #86efac;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+            
+            body {
+                padding: 10px;
+            }
+        }
+
+        .processing {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            color: #6b7280;
+            font-style: italic;
+        }
+
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid #e5e7eb;
+            border-top: 2px solid #2563eb;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Resume Highlighter Prototype</h1>
+            <p>Test intelligent resume highlighting based on job descriptions</p>
+        </div>
+
+        <div class="content">
+            <!-- Input Section -->
+            <div class="input-section">
+                <div class="input-group">
+                    <label for="jobDescription">📋 Job Description</label>
+                    <textarea 
+                        id="jobDescription" 
+                        placeholder="Paste the job description here..."
+                    ></textarea>
+                </div>
+
+                <div class="input-group">
+                    <label for="resumeText">📄 Resume Text</label>
+                    <textarea 
+                        id="resumeText" 
+                        placeholder="Paste your resume text here..."
+                    ></textarea>
+                </div>
+
+                <div class="controls">
+                    <button class="highlight-btn" onclick="highlightMatches()">
+                        🔍 Highlight Matches
+                    </button>
+
+                    <div class="stats" id="stats" style="display: none;">
+                        <h3>📊 Analysis Results</h3>
+                        <div class="stat-item">
+                            <span class="stat-label">Keywords Extracted:</span>
+                            <span class="stat-value" id="keywordCount">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Exact Matches:</span>
+                            <span class="stat-value" id="exactMatches">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Skill Matches:</span>
+                            <span class="stat-value" id="skillMatches">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Related Matches:</span>
+                            <span class="stat-value" id="relatedMatches">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="keywords-section" id="keywordsSection" style="display: none;">
+                    <h3>🔑 Extracted Keywords</h3>
+                    <div class="keyword-list" id="keywordList"></div>
+                </div>
+            </div>
+
+            <!-- Output Section -->
+            <div class="output-section">
+                <div class="legend">
+                    <h3>🎨 Highlight Legend</h3>
+                    <div class="legend-items">
+                        <div class="legend-item">
+                            <div class="legend-color match-exact"></div>
+                            <span>Exact Match</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color match-skill"></div>
+                            <span>Skills & Technologies</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color match-related"></div>
+                            <span>Related Terms</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color match-company"></div>
+                            <span>Company/Industry</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="highlighted-resume empty" id="highlightedResume">
+                    Enter job description and resume text, then click "Highlight Matches" to see the results.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Comprehensive skill and technology lists
+        const SKILLS_DATABASE = {
+            programming: [
+                'javascript', 'python', 'java', 'c++', 'c#', 'php', 'ruby', 'go', 'rust', 'swift',
+                'typescript', 'scala', 'kotlin', 'r', 'matlab', 'perl', 'shell', 'bash', 'powershell'
+            ],
+            frontend: [
+                'react', 'vue', 'angular', 'html', 'css', 'sass', 'less', 'webpack', 'babel',
+                'jquery', 'bootstrap', 'tailwind', 'material-ui', 'next.js', 'nuxt.js', 'gatsby'
+            ],
+            backend: [
+                'node.js', 'express', 'django', 'flask', 'spring', 'laravel', 'rails', 'asp.net',
+                'fastapi', 'nestjs', 'koa', 'gin', 'echo', 'fiber'
+            ],
+            databases: [
+                'mysql', 'postgresql', 'mongodb', 'redis', 'elasticsearch', 'cassandra', 'dynamodb',
+                'oracle', 'sql server', 'sqlite', 'mariadb', 'couchdb', 'neo4j'
+            ],
+            cloud: [
+                'aws', 'azure', 'gcp', 'docker', 'kubernetes', 'terraform', 'ansible', 'jenkins',
+                'gitlab', 'github actions', 'circleci', 'travis ci', 'serverless'
+            ],
+            tools: [
+                'git', 'jira', 'confluence', 'slack', 'figma', 'sketch', 'adobe', 'postman',
+                'swagger', 'graphql', 'rest api', 'microservices', 'agile', 'scrum', 'kanban'
+            ]
+        };
+
+        // Company and industry terms
+        const COMPANY_TERMS = [
+            'startup', 'enterprise', 'fintech', 'healthtech', 'edtech', 'saas', 'b2b', 'b2c',
+            'e-commerce', 'marketplace', 'platform', 'fortune 500', 'unicorn', 'series a', 'series b'
+        ];
+
+        // Related terms mapping
+        const RELATED_TERMS = {
+            'frontend': ['ui', 'ux', 'user interface', 'user experience', 'client-side'],
+            'backend': ['server-side', 'api', 'database', 'infrastructure'],
+            'full-stack': ['full stack', 'fullstack', 'end-to-end'],
+            'machine learning': ['ml', 'ai', 'artificial intelligence', 'deep learning', 'neural networks'],
+            'data science': ['analytics', 'big data', 'data analysis', 'statistics'],
+            'mobile': ['ios', 'android', 'react native', 'flutter', 'cordova'],
+            'devops': ['ci/cd', 'deployment', 'infrastructure', 'monitoring'],
+            'testing': ['qa', 'quality assurance', 'automation', 'unit tests', 'integration tests']
+        };
+
+        function extractKeywords(jobDescription) {
+            const keywords = new Set();
+            const text = jobDescription.toLowerCase();
+            
+            // Extract all skill categories
+            Object.values(SKILLS_DATABASE).forEach(skillList => {
+                skillList.forEach(skill => {
+                    if (text.includes(skill.toLowerCase())) {
+                        keywords.add(skill);
+                    }
+                });
+            });
+
+            // Extract company terms
+            COMPANY_TERMS.forEach(term => {
+                if (text.includes(term.toLowerCase())) {
+                    keywords.add(term);
+                }
+            });
+
+            // Extract important phrases (2-3 words)
+            const phrases = text.match(/\b[a-z]+(?:\s+[a-z]+){1,2}\b/g) || [];
+            phrases.forEach(phrase => {
+                if (phrase.length > 5 && !phrase.includes('the') && !phrase.includes('and')) {
+                    keywords.add(phrase.trim());
+                }
+            });
+
+            // Extract specific requirements
+            const requirements = text.match(/(?:required|must have|should have|experience with|knowledge of)\s+([^.!?]+)/gi) || [];
+            requirements.forEach(req => {
+                const cleaned = req.replace(/^(?:required|must have|should have|experience with|knowledge of)\s+/i, '').trim();
+                if (cleaned.length > 3 && cleaned.length < 50) {
+                    keywords.add(cleaned);
+                }
+            });
+
+            return Array.from(keywords).slice(0, 50); // Limit to 50 keywords
+        }
+
+        function categorizeKeyword(keyword) {
+            const lowerKeyword = keyword.toLowerCase();
+            
+            // Check if it's a programming skill
+            if (Object.values(SKILLS_DATABASE).some(skillList => 
+                skillList.includes(lowerKeyword))) {
+                return 'skill';
+            }
+            
+            // Check if it's a company term
+            if (COMPANY_TERMS.includes(lowerKeyword)) {
+                return 'company';
+            }
+            
+            // Check if it's in related terms
+            if (Object.keys(RELATED_TERMS).includes(lowerKeyword) ||
+                Object.values(RELATED_TERMS).some(relatedList => 
+                    relatedList.includes(lowerKeyword))) {
+                return 'related';
+            }
+            
+            return 'exact';
+        }
+
+        function highlightText(text, keywords) {
+            let highlightedText = text;
+            const matches = {
+                exact: 0,
+                skill: 0,
+                related: 0,
+                company: 0
+            };
+            
+            const foundKeywords = new Set();
+
+            // Sort keywords by length (longest first) to avoid partial replacements
+            const sortedKeywords = keywords.sort((a, b) => b.length - a.length);
+
+            sortedKeywords.forEach(keyword => {
+                const category = categorizeKeyword(keyword);
+                const regex = new RegExp(`\\b${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
+                
+                if (regex.test(highlightedText)) {
+                    foundKeywords.add(keyword);
+                    matches[category]++;
+                    
+                    highlightedText = highlightedText.replace(regex, match => {
+                        return `<span class="match-${category}" title="${category.toUpperCase()}: ${keyword}">${match}</span>`;
+                    });
+                }
+            });
+
+            return { highlightedText, matches, foundKeywords };
+        }
+
+        function displayKeywords(keywords, foundKeywords) {
+            const keywordList = document.getElementById('keywordList');
+            keywordList.innerHTML = '';
+            
+            keywords.forEach(keyword => {
+                const tag = document.createElement('div');
+                tag.className = `keyword-tag ${foundKeywords.has(keyword) ? 'found' : ''}`;
+                tag.textContent = keyword;
+                tag.title = `Category: ${categorizeKeyword(keyword).toUpperCase()}`;
+                keywordList.appendChild(tag);
+            });
+        }
+
+        function updateStats(keywords, matches) {
+            document.getElementById('keywordCount').textContent = keywords.length;
+            document.getElementById('exactMatches').textContent = matches.exact;
+            document.getElementById('skillMatches').textContent = matches.skill;
+            document.getElementById('relatedMatches').textContent = matches.related + matches.company;
+            
+            document.getElementById('stats').style.display = 'block';
+        }
+
+        async function highlightMatches() {
+            const jobDescription = document.getElementById('jobDescription').value.trim();
+            const resumeText = document.getElementById('resumeText').value.trim();
+            const outputElement = document.getElementById('highlightedResume');
+            const button = document.querySelector('.highlight-btn');
+
+            if (!jobDescription || !resumeText) {
+                alert('Please enter both job description and resume text.');
+                return;
+            }
+
+            // Show processing state
+            button.disabled = true;
+            button.innerHTML = '<div class="spinner"></div> Processing...';
+            outputElement.innerHTML = '<div class="processing"><div class="spinner"></div>Analyzing and highlighting...</div>';
+            outputElement.className = 'highlighted-resume';
+
+            // Simulate processing delay for better UX
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            try {
+                // Extract keywords from job description
+                const keywords = extractKeywords(jobDescription);
+                
+                // Highlight matching terms in resume
+                const { highlightedText, matches, foundKeywords } = highlightText(resumeText, keywords);
+                
+                // Display results
+                outputElement.innerHTML = highlightedText;
+                updateStats(keywords, matches);
+                displayKeywords(keywords, foundKeywords);
+                
+                document.getElementById('keywordsSection').style.display = 'block';
+                
+                console.log('Analysis complete:', {
+                    totalKeywords: keywords.length,
+                    foundKeywords: foundKeywords.size,
+                    matches: matches
+                });
+
+            } catch (error) {
+                outputElement.innerHTML = `<div style="color: #ef4444;">Error: ${error.message}</div>`;
+                console.error('Highlighting error:', error);
+            } finally {
+                button.disabled = false;
+                button.innerHTML = '🔍 Highlight Matches';
+            }
+        }
+
+        // Sample data for testing
+        function loadSampleData() {
+            const sampleJob = `Senior Frontend Developer - React Specialist
+
+We are looking for an experienced Frontend Developer to join our growing team. The ideal candidate should have:
+
+Required Skills:
+- 5+ years of experience with React and JavaScript
+- Strong knowledge of HTML5, CSS3, and modern CSS frameworks
+- Experience with TypeScript and modern build tools (Webpack, Babel)
+- Proficiency in responsive design and cross-browser compatibility
+- Experience with state management libraries (Redux, Context API)
+
+Preferred Qualifications:
+- Experience with Next.js or Gatsby
+- Knowledge of testing frameworks (Jest, Cypress)
+- Familiarity with CI/CD pipelines and AWS
+- Understanding of agile development methodologies
+- Bachelor's degree in Computer Science or related field
+
+We offer competitive salary, excellent benefits, and the opportunity to work on cutting-edge fintech applications.`;
+
+            const sampleResume = `John Smith
+Senior Frontend Developer
+john.smith@email.com | (555) 123-4567
+
+PROFESSIONAL SUMMARY
+Experienced Frontend Developer with 6+ years of expertise in building scalable web applications using React, JavaScript, and modern frontend technologies. Proven track record in fintech and e-commerce industries.
+
+TECHNICAL SKILLS
+• Programming Languages: JavaScript, TypeScript, HTML5, CSS3
+• Frameworks & Libraries: React, Next.js, Vue.js, jQuery
+• State Management: Redux, Context API, MobX
+• Styling: CSS3, Sass, Tailwind CSS, Bootstrap
+• Build Tools: Webpack, Babel, Vite, Parcel
+• Testing: Jest, Cypress, React Testing Library
+• Version Control: Git, GitHub, GitLab
+• Cloud & DevOps: AWS, Docker, CI/CD pipelines
+
+PROFESSIONAL EXPERIENCE
+
+Senior Frontend Developer | TechCorp Inc. | 2020 - Present
+• Developed and maintained React applications serving 100k+ daily active users
+• Implemented responsive design patterns ensuring cross-browser compatibility
+• Led migration from JavaScript to TypeScript, improving code quality by 40%
+• Collaborated with agile development teams using Scrum methodology
+• Optimized application performance resulting in 30% faster load times
+
+Frontend Developer | StartupXYZ | 2018 - 2020
+• Built modern web applications using React and Redux
+• Worked closely with UX/UI designers to implement pixel-perfect designs
+• Integrated RESTful APIs and GraphQL endpoints
+• Maintained 95% test coverage using Jest and Cypress
+
+EDUCATION
+Bachelor of Science in Computer Science
+University of Technology | 2014 - 2018
+
+CERTIFICATIONS
+• AWS Certified Developer Associate
+• Advanced React Development Certificate`;
+
+            document.getElementById('jobDescription').value = sampleJob;
+            document.getElementById('resumeText').value = sampleResume;
+        }
+
+        // Load sample data on page load for testing
+        window.addEventListener('load', () => {
+            loadSampleData();
+        });
+
+        // Add keyboard shortcut for quick highlighting
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'Enter') {
+                e.preventDefault();
+                highlightMatches();
+            }
+        });
+    </script>
+</body>
+</html> 

@@ -1,153 +1,126 @@
-# 🤖 AutoApply AI
+# 🤖 AutoApply AI - Chrome Extension
 
-🤖 **Automate your job search with AI-powered resume tailoring, document generation, and application tracking.**
+An AI-powered Chrome extension that helps you capture job listings, match them with your resume, and generate tailored application documents.
 
-## Features
+## ✨ Features
 
-✅ **Phase 1-4 Complete:**
-- 📄 **Resume Upload & Parsing** - AI-powered resume analysis using OpenAI GPT-4
-- 🎯 **AI Job Suggestions** - Get personalized job title recommendations based on your background
-- 🔍 **Real Job Scraping** - Integrated with Apify LinkedIn Jobs Scraper for live job data
-- 📊 **Professional Job Results** - Sortable table with detailed job information
+- **🎯 Job Capture**: Automatically extract job details from LinkedIn, Indeed, and other job sites
+- **📊 AI Resume Matching**: Get compatibility scores and detailed analysis for each job
+- **📝 Document Generation**: Create customized cover letters and application documents
+- **⭐ Job Management**: Star, sort, and search through your captured jobs
+- **🔒 Secure Storage**: All data stored locally in your browser
 
-## Quick Start
+## 🚀 Installation
 
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd AutoApply\ AI
-   ```
+1. **Download the Extension**
+   - Clone this repository or download the ZIP file
+   - Extract to a folder on your computer
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
+2. **Install in Chrome**
+   - Open Chrome and go to `chrome://extensions/`
+   - Enable "Developer mode" (top right toggle)
+   - Click "Load unpacked" and select the extension folder
+   - The AutoApply AI icon should appear in your browser toolbar
 
-3. **Set up environment variables**
-   
-   Create a `.env` file in the project root:
-   ```bash
-   # Required for AI features
-   OPENAI_API_KEY=your_openai_api_key_here
-   
-   # Required for real job scraping (optional - falls back to mock data)
-   APIFY_API_KEY=your_apify_api_key_here
-   
-   # Optional: Google integration (for future phases)
-   GOOGLE_CLIENT_ID=your_google_client_id
-   GOOGLE_CLIENT_SECRET=your_google_client_secret
-   GOOGLE_DRIVE_FOLDER_ID=your_drive_folder_id
-   GOOGLE_SHEETS_ID=your_sheets_id
-   ```
+3. **Set Up Your OpenAI API Key**
+   - Get your API key from [OpenAI Platform](https://platform.openai.com/api-keys)
+   - When you first use AI features, you'll be prompted to enter your API key
+   - The key is stored securely in your browser and never shared
 
-4. **Run the development server**
-   ```bash
-   npm run dev
-   ```
+## 🎯 How to Use
 
-5. **Open your browser**
-   Navigate to [http://localhost:5001](http://localhost:5001)
+### 1. Capture Jobs
+- Navigate to any job posting (LinkedIn, Indeed, etc.)
+- Click the AutoApply AI extension icon
+- Click "🎯 Capture Job" to extract job details
+- The job will be saved to your Jobs tab
 
-## How It Works
+### 2. Upload Your Resume
+- In the extension popup, go to the "📥 Capture" tab
+- Click "📄 Upload Resume" and select your resume file
+- Supported formats: .txt, .docx, .doc (PDF coming soon)
+- For best results, use plain text (.txt) format
 
-### 1. Resume Processing
-- Paste your resume text (PDF upload simplified for reliability)
-- AI extracts name, title, experience, skills, education, and summary
-- Clean, organized display of parsed data
+### 3. Analyze Job Matches
+- After uploading your resume, click "📊 Score All Jobs"
+- The AI will analyze how well your resume matches each job
+- View detailed analysis with strengths, gaps, and recommendations
 
-### 2. AI Job Suggestions
-- GPT-4 analyzes your background
-- Suggests 5 relevant job titles with confidence scores
-- Multi-select interface for job search
+### 4. Generate Documents
+- Go to the "📝 Generate" tab
+- Select a job and choose document type (cover letter, etc.)
+- The AI will create a tailored document based on the job and your resume
 
-### 3. Real Job Scraping
-- **LinkedIn Integration**: Uses Apify's LinkedIn Jobs Scraper for real job data
-- **Fallback Support**: Automatically falls back to demo data if API unavailable
-- **Rich Data**: Job titles, companies, locations, salaries, job types, experience levels
-- **Smart Filtering**: Deduplication and intelligent sorting
+## 🔧 Recent Updates
 
-### 4. Job Results
-- Professional sortable table
-- Direct links to job postings
-- Enhanced UI showing data source (LinkedIn vs. demo)
-- Salary ranges and job details when available
+### v1.0.0 - Job Expansion Fix
+- **✅ Fixed job expansion cutoff issue**
+- Increased job list container height from 400px to 600px
+- Added scrollable job descriptions with 200px max-height
+- Improved content visibility when expanding job details
 
-## API Configuration
+### Security Improvements
+- **🔒 Removed hardcoded API keys**
+- Added secure API key storage using Chrome's sync storage
+- Users now configure their own OpenAI API key
+- Enhanced error handling for API key configuration
 
-### Apify Setup (Recommended for Real Data)
-1. Create account at [Apify.com](https://apify.com)
-2. Get your API key from the dashboard
-3. Add `APIFY_API_KEY=your_key_here` to your `.env` file
+## 🛠️ Technical Details
 
-**Without Apify**: The app works perfectly with demo data for testing and development.
+- **Manifest Version**: 3
+- **Permissions**: activeTab, storage, scripting
+- **APIs Used**: OpenAI GPT-4 for job matching and document generation
+- **Storage**: Chrome sync storage for settings, local storage for jobs
 
-### OpenAI Setup (Required)
-1. Create account at [OpenAI](https://platform.openai.com)
-2. Generate an API key
-3. Add `OPENAI_API_KEY=your_key_here` to your `.env` file
+## 📋 Supported Job Sites
 
-## Technology Stack
+- LinkedIn
+- Indeed
+- Lever.co
+- Greenhouse.io
+- Workday
+- Most job sites with standard HTML structure
 
-- **Framework**: Next.js 15 with TypeScript
-- **Styling**: Tailwind CSS
-- **AI**: OpenAI GPT-4 for resume parsing and job suggestions
-- **Job Scraping**: Apify LinkedIn Jobs Scraper
-- **UI Components**: Custom components with beautiful animations
-- **State Management**: React hooks
+## 🔒 Privacy & Security
 
-## Project Status
+- All job data is stored locally in your browser
+- Your OpenAI API key is stored securely using Chrome's sync storage
+- No data is sent to external servers except OpenAI for AI processing
+- You have full control over your data
 
-### ✅ Completed Phases
-- **Phase 1**: Next.js project setup with Tailwind CSS
-- **Phase 2**: Resume upload and AI parsing
-- **Phase 3**: AI-powered job title suggestions
-- **Phase 4**: Real job scraping with LinkedIn integration
+## 🐛 Troubleshooting
 
-### 🚧 Upcoming Phases
-- **Phase 5**: AI document generation (tailored resumes & cover letters)
-- **Phase 6**: Google Drive integration for document storage
-- **Phase 7**: Application tracking with Google Sheets
-- **Phase 8**: Activity logs and UX polish
+**Job capture not working?**
+- Refresh the job page and try again
+- Make sure you're on a job posting page (not search results)
+- Check if the site is supported
 
-## Development
+**Resume not uploading?**
+- For best results, save your resume as a plain text (.txt) file
+- Make sure the file contains readable text
+- Word documents (.docx) are supported but may need troubleshooting
 
-```bash
-# Install dependencies
-npm install
+**API key issues?**
+- Get a new API key from [OpenAI Platform](https://platform.openai.com/api-keys)
+- Make sure you have credits available in your OpenAI account
+- The extension will prompt you to enter your API key when needed
 
-# Run development server
-npm run dev
+## 📞 Support
 
-# Build for production
-npm run build
+If you encounter any issues:
+1. Check the troubleshooting section above
+2. Try refreshing the page and reloading the extension
+3. Check the browser console for error messages
+4. Create an issue in this repository
 
-# Start production server
-npm start
-```
+## 🚀 Future Features
 
-## Environment Variables
-
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `OPENAI_API_KEY` | Yes | OpenAI API key for AI features |
-| `APIFY_API_KEY` | No | Apify API key for real job scraping |
-| `GOOGLE_CLIENT_ID` | No | Google OAuth (future phases) |
-| `GOOGLE_CLIENT_SECRET` | No | Google OAuth (future phases) |
-| `GOOGLE_DRIVE_FOLDER_ID` | No | Google Drive integration (future) |
-| `GOOGLE_SHEETS_ID` | No | Application tracking (future) |
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
-
-## License
-
-MIT License - see LICENSE file for details
+- PDF resume support
+- More job sites support
+- Batch job applications
+- Interview preparation tools
+- Job search analytics
 
 ---
 
-**Built with ❤️ for job seekers everywhere**
+Made with ❤️ for job seekers everywhere! 

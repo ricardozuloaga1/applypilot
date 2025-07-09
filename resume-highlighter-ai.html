@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Resume Highlighter - Semantic Analysis</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2563eb, #1e40af);
+            color: white;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 16px;
+        }
+
+        .api-setup {
+            background: rgba(255, 255, 255, 0.1);
+            margin: 16px 0;
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .api-setup input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            width: 300px;
+            margin: 0 8px;
+        }
+
+        .api-setup input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .api-setup button {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .api-setup button:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .api-status {
+            margin-top: 8px;
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            padding: 24px;
+        }
+
+        .input-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .input-group label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #374151;
+            font-size: 14px;
+        }
+
+        .input-group textarea {
+            padding: 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.5;
+            resize: vertical;
+            transition: border-color 0.2s ease;
+            font-family: inherit;
+        }
+
+        .input-group textarea:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        #jobDescription {
+            min-height: 200px;
+        }
+
+        #resumeText {
+            min-height: 300px;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .highlight-btn {
+            background: linear-gradient(135deg, #2563eb, #1e40af);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .highlight-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+        }
+
+        .highlight-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .highlight-btn.ai-processing {
+            background: linear-gradient(135deg, #059669, #047857);
+        }
+
+        .ai-analysis {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            margin-top: 12px;
+        }
+
+        .ai-analysis h3 {
+            font-size: 16px;
+            color: #374151;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .job-structure {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .structure-section {
+            background: white;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .structure-section h4 {
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .structure-section ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .structure-section li {
+            padding: 4px 0;
+            font-size: 13px;
+            color: #374151;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .structure-section li:last-child {
+            border-bottom: none;
+        }
+
+        .relevance-score {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: auto;
+        }
+
+        .score-badge {
+            background: #e5e7eb;
+            color: #374151;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .score-badge.high {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .score-badge.medium {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .score-badge.low {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .stats {
+            background: #f8fafc;
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .stats h3 {
+            font-size: 14px;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+            font-size: 13px;
+        }
+
+        .stat-label {
+            color: #6b7280;
+        }
+
+        .stat-value {
+            font-weight: 600;
+            color: #2563eb;
+        }
+
+        .output-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .legend {
+            background: #f8fafc;
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .legend h3 {
+            font-size: 14px;
+            color: #374151;
+            margin-bottom: 12px;
+        }
+
+        .legend-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .highlighted-resume {
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 20px;
+            min-height: 400px;
+            line-height: 1.6;
+            font-size: 14px;
+            color: #374151;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-y: auto;
+            max-height: 600px;
+        }
+
+        .highlighted-resume.empty {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #9ca3af;
+            font-style: italic;
+        }
+
+        /* AI-Powered Highlight Styles */
+        .match-critical {
+            background: linear-gradient(120deg, #b91c1c, #dc2626);
+            color: white;
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-weight: 700;
+            box-shadow: 0 2px 4px rgba(185, 28, 28, 0.3);
+        }
+
+        .match-required {
+            background: linear-gradient(120deg, #dcfce7, #bbf7d0);
+            color: #166534;
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-weight: 600;
+            border: 1px solid #86efac;
+        }
+
+        .match-preferred {
+            background: linear-gradient(120deg, #dbeafe, #bfdbfe);
+            color: #1e40af;
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-weight: 500;
+            border: 1px solid #93c5fd;
+        }
+
+        .match-related {
+            background: linear-gradient(120deg, #fef3c7, #fde68a);
+            color: #92400e;
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-weight: 400;
+            border: 1px solid #fcd34d;
+        }
+
+        .match-context {
+            background: linear-gradient(120deg, #f3e8ff, #e9d5ff);
+            color: #6b21a8;
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-weight: 400;
+            border: 1px solid #c4b5fd;
+        }
+
+        .processing {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            color: #6b7280;
+            font-style: italic;
+        }
+
+        .ai-spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #e5e7eb;
+            border-top: 2px solid #059669;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #fecaca;
+            margin-top: 12px;
+        }
+
+        .success-message {
+            background: #dcfce7;
+            color: #166534;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #bbf7d0;
+            margin-top: 12px;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+            
+            .job-structure {
+                grid-template-columns: 1fr;
+            }
+            
+            body {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 AI Resume Highlighter</h1>
+            <p>Semantic analysis powered by OpenAI GPT-4o Mini for intelligent resume highlighting</p>
+            
+            <div class="api-setup">
+                <input type="password" id="apiKey" placeholder="Enter your OpenAI API key">
+                <button onclick="testApiKey()">Test Connection</button>
+                <div class="api-status" id="apiStatus">Enter API key to enable AI analysis</div>
+            </div>
+        </div>
+
+        <div class="content">
+            <!-- Input Section -->
+            <div class="input-section">
+                <div class="input-group">
+                    <label for="jobDescription">📋 Job Description</label>
+                    <textarea 
+                        id="jobDescription" 
+                        placeholder="Paste the job description here..."
+                    ></textarea>
+                </div>
+
+                <div class="input-group">
+                    <label for="resumeText">📄 Resume Text</label>
+                    <textarea 
+                        id="resumeText" 
+                        placeholder="Paste your resume text here..."
+                    ></textarea>
+                </div>
+
+                <div class="controls">
+                    <button class="highlight-btn" onclick="aiAnalyzeAndHighlight()">
+                        🤖 AI Analysis & Highlight
+                    </button>
+
+                    <div class="stats" id="stats" style="display: none;">
+                        <h3>📊 AI Analysis Results</h3>
+                        <div class="stat-item">
+                            <span class="stat-label">Job Type Detected:</span>
+                            <span class="stat-value" id="jobType">-</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Critical Matches:</span>
+                            <span class="stat-value" id="criticalMatches">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Required Matches:</span>
+                            <span class="stat-value" id="requiredMatches">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Preferred Matches:</span>
+                            <span class="stat-value" id="preferredMatches">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Overall Fit Score:</span>
+                            <span class="stat-value" id="fitScore">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ai-analysis" id="aiAnalysisSection" style="display: none;">
+                    <h3>🧠 AI Job Structure Analysis</h3>
+                    <div class="job-structure" id="jobStructure"></div>
+                </div>
+            </div>
+
+            <!-- Output Section -->
+            <div class="output-section">
+                <div class="legend">
+                    <h3>🎨 AI Highlight Legend</h3>
+                    <div class="legend-items">
+                        <div class="legend-item">
+                            <div class="legend-color match-critical"></div>
+                            <span>Critical Requirements</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color match-required"></div>
+                            <span>Required Skills</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color match-preferred"></div>
+                            <span>Preferred Qualifications</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color match-related"></div>
+                            <span>Related Experience</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color match-context"></div>
+                            <span>Industry Context</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="highlighted-resume empty" id="highlightedResume">
+                    Enter your OpenAI API key, add job description and resume text, then click "AI Analysis & Highlight" to see semantic highlighting.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let apiKey = '';
+        let jobStructure = null;
+
+        // Test API key connection
+        async function testApiKey() {
+            const keyInput = document.getElementById('apiKey');
+            const statusDiv = document.getElementById('apiStatus');
+            
+            apiKey = keyInput.value.trim();
+            
+            if (!apiKey) {
+                statusDiv.textContent = 'Please enter an API key';
+                statusDiv.className = 'api-status error';
+                return;
+            }
+
+            statusDiv.innerHTML = '🔄 Testing connection...';
+            statusDiv.className = 'api-status';
+
+            try {
+                const response = await fetch('https://api.openai.com/v1/models', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`,
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                if (response.ok) {
+                    statusDiv.innerHTML = '✅ API key valid - AI analysis enabled';
+                    statusDiv.className = 'api-status success';
+                } else {
+                    statusDiv.innerHTML = '❌ Invalid API key';
+                    statusDiv.className = 'api-status error';
+                    apiKey = '';
+                }
+            } catch (error) {
+                statusDiv.innerHTML = '❌ Connection failed';
+                statusDiv.className = 'api-status error';
+                apiKey = '';
+            }
+        }
+
+        // AI-powered job analysis
+        async function analyzeJobWithAI(jobDescription) {
+            const prompt = `
+You are an expert HR analyst. Analyze this job description and extract structured information in JSON format.
+
+Job Description:
+${jobDescription}
+
+Please provide a JSON response with this exact structure:
+{
+    "role": {
+        "title": "exact job title",
+        "level": "entry/mid/senior/executive",
+        "department": "department name",
+        "industry": "industry sector",
+        "jobType": "technical/legal/marketing/sales/etc"
+    },
+    "critical": [
+        "must-have requirements that would disqualify if missing"
+    ],
+    "required": [
+        "required skills, experience, qualifications"
+    ],
+    "preferred": [
+        "preferred/nice-to-have qualifications"
+    ],
+    "related": [
+        "related experience or transferable skills"
+    ],
+    "context": [
+        "company, industry, domain-specific terms"
+    ],
+    "ignore": [
+        "generic phrases, boilerplate, marketing language to ignore"
+    ],
+    "fitScore": {
+        "education": 0.2,
+        "experience": 0.3,
+        "skills": 0.3,
+        "domain": 0.2
+    }
+}
+
+IMPORTANT EXTRACTION GUIDELINES:
+1. Extract both specific phrases AND individual keywords from compound terms
+2. Include variations, abbreviations, and synonyms (e.g., "J.D." AND "Juris Doctor")
+3. Break down compound requirements into searchable components
+4. Include related professional terms that would appear on resumes
+5. For legal roles: include "attorney", "lawyer", "counsel", "legal advisor", "J.D.", "LL.M.", "bar", "licensed"
+6. For experience: include both "X years" AND "experience", "background", "expertise"
+7. For skills: include both action verbs AND noun forms ("negotiate" AND "negotiation")
+8. Focus on terms that would realistically appear in relevant resumes
+9. Avoid overly generic business phrases that add no value
+
+Examples of good extraction:
+- "commercial lending" → Extract: "commercial lending", "commercial", "lending", "loans", "credit"
+- "3+ years experience" → Extract: "experience", "years", "background", "expertise"  
+- "Juris Doctor" → Extract: "Juris Doctor", "J.D.", "law degree", "legal education"
+- "attorney" → Extract: "attorney", "lawyer", "counsel", "legal advisor"
+`;
+
+            try {
+                const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        model: 'gpt-4o-mini',
+                        messages: [
+                            {
+                                role: 'system',
+                                content: 'You are an expert HR analyst specializing in job description analysis. Always respond with valid JSON.'
+                            },
+                            {
+                                role: 'user',
+                                content: prompt
+                            }
+                        ],
+                        max_tokens: 4000,
+                        temperature: 0.1
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API request failed: ${response.status}`);
+                }
+
+                const data = await response.json();
+                let jsonResponse = data.choices[0].message.content;
+                
+                // Clean up JSON response - remove markdown code blocks if present
+                jsonResponse = jsonResponse.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+                jsonResponse = jsonResponse.replace(/^```\s*/, '').replace(/\s*```$/, '');
+                jsonResponse = jsonResponse.trim();
+                
+                // Parse JSON response
+                const structuredData = JSON.parse(jsonResponse);
+                return structuredData;
+
+            } catch (error) {
+                console.error('AI analysis failed:', error);
+                throw error;
+            }
+        }
+
+        // Display AI analysis results
+        function displayJobStructure(structure) {
+            const structureDiv = document.getElementById('jobStructure');
+            structureDiv.innerHTML = '';
+
+            const sections = [
+                { key: 'role', title: 'Role Information', display: (data) => [
+                    `${data.title} (${data.level})`,
+                    `${data.department} - ${data.industry}`,
+                    `Type: ${data.jobType}`
+                ]},
+                { key: 'critical', title: 'Critical Requirements' },
+                { key: 'required', title: 'Required Skills' },
+                { key: 'preferred', title: 'Preferred Qualifications' },
+                { key: 'related', title: 'Related Experience' },
+                { key: 'context', title: 'Industry Context' }
+            ];
+
+            sections.forEach(section => {
+                const sectionDiv = document.createElement('div');
+                sectionDiv.className = 'structure-section';
+                
+                const title = document.createElement('h4');
+                title.textContent = section.title;
+                sectionDiv.appendChild(title);
+
+                const list = document.createElement('ul');
+                
+                let items = [];
+                if (section.display) {
+                    items = section.display(structure[section.key]);
+                } else {
+                    items = structure[section.key] || [];
+                }
+
+                items.forEach(item => {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = item;
+                    list.appendChild(listItem);
+                });
+
+                sectionDiv.appendChild(list);
+                structureDiv.appendChild(sectionDiv);
+            });
+
+            document.getElementById('aiAnalysisSection').style.display = 'block';
+        }
+
+        // AI-powered semantic matching and highlighting
+        async function aiHighlightText(resumeText, jobStructure) {
+            const prompt = `
+You are an expert resume analyzer. I will provide you with a job structure and resume text. Your task is to:
+
+1. Identify semantic matches between the job requirements and resume content
+2. Apply HTML highlighting to the resume text
+3. Count the matches by category
+
+Job Structure:
+${JSON.stringify(jobStructure, null, 2)}
+
+Resume Text:
+${resumeText}
+
+INSTRUCTIONS:
+- Find semantic matches (not just exact word matches)
+- Apply HTML spans with these classes: match-critical, match-required, match-preferred, match-related, match-context
+- Be intelligent about synonyms and variations (e.g., "J.D." matches "Juris Doctor", "counsel" matches "attorney")
+- Only highlight relevant matches that make sense in context
+- Don't over-highlight - be selective and meaningful
+
+Return a JSON response with this structure:
+{
+    "highlightedText": "The resume text with <span class='match-category' title='explanation'>highlighted terms</span>",
+    "matches": {
+        "critical": 2,
+        "required": 5,
+        "preferred": 3,
+        "related": 4,
+        "context": 1
+    },
+    "explanation": "Brief explanation of key matches found"
+}
+
+Be semantic and intelligent - look for meaning, not just exact phrases.
+`;
+
+            try {
+                const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        model: 'gpt-4o-mini',
+                        messages: [
+                            {
+                                role: 'system',
+                                content: 'You are an expert resume analyzer specializing in semantic matching. Always respond with valid JSON.'
+                            },
+                            {
+                                role: 'user',
+                                content: prompt
+                            }
+                        ],
+                        max_tokens: 4000,
+                        temperature: 0.1
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`AI highlighting failed: ${response.status}`);
+                }
+
+                const data = await response.json();
+                let jsonResponse = data.choices[0].message.content;
+                
+                // Clean up JSON response
+                jsonResponse = jsonResponse.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+                jsonResponse = jsonResponse.replace(/^```\s*/, '').replace(/\s*```$/, '');
+                jsonResponse = jsonResponse.trim();
+                
+                const result = JSON.parse(jsonResponse);
+                
+                console.log('🎯 AI Semantic Matching Results:', result);
+                
+                return {
+                    highlightedText: result.highlightedText,
+                    matches: result.matches
+                };
+
+            } catch (error) {
+                console.error('AI highlighting failed:', error);
+                // Fallback to plain text
+                return {
+                    highlightedText: resumeText,
+                    matches: {
+                        critical: 0,
+                        required: 0,
+                        preferred: 0,
+                        related: 0,
+                        context: 0
+                    }
+                };
+            }
+        }
+
+        // Calculate realistic fit score
+        function calculateFitScore(matches, structure) {
+            const totalPossible = {
+                critical: structure.critical?.length || 0,
+                required: structure.required?.length || 0,
+                preferred: structure.preferred?.length || 0,
+                related: structure.related?.length || 0,
+                context: structure.context?.length || 0
+            };
+
+            let score = 0;
+            let maxScore = 0;
+            
+            // Critical requirements (40% of total score)
+            if (totalPossible.critical > 0) {
+                const criticalScore = Math.min(matches.critical / totalPossible.critical, 1) * 40;
+                score += criticalScore;
+                maxScore += 40;
+            }
+            
+            // Required skills (35% of total score)
+            if (totalPossible.required > 0) {
+                const requiredScore = Math.min(matches.required / totalPossible.required, 1) * 35;
+                score += requiredScore;
+                maxScore += 35;
+            }
+            
+            // Preferred qualifications (15% of total score)
+            if (totalPossible.preferred > 0) {
+                const preferredScore = Math.min(matches.preferred / totalPossible.preferred, 1) * 15;
+                score += preferredScore;
+                maxScore += 15;
+            }
+            
+            // Related experience (7% of total score)
+            if (totalPossible.related > 0) {
+                const relatedScore = Math.min(matches.related / totalPossible.related, 1) * 7;
+                score += relatedScore;
+                maxScore += 7;
+            }
+            
+            // Industry context (3% of total score)
+            if (totalPossible.context > 0) {
+                const contextScore = Math.min(matches.context / totalPossible.context, 1) * 3;
+                score += contextScore;
+                maxScore += 3;
+            }
+
+            // Normalize to percentage based on available categories
+            const finalScore = maxScore > 0 ? (score / maxScore) * 100 : 0;
+            
+            return Math.round(Math.min(finalScore, 100));
+        }
+
+        // Update statistics display
+        function updateStats(jobType, matches, fitScore) {
+            document.getElementById('jobType').textContent = jobType;
+            document.getElementById('criticalMatches').textContent = matches.critical;
+            document.getElementById('requiredMatches').textContent = matches.required;
+            document.getElementById('preferredMatches').textContent = matches.preferred;
+            document.getElementById('fitScore').textContent = `${fitScore}%`;
+            
+            document.getElementById('stats').style.display = 'block';
+        }
+
+        // Main AI analysis function
+        async function aiAnalyzeAndHighlight() {
+            const jobDescription = document.getElementById('jobDescription').value.trim();
+            const resumeText = document.getElementById('resumeText').value.trim();
+            const outputElement = document.getElementById('highlightedResume');
+            const button = document.querySelector('.highlight-btn');
+
+            if (!apiKey) {
+                alert('Please enter and test your OpenAI API key first.');
+                return;
+            }
+
+            if (!jobDescription || !resumeText) {
+                alert('Please enter both job description and resume text.');
+                return;
+            }
+
+            // Show processing state
+            button.disabled = true;
+            button.innerHTML = '<div class="ai-spinner"></div> AI Analysis in Progress...';
+            button.className = 'highlight-btn ai-processing';
+            outputElement.innerHTML = '<div class="processing"><div class="ai-spinner"></div>AI is analyzing job requirements and matching with your resume...</div>';
+            outputElement.className = 'highlighted-resume';
+
+            try {
+                // Step 1: AI analysis of job description
+                console.log('🤖 Starting AI analysis...');
+                jobStructure = await analyzeJobWithAI(jobDescription);
+                console.log('📊 Job structure:', jobStructure);
+
+                // Step 2: Display structured analysis
+                displayJobStructure(jobStructure);
+
+                // Step 3: AI-powered semantic highlighting
+                console.log('🎨 Starting AI semantic highlighting...');
+                const startTime = Date.now();
+                const { highlightedText, matches } = await aiHighlightText(resumeText, jobStructure);
+                const endTime = Date.now();
+                console.log(`🎨 AI highlighting completed in ${endTime - startTime}ms`);
+                
+                // Step 4: Calculate fit score
+                const fitScore = calculateFitScore(matches, jobStructure);
+                
+                // Step 5: Display results
+                outputElement.innerHTML = highlightedText;
+                updateStats(jobStructure.role.jobType, matches, fitScore);
+                
+                console.log('✅ AI analysis complete:', {
+                    jobType: jobStructure.role.jobType,
+                    matches: matches,
+                    fitScore: fitScore
+                });
+
+            } catch (error) {
+                outputElement.innerHTML = `<div class="error-message">❌ AI Analysis Failed: ${error.message}</div>`;
+                console.error('AI analysis error:', error);
+            } finally {
+                button.disabled = false;
+                button.innerHTML = '🤖 AI Analysis & Highlight';
+                button.className = 'highlight-btn';
+            }
+        }
+
+        // Sample data for testing
+        function loadSampleData() {
+            const sampleJob = `Manager (Counsel): Commercial Bank - Corporate Lending
+
+An amazing opportunity exists for a detail-oriented, confident and experienced attorney to join the legal team supporting the Corporate Banking business in Capital One's Commercial Bank as a Manager, Counsel. Corporate Banking is Capital One's commercial lending business which encompasses a broad range of transaction structures, sizes and industries with commercial borrowers located across the nation.
+
+You'll be a key player in supporting this successful and growing platform by providing real-time legal advice on lending transactions and longer-term strategic initiatives. You'll work closely with internal business partners, senior management and with internal and external legal counsel to provide innovative and commercial solutions to optimize our commercial lending business.
+
+Representative Responsibilities include:
+- Work side-by-side with business partners to structure and negotiate middle-market corporate lending transactions
+- Review and negotiate loan and collateral documentation and guide business partners on market terms
+- Identify and assess legal risk and provide legal advice and assistance in resolving or escalating matters related to commercial lending transactions
+- Keep current with legislation, regulations, case law and market trends that affect the commercial bank's lending activities
+- Manage all legal issues in connection with a portfolio of loans and collaborate with stakeholders across underwriting, risk and legal to find solutions
+- Manage outside counsel 
+- Work with Capital One's enterprise regulatory, litigation, risk and compliance teams on regulatory and compliance issues 
+- Develop and maintain form loan documents
+
+Basic Qualifications:
+- Juris Doctor from an accredited law school
+- Active member in good standing of at least one state bar 
+- At least 3 years of experience as an attorney in a law firm or an in-house legal department working on commercial lending transactions
+
+Preferred Qualifications:
+- 4+ years of experience as an attorney in a law firm or an in-house legal department working on middle-market corporate commercial lending transactions, including cash flow, asset based and/or reserve based lending 
+- Experience with private equity sponsor-backed lending transactions
+- Knowledge of laws and regulations applicable to commercial lending
+- Experience with lending to borrowers in the healthcare, food & beverage, energy (reserve based lending), technology, media & telecom, aerospace, defense and/or government contracting industries
+- Demonstrated ability to build collegial and effective relationships with multiple stakeholders and resolve issues across organizational borders`;
+
+            const sampleResume = `Ricardo E. Zuloaga
+New York, NY | Citizenship: United States & Venezuela
+Phone: +1 917-254-9076 | Email: rzuloagamachado@gmail.com
+Professional Summary
+Senior contracts and legal operations professional with over 10 years of experience drafting, negotiating, and managing commercial agreements in high-growth, cross-border environments. Proven track record of supporting vendor, partner, and technology agreements from intake to execution. Skilled in contract lifecycle management (CLM), risk assessment, and cross-functional collaboration with legal, procurement, and compliance teams. Committed to mission-driven work and building scalable contract frameworks for operational efficiency.
+Core Skills
+•	• Drafting and negotiating commercial and technology contracts
+•	• Contract lifecycle management & operational compliance
+•	• Indemnity, liability, confidentiality & vendor agreement terms
+•	• Process improvement, policy development, and playbook creation
+•	• Cross-functional collaboration and stakeholder training
+•	• Contract tools: Ironclad, DocuSign CLM, Jira, Power BI (in progress)
+Professional Experience
+Contracts Manager / Senior Legal & Commercial Advisor
+Zumar Trading Corp. – New York, NY | 2020 – Present
+•	• Draft, negotiate, and execute commercial contracts including vendor agreements, MoUs, SaaS arrangements, and service terms.
+•	• Lead contract lifecycle from intake through execution, amendments, and renewals using CLM tools such as Ironclad.
+•	• Create contract templates, approval workflows, and internal policy documentation to enhance team efficiency and minimize risk.
+•	• Collaborate with finance, procurement, and compliance teams to align contract terms with operational goals.
+•	• Provide internal training on contract management best practices and redlining techniques.
+Legal & Compliance Consultant – Stone Ridge Asset Management, New York, NY | 2017 – 2018
+•	• Reviewed legal and marketing materials to ensure compliance with regulatory frameworks (SEC/FINRA).
+•	• Managed contract documentation and supported risk reviews for internal controls.
+Legal & Compliance Consultant – Payfully, New York, NY | 2016 – 2017
+•	• Built internal compliance and legal documentation systems.
+•	• Drafted commercial agreements and advised on startup risk practices for fintech lending.
+Consultant – Document Review Attorney – Epiq, FTI Consulting, Consilio, RVM, New York, NY | 2018 – 2024
+•	• Conducted detailed contract review, redlining, and privilege analysis for regulatory and litigation matters.
+•	• Supported compliance readiness and policy review during sensitive legal proceedings.
+Corporate Paralegal / Associate – Paredes & Asociados, Caracas, Venezuela | 2014 – 2016
+•	• Drafted and negotiated vendor and corporate contracts.
+•	• Supported entity formation and document control for multinational clients.
+Education
+Duke University School of Law, LL.M. – Durham, NC | 2013 – 2014
+Monteávila University, J.D. – Caracas, Venezuela | 2006 – 2011
+Licenses & Admissions
+New York State Bar (Registration No. 5508239)
+Venezuelan Bar
+Tools & Platforms
+Ironclad, DocuSign CLM, Jira, Confluence, ServiceNow
+Microsoft Word + Track Changes, Adobe Acrobat Pro
+Power BI (developing), familiarity with SDLC & internal audit workflows`;
+
+            document.getElementById('jobDescription').value = sampleJob;
+            document.getElementById('resumeText').value = sampleResume;
+        }
+
+        // Load sample data on page load
+        window.addEventListener('load', () => {
+            loadSampleData();
+        });
+
+        // Add keyboard shortcut for quick analysis
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'Enter') {
+                e.preventDefault();
+                aiAnalyzeAndHighlight();
+            }
+        });
+    </script>
+</body>
+</html> 
