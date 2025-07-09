@@ -419,6 +419,7 @@ class AutoApplyAI {
                     ${job.matchAnalysis ? `
                         <div class="match-analysis">
                             <h4>🎯 Match Analysis</h4>
+                            ${job.matchAnalysis.matrix ? this.renderAnalysisMatrix(job.matchAnalysis.matrix) : ''}
                             <div class="match-details">
                                 <div class="match-section">
                                     <strong>✅ Strengths:</strong>
@@ -1548,13 +1549,36 @@ Be harsh but fair. Don't give sympathy scores. If there are major gaps, reflect 
 
 CRITICAL: You MUST respond with ONLY valid JSON. Do not include any text before or after the JSON. Do not use markdown formatting like \`\`\`json. Just return the raw JSON object.
 
-Format response as JSON:
+Format response as JSON with matrix structure:
 {
   "overallScore": 45,
   "strengths": ["Specific matching skills/experience found"],
   "gaps": ["Specific missing requirements"],
   "recommendations": ["Concrete actionable advice"],
-  "reasoning": "Detailed explanation of score calculation"
+  "reasoning": "Detailed explanation of score calculation",
+  "matrix": [
+    {
+      "category": "Technical Skills",
+      "requirement": "Python programming, 5+ years",
+      "evidence": "Python developer with 3 years experience",
+      "matchLevel": "partial",
+      "gapAction": "Highlight advanced Python projects to demonstrate deeper expertise"
+    },
+    {
+      "category": "Experience",
+      "requirement": "Senior software development role",
+      "evidence": "Senior Software Engineer at TechCorp",
+      "matchLevel": "strong",
+      "gapAction": "Major strength - emphasize leadership aspects"
+    },
+    {
+      "category": "Education",
+      "requirement": "Bachelor's degree in Computer Science",
+      "evidence": "Master's degree in Computer Science",
+      "matchLevel": "exceeds",
+      "gapAction": "Exceeds requirement - highlight advanced coursework"
+    }
+  ]
 }
 `;
 
@@ -1616,6 +1640,7 @@ Format response as JSON:
                         gaps: matchData.gaps || [],
                         recommendations: matchData.recommendations || [],
                         reasoning: matchData.reasoning || '',
+                        matrix: matchData.matrix || [],
                         analyzedAt: new Date().toISOString()
                     };
                 } catch (parseError) {
@@ -1630,6 +1655,7 @@ Format response as JSON:
                         gaps: [],
                         recommendations: [],
                         reasoning: content,
+                        matrix: [],
                         analyzedAt: new Date().toISOString()
                     };
                 }
@@ -1712,6 +1738,64 @@ Format response as JSON:
             }
         }
         return this.escapeHtml(cleanReasoning);
+    }
+
+    renderAnalysisMatrix(matrix) {
+        if (!matrix || !Array.isArray(matrix) || matrix.length === 0) {
+            return '';
+        }
+
+        const getMatchIcon = (matchLevel) => {
+            switch (matchLevel?.toLowerCase()) {
+                case 'strong': return '🟢';
+                case 'exceeds': return '🔵';
+                case 'partial': return '🟡';
+                case 'missing': return '🔴';
+                default: return '⚪';
+            }
+        };
+
+        const getMatchClass = (matchLevel) => {
+            switch (matchLevel?.toLowerCase()) {
+                case 'strong': return 'match-strong';
+                case 'exceeds': return 'match-exceeds';
+                case 'partial': return 'match-partial';
+                case 'missing': return 'match-missing';
+                default: return 'match-unknown';
+            }
+        };
+
+        return `
+            <div class="analysis-matrix">
+                <h5>📊 Requirements vs Evidence</h5>
+                <div class="matrix-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Job Requirement</th>
+                                <th>Resume Evidence</th>
+                                <th>Match</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${matrix.map(row => `
+                                <tr>
+                                    <td class="matrix-category">${this.escapeHtml(row.category || '')}</td>
+                                    <td class="matrix-requirement">${this.escapeHtml(row.requirement || '')}</td>
+                                    <td class="matrix-evidence">${this.escapeHtml(row.evidence || 'Not mentioned')}</td>
+                                    <td class="matrix-match ${getMatchClass(row.matchLevel)}">
+                                        ${getMatchIcon(row.matchLevel)} ${this.escapeHtml(row.matchLevel || 'unknown')}
+                                    </td>
+                                    <td class="matrix-action">${this.escapeHtml(row.gapAction || '')}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
     }
 
     async scoreAllJobs() {
