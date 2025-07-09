@@ -396,14 +396,7 @@ class AutoApplyAI {
                     </div>
                     <div class="match-score">
                         ${matchScore !== null && matchScore !== undefined ? 
-                            `<div class="match-circle ${this.getMatchLevel(matchScore)}"></div>
-                             <div class="score-details">
-                                 <span class="main-score">${matchScore}%</span>
-                                 ${job.matchAnalysis?.mlScore !== null && job.matchAnalysis?.mlScore !== undefined ? 
-                                     `<span class="ml-score" title="ML Semantic Similarity">🧠 ${job.matchAnalysis.mlScore}%</span>` : 
-                                     ''
-                                 }
-                             </div>` : 
+                            `<div class="match-circle ${this.getMatchLevel(matchScore)}"></div><span>${matchScore}%</span>` : 
                             `<div class="match-circle unscored"></div><span>Not Scored</span>`
                         }
                     </div>
@@ -756,7 +749,7 @@ class AutoApplyAI {
         if (!this.selectedJob || !this.resumeFile) return;
         
         const docType = document.getElementById('doc-type').value;
-        this.setStatus('generate-status', 'Initializing ML-powered generation...', 'info');
+        this.setStatus('generate-status', 'Generating document with ChatGPT-4o...', 'info');
         
         try {
             // Read resume file
@@ -768,17 +761,10 @@ class AutoApplyAI {
                 throw new Error('OpenAI API key not configured. Please set your API key in the extension settings.');
             }
 
-            // Enhanced resume generation with ML-powered scoring
-            if (docType === 'resume') {
-                const enhancedResume = await this.generateEnhancedResume(resumeText, this.selectedJob, apiKey);
-                this.downloadDocument(enhancedResume.content, docType, this.selectedJob.title);
-                this.setStatus('generate-status', `Document generated! Match Score: ${enhancedResume.score}%`, 'success');
-            } else {
-                // Use traditional generation for cover letters and follow-ups
-                const content = await this.generateTraditionalDocument(resumeText, this.selectedJob, docType, apiKey);
-                this.downloadDocument(content, docType, this.selectedJob.title);
-                this.setStatus('generate-status', 'Document generated successfully!', 'success');
-            }
+            // Generate document with optimized prompts
+            const content = await this.generateOptimizedDocument(resumeText, this.selectedJob, docType, apiKey);
+            this.downloadDocument(content, docType, this.selectedJob.title);
+            this.setStatus('generate-status', 'Document generated successfully!', 'success');
             
         } catch (error) {
             console.error('Generation error:', error);
@@ -786,69 +772,93 @@ class AutoApplyAI {
         }
     }
 
-    async generateEnhancedResume(resumeText, job, apiKey) {
-        this.setStatus('generate-status', '🧠 Extracting job keywords...', 'info');
+    async generateOptimizedDocument(resumeText, job, docType, apiKey) {
+        let systemPrompt = '';
+        let userPrompt = '';
         
-        // Step 1: Extract keywords from job description
-        const jobKeywords = this.extractJobKeywords(job.description);
-        
-        this.setStatus('generate-status', '📊 Calculating similarity score...', 'info');
-        
-        // Step 2: Get embeddings for initial similarity score
-        const resumeEmbedding = await this.getEmbedding(resumeText, apiKey);
-        const jobKeywordsText = jobKeywords.join(', ');
-        const jobEmbedding = await this.getEmbedding(jobKeywordsText, apiKey);
-        
-        // Step 3: Calculate initial cosine similarity
-        const initialScore = this.calculateCosineSimilarity(resumeEmbedding, jobEmbedding);
-        
-        this.setStatus('generate-status', `🔄 Optimizing resume (${Math.round(initialScore * 100)}% → ?)...`, 'info');
-        
-        // Step 4: Iterative resume improvement
-        const improvedResume = await this.improveResumeWithLLM(
-            resumeText, 
-            job.description, 
-            jobKeywords, 
-            initialScore, 
-            jobEmbedding, 
-            apiKey
-        );
-        
-        this.setStatus('generate-status', '✨ Finalizing optimized resume...', 'info');
-        
-        return {
-            content: improvedResume.content,
-            score: Math.round(improvedResume.score * 100),
-            initialScore: Math.round(initialScore * 100),
-            suggestions: improvedResume.suggestions
-        };
-    }
-
-    async generateTraditionalDocument(resumeText, job, docType, apiKey) {
-        // Traditional document generation for cover letters and follow-ups
-        let prompt = '';
         switch (docType) {
-            case 'cover-letter':
-                prompt = `Write a professional cover letter for the following job position. Be specific and tailored to the job requirements.
-                
-Job Title: ${job.title}
+            case 'resume':
+                systemPrompt = `You are an expert resume writer and ATS optimization specialist. Your task is to tailor a resume for a specific job posting.
+
+CRITICAL RULES:
+- ONLY use information that exists in the original resume
+- NEVER invent new jobs, skills, companies, or experiences
+- NEVER add fictional details or accomplishments
+- Focus on reordering, rephrasing, and emphasizing relevant content
+- Use keywords from the job description naturally
+- Maintain professional formatting and structure
+- Keep all dates, company names, and factual information exactly as provided`;
+
+                userPrompt = `Tailor this resume for the following job posting. Optimize for ATS systems and highlight the most relevant experiences.
+
+JOB POSTING:
+Title: ${job.title}
 Company: ${job.company}
-Job Description: ${job.description}
+Description: ${job.description}
 
-Resume: ${resumeText}
+ORIGINAL RESUME:
+${resumeText}
 
-Please write a compelling cover letter that highlights relevant experience and shows enthusiasm for the role.`;
+INSTRUCTIONS:
+1. Reorganize sections to highlight most relevant experience first
+2. Rewrite bullet points to emphasize skills mentioned in the job description
+3. Use action verbs and quantifiable achievements where they exist
+4. Include relevant keywords naturally
+5. Maintain the same factual content - do not invent anything
+6. Return ONLY the tailored resume content in clean markdown format`;
                 break;
+
+            case 'cover-letter':
+                systemPrompt = `You are a professional cover letter writer. Create compelling, personalized cover letters that demonstrate genuine interest and relevant qualifications.
+
+CRITICAL RULES:
+- Write in a professional, engaging tone
+- Reference specific details from the job posting
+- Highlight relevant experience from the resume
+- Keep it concise (3-4 paragraphs maximum)
+- Show enthusiasm for the role and company
+- NEVER invent experience not in the resume`;
+
+                userPrompt = `Write a compelling cover letter for this job application:
+
+JOB POSTING:
+Title: ${job.title}
+Company: ${job.company}
+Description: ${job.description}
+
+RESUME SUMMARY:
+${resumeText.substring(0, 1500)}
+
+REQUIREMENTS:
+1. Address the hiring manager professionally
+2. Open with enthusiasm for the specific role
+3. Highlight 2-3 most relevant experiences from the resume
+4. Show knowledge of the company/role requirements
+5. Close with a professional call to action
+6. Keep it under 400 words
+7. Format as a proper business letter`;
+                break;
+
             case 'follow-up':
-                prompt = `Write a professional follow-up email for a job application.
-                
-Job Title: ${job.title}
+                systemPrompt = `You are a professional communication expert. Write polite, professional follow-up emails that demonstrate continued interest without being pushy.`;
+
+                userPrompt = `Write a professional follow-up email for this job application:
+
+JOB DETAILS:
+Title: ${job.title}
 Company: ${job.company}
 
-Please write a polite and professional follow-up email that can be sent after submitting an application.`;
+REQUIREMENTS:
+1. Professional subject line
+2. Polite greeting
+3. Brief reminder of the application and enthusiasm
+4. Offer to provide additional information
+5. Professional closing
+6. Keep it concise (under 150 words)
+7. Strike a balance between persistent and respectful`;
                 break;
         }
-        
+
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             headers: {
@@ -856,19 +866,19 @@ Please write a polite and professional follow-up email that can be sent after su
                 'Authorization': `Bearer ${apiKey}`
             },
             body: JSON.stringify({
-                model: 'gpt-3.5-turbo',
+                model: 'gpt-4o',
                 messages: [
                     {
                         role: 'system',
-                        content: 'You are a professional career counselor and resume writer. Generate high-quality, tailored job application documents.'
+                        content: systemPrompt
                     },
                     {
                         role: 'user',
-                        content: prompt
+                        content: userPrompt
                     }
                 ],
-                max_tokens: 1500,
-                temperature: 0.7
+                max_tokens: 2000,
+                temperature: 0.3
             })
         });
         
@@ -883,213 +893,6 @@ Please write a polite and professional follow-up email that can be sent after su
         }
     }
 
-    // ML-Powered Resume Scoring Functions
-    
-    extractJobKeywords(text) {
-        // Extract keywords using regex and common patterns (from resume_scorer.py)
-        const stopWords = new Set([
-            'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 
-            'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
-            'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could',
-            'should', 'may', 'might', 'must', 'shall', 'can', 'this', 'that',
-            'these', 'those', 'i', 'you', 'he', 'she', 'it', 'we', 'they'
-        ]);
-        
-        // Extract words, keeping technical terms and acronyms
-        const words = text.toLowerCase().match(/\b[a-z][a-z0-9+#\-\.]*\b/g) || [];
-        
-        // Filter out stop words and short words
-        const keywords = words.filter(word => !stopWords.has(word) && word.length > 2);
-        
-        // Count frequency and return top keywords
-        const wordFreq = {};
-        keywords.forEach(word => {
-            wordFreq[word] = (wordFreq[word] || 0) + 1;
-        });
-        
-        // Sort by frequency and return top 50
-        const sortedWords = Object.entries(wordFreq)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 50)
-            .map(([word]) => word);
-        
-        return sortedWords;
-    }
-
-    async getEmbedding(text, apiKey) {
-        // Get OpenAI embeddings
-        const response = await fetch('https://api.openai.com/v1/embeddings', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`
-            },
-            body: JSON.stringify({
-                model: 'text-embedding-ada-002',
-                input: text
-            })
-        });
-        
-        if (response.ok) {
-            const result = await response.json();
-            this.incrementApiCalls();
-            return result.data[0].embedding;
-        } else {
-            const error = await response.json();
-            throw new Error(`Embedding API Error: ${error.error?.message || response.statusText}`);
-        }
-    }
-
-    calculateCosineSimilarity(embedding1, embedding2) {
-        // Calculate cosine similarity between two embeddings (from resume_scorer.py)
-        if (!embedding1 || !embedding2) return 0.0;
-        
-        const vec1 = embedding1;
-        const vec2 = embedding2;
-        
-        // Calculate dot product
-        let dotProduct = 0;
-        for (let i = 0; i < vec1.length; i++) {
-            dotProduct += vec1[i] * vec2[i];
-        }
-        
-        // Calculate magnitudes
-        let magnitude1 = 0;
-        let magnitude2 = 0;
-        for (let i = 0; i < vec1.length; i++) {
-            magnitude1 += vec1[i] * vec1[i];
-            magnitude2 += vec2[i] * vec2[i];
-        }
-        magnitude1 = Math.sqrt(magnitude1);
-        magnitude2 = Math.sqrt(magnitude2);
-        
-        if (magnitude1 === 0 || magnitude2 === 0) return 0.0;
-        
-        return dotProduct / (magnitude1 * magnitude2);
-    }
-
-    async improveResumeWithLLM(resumeText, jobDescription, jobKeywords, currentScore, jobEmbedding, apiKey, maxRetries = 3) {
-        // Iterative resume improvement using LLM (from resume_scorer.py)
-        const prompt = `You are an expert resume editor and talent acquisition specialist. Your task is to revise the following resume so that it aligns as closely as possible with the provided job description and extracted job keywords, in order to maximize the cosine similarity between the resume and the job keywords.
-
-Instructions:
-- Carefully review the job description and the list of extracted job keywords.
-- Update the candidate's resume by:
-  - Emphasizing and naturally incorporating relevant skills, experiences, and keywords from the job description and keyword list.
-  - Where appropriate, naturally weave the extracted job keywords into the resume content.
-  - Rewriting, adding, or removing resume content as needed to better match the job requirements.
-  - Maintaining a natural, professional tone and avoiding keyword stuffing.
-  - Where possible, use quantifiable achievements and action verbs.
-  - The current cosine similarity score is ${currentScore.toFixed(4)}. Revise the resume to further increase this score.
-- ONLY output the improved updated resume. Do not include any explanations, commentary, or formatting outside of the resume itself.
-
-Job Description:
-\`\`\`
-${jobDescription}
-\`\`\`
-
-Extracted Job Keywords:
-\`\`\`
-${jobKeywords.join(', ')}
-\`\`\`
-
-Original Resume:
-\`\`\`
-${resumeText}
-\`\`\`
-
-NOTE: ONLY OUTPUT THE IMPROVED UPDATED RESUME IN MARKDOWN FORMAT.`;
-
-        let bestResume = resumeText;
-        let bestScore = currentScore;
-        
-        for (let attempt = 0; attempt < maxRetries; attempt++) {
-            try {
-                const response = await fetch('https://api.openai.com/v1/chat/completions', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${apiKey}`
-                    },
-                    body: JSON.stringify({
-                        model: 'gpt-4',
-                        messages: [
-                            {
-                                role: 'system',
-                                content: 'You are a professional resume optimization expert. Generate only the improved resume content, no explanations.'
-                            },
-                            {
-                                role: 'user',
-                                content: prompt
-                            }
-                        ],
-                        max_tokens: 4000,
-                        temperature: 0.7
-                    })
-                });
-                
-                if (response.ok) {
-                    const result = await response.json();
-                    const improvedResume = result.choices[0].message.content.trim();
-                    this.incrementApiCalls();
-                    
-                    // Get embedding for improved resume
-                    const improvedEmbedding = await this.getEmbedding(improvedResume, apiKey);
-                    
-                    // Calculate new score
-                    const newScore = this.calculateCosineSimilarity(improvedEmbedding, jobEmbedding);
-                    
-                    if (newScore > bestScore) {
-                        bestResume = improvedResume;
-                        bestScore = newScore;
-                        console.log(`Improved score from ${currentScore.toFixed(4)} to ${newScore.toFixed(4)}`);
-                        break; // Stop on first improvement
-                    }
-                    
-                } else {
-                    const error = await response.json();
-                    console.error(`Improvement attempt ${attempt + 1} failed:`, error);
-                }
-                
-            } catch (error) {
-                console.error(`Error in improvement attempt ${attempt + 1}:`, error);
-                continue;
-            }
-        }
-        
-        // Generate improvement suggestions
-        const suggestions = this.generateSuggestions(currentScore, bestScore, jobKeywords);
-        
-        return {
-            content: bestResume,
-            score: bestScore,
-            suggestions: suggestions
-        };
-    }
-
-    generateSuggestions(originalScore, improvedScore, jobKeywords) {
-        // Generate improvement suggestions based on keywords and scores
-        const suggestions = [];
-        
-        if (improvedScore > originalScore) {
-            suggestions.push(`Resume improved from ${Math.round(originalScore * 100)}% to ${Math.round(improvedScore * 100)}% match`);
-        } else {
-            suggestions.push(`Current resume match: ${Math.round(originalScore * 100)}%`);
-        }
-        
-        // Add keyword-based suggestions
-        suggestions.push(`Key skills to highlight: ${jobKeywords.slice(0, 10).join(', ')}`);
-        
-        if (improvedScore < 0.7) {
-            suggestions.push("Consider adding more specific technical skills mentioned in the job description");
-        }
-        
-        if (improvedScore < 0.5) {
-            suggestions.push("Resume may need significant restructuring to match job requirements");
-        }
-        
-        return suggestions;
-    }
 
     async readFileAsText(file) {
         const fileType = file.type.toLowerCase();
@@ -1652,41 +1455,15 @@ This will give you immediate access to job matching while we improve Word suppor
             console.log('Resume content length:', resumeText.length, 'characters');
             console.log('Resume preview:', resumeText.substring(0, 200) + '...');
             
-            // Step 2: Get API key for embeddings
+            // Step 2: Proceed with job matching
+            this.setStatus?.('capture-status', `🎯 Analyzing match for: ${job.title}...`, 'info');
+            
+            // Get API key for scoring
             const apiKey = await this.getApiKey();
             if (!apiKey) {
-                console.warn('No API key available for embeddings, using traditional scoring only');
+                console.warn('No API key available for job scoring');
+                return null;
             }
-            
-            // Step 3: Calculate ML-powered similarity score (if API key available)
-            let similarityScore = null;
-            let jobKeywords = [];
-            
-            if (apiKey) {
-                this.setStatus?.('capture-status', `🧠 Calculating ML similarity score for: ${job.title}...`, 'info');
-                
-                try {
-                    // Extract keywords from job description
-                    jobKeywords = this.extractJobKeywords(job.description || '');
-                    
-                    // Get embeddings for resume and job keywords
-                    const resumeEmbedding = await this.getEmbedding(resumeText, apiKey);
-                    const jobKeywordsText = jobKeywords.join(', ');
-                    const jobEmbedding = await this.getEmbedding(jobKeywordsText, apiKey);
-                    
-                    // Calculate cosine similarity
-                    similarityScore = this.calculateCosineSimilarity(resumeEmbedding, jobEmbedding);
-                    
-                    console.log(`✅ ML Similarity Score: ${Math.round(similarityScore * 100)}%`);
-                    
-                } catch (error) {
-                    console.error('Error calculating ML similarity:', error);
-                    similarityScore = null;
-                }
-            }
-            
-            // Step 4: Proceed with traditional job matching
-            this.setStatus?.('capture-status', `🎯 Analyzing detailed match for: ${job.title}...`, 'info');
             
             // Smart truncation that preserves key sections
             const maxResumeLength = 3000; // ~750 tokens - increased for better context
@@ -1795,7 +1572,7 @@ Format response as JSON:
                     'Authorization': `Bearer ${apiKey}`
                 },
                 body: JSON.stringify({
-                    model: 'gpt-4',
+                    model: 'gpt-4o',
                     messages: [
                         {
                             role: 'system',
@@ -1825,27 +1602,12 @@ Format response as JSON:
                 try {
                     const matchData = JSON.parse(content);
                     
-                    // Combine traditional and ML scoring
-                    let finalScore = Math.max(0, Math.min(100, matchData.overallScore || 0));
-                    let mlScore = similarityScore ? Math.round(similarityScore * 100) : null;
-                    
-                    // Add ML insights to recommendations if available
-                    const recommendations = matchData.recommendations || [];
-                    if (mlScore !== null) {
-                        recommendations.unshift(`ML Similarity Score: ${mlScore}% (Semantic matching)`);
-                        if (jobKeywords.length > 0) {
-                            recommendations.push(`Key job keywords: ${jobKeywords.slice(0, 8).join(', ')}`);
-                        }
-                    }
-                    
                     return {
-                        score: finalScore,
-                        mlScore: mlScore,
+                        score: Math.max(0, Math.min(100, matchData.overallScore || 0)),
                         strengths: matchData.strengths || [],
                         gaps: matchData.gaps || [],
-                        recommendations: recommendations,
+                        recommendations: matchData.recommendations || [],
                         reasoning: matchData.reasoning || '',
-                        jobKeywords: jobKeywords,
                         analyzedAt: new Date().toISOString()
                     };
                 } catch (parseError) {
@@ -1853,16 +1615,13 @@ Format response as JSON:
                     // Fallback: extract score from text
                     const scoreMatch = content.match(/(\d+)/);
                     const score = scoreMatch ? parseInt(scoreMatch[1]) : 50;
-                    let mlScore = similarityScore ? Math.round(similarityScore * 100) : null;
                     
                     return {
                         score: Math.max(0, Math.min(100, score)),
-                        mlScore: mlScore,
                         strengths: [],
                         gaps: [],
-                        recommendations: mlScore ? [`ML Similarity Score: ${mlScore}%`] : [],
+                        recommendations: [],
                         reasoning: content,
-                        jobKeywords: jobKeywords,
                         analyzedAt: new Date().toISOString()
                     };
                 }
@@ -2338,7 +2097,7 @@ Your API key will be stored securely in your browser and never shared.`);
         const aiStatus = document.getElementById('ai-status');
         this.getApiKey().then(apiKey => {
             if (apiKey) {
-                aiStatus.textContent = '✅ ChatGPT Connected';
+                aiStatus.textContent = '✅ ChatGPT-4o Connected';
                 aiStatus.className = 'status success';
             } else {
                 aiStatus.textContent = '❌ API Key Required';

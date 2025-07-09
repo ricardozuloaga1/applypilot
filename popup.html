@@ -470,70 +470,6 @@
             background: #9ca3af;
         }
         
-        .score-details {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
-        
-        .main-score {
-            font-size: 14px;
-            font-weight: 600;
-            color: #1f2937;
-        }
-        
-        .ml-score {
-            font-size: 11px;
-            font-weight: 500;
-            color: #6366f1;
-            background: rgba(99, 102, 241, 0.1);
-            padding: 2px 6px;
-            border-radius: 4px;
-            display: inline-block;
-        }
-        
-        .ml-score:hover {
-            background: rgba(99, 102, 241, 0.2);
-        }
-        
-        .ml-features {
-            background: rgba(99, 102, 241, 0.05);
-            border: 1px solid rgba(99, 102, 241, 0.2);
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 20px;
-        }
-        
-        .ml-features h3 {
-            margin: 0 0 12px 0;
-            color: #4f46e5;
-            font-size: 16px;
-            font-weight: 600;
-        }
-        
-        .feature-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        
-        .feature-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 13px;
-            color: #374151;
-        }
-        
-        .feature-icon {
-            font-size: 14px;
-            width: 20px;
-            text-align: center;
-        }
-        
-        .feature-text {
-            flex: 1;
-        }
         
         .no-jobs {
             text-align: center;
@@ -1013,32 +949,14 @@
         <!-- Generate Tab -->
         <div class="tab-content" id="generate-tab">
             <div class="ai-status">
-                <div class="status success" id="ai-status">✅ ChatGPT Connected</div>
-            </div>
-            
-            <div class="ml-features">
-                <h3>🧠 ML-Powered Generation</h3>
-                <div class="feature-list">
-                    <div class="feature-item">
-                        <span class="feature-icon">🎯</span>
-                        <span class="feature-text">Cosine similarity scoring for precise matching</span>
-                    </div>
-                    <div class="feature-item">
-                        <span class="feature-icon">🔄</span>
-                        <span class="feature-text">Iterative LLM optimization for resume tailoring</span>
-                    </div>
-                    <div class="feature-item">
-                        <span class="feature-icon">📊</span>
-                        <span class="feature-text">Semantic keyword extraction and embedding analysis</span>
-                    </div>
-                </div>
+                <div class="status success" id="ai-status">✅ ChatGPT-4o Connected</div>
             </div>
             
             <div class="document-type">
                 <label for="doc-type">Document Type:</label>
                 <select id="doc-type">
                     <option value="cover-letter">Cover Letter</option>
-                    <option value="resume">🧠 ML-Tailored Resume</option>
+                    <option value="resume">Tailored Resume</option>
                     <option value="follow-up">Follow-up Email</option>
                 </select>
             </div>
