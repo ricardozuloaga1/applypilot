@@ -1779,8 +1779,7 @@ Format response as JSON:
 }
 `;
 
-            // Get API key from storage
-            const apiKey = await this.getApiKey();
+            // Use the API key from the ML scoring section
             if (!apiKey) {
                 throw new Error('OpenAI API key not configured. Please set your API key in the extension settings.');
             }
