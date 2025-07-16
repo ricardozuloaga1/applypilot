@@ -1,0 +1,2529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Structured Resume Format Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #1f2937;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .test-section {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .test-section h2 {
+            margin-top: 0;
+            color: #374151;
+            border-bottom: 2px solid #f3f4f6;
+            padding-bottom: 10px;
+        }
+
+        /* Structured Resume Form Styles */
+        .resume-section {
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            background: #f9fafb;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #f3f4f6;
+            border-bottom: 1px solid #d1d5db;
+            cursor: pointer;
+        }
+
+        .section-header input[type="checkbox"] {
+            margin-right: 10px;
+            transform: scale(1.2);
+        }
+
+        .section-header h3 {
+            margin: 0;
+            color: #374151;
+            flex: 1;
+        }
+
+        .section-content {
+            padding: 15px;
+            display: none;
+        }
+
+        .section-content.active {
+            display: block;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            flex: 1;
+        }
+
+        .form-group.full-width {
+            flex: 100%;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #374151;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .experience-item, .education-item {
+            border: 1px solid #e5e7eb;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: white;
+        }
+
+        .add-button, .remove-button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            margin: 5px;
+        }
+
+        .add-button {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .remove-button {
+            background: #ef4444;
+            color: white;
+        }
+
+        /* File Upload Test Styles */
+        .upload-area {
+            border: 2px dashed #d1d5db;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .upload-area.dragover {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+
+        /* Results Display */
+        .results {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+
+        .json-display {
+            background: #1f2937;
+            color: #e5e7eb;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+
+        /* Button Styles */
+        .action-button {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            margin: 10px 5px;
+        }
+
+        .action-button:hover {
+            background: #059669;
+        }
+
+        .action-button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        /* Status Messages */
+        .status {
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+
+        .status.success {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+
+        .status.error {
+            background: #fef2f2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+
+        .status.info {
+            background: #eff6ff;
+            color: #1e40af;
+            border: 1px solid #bfdbfe;
+        }
+
+        /* Two Column Layout */
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .two-column {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-row {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Structured Resume Format Test</h1>
+        
+        <!-- Test Section 1: File Upload and Extraction -->
+        <div class="test-section">
+            <h2>📄 Test 1: File Upload & Data Extraction</h2>
+            <p>Upload a resume file to test extraction and mapping to structured format. Supports .txt, .docx files.</p>
+            
+            <div class="upload-area" id="uploadArea">
+                <p>📎 Drag and drop your resume here or click to select</p>
+                <input type="file" id="fileInput" accept=".txt,.doc,.docx,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" style="display: none;">
+                <button class="action-button" onclick="document.getElementById('fileInput').click()">
+                    Choose File
+                </button>
+            </div>
+            
+            <div id="extractionStatus"></div>
+            <div id="extractionResults" class="results" style="display: none;"></div>
+            
+            <div class="status info" style="display: none;" id="extractionTips">
+                <p><strong>💡 Extraction Tips:</strong></p>
+                <ul>
+                    <li><strong>NEW:</strong> Enhanced DOCX parser now properly handles ZIP compression</li>
+                    <li>If extraction is still poor, try saving your resume as a <code>.txt</code> file</li>
+                    <li>You can also copy/paste your resume content directly into the form fields</li>
+                    <li>Use "Load Sample Data" to see the expected format</li>
+                </ul>
+            </div>
+
+            <div class="status" style="display: none;" id="extractionProgress">
+                <p><strong>🔧 Processing DOCX:</strong></p>
+                <div id="progressSteps"></div>
+            </div>
+            
+            <button class="action-button" id="mapToStructuredBtn" onclick="mapExtractedToStructured()" disabled>
+                📋 Map to Structured Format
+            </button>
+        </div>
+
+        <!-- Test Section 2: Structured Resume Form -->
+        <div class="test-section">
+            <h2>📝 Test 2: Structured Resume Input Form</h2>
+            <p>Manual input form with toggleable sections and structured data.</p>
+            
+            <form id="structuredResumeForm">
+                <!-- Personal Information Section -->
+                <div class="resume-section">
+                    <div class="section-header" onclick="toggleSection('personal')">
+                        <input type="checkbox" id="includePersonal" checked>
+                        <h3>👤 Personal Information</h3>
+                        <span id="personalToggle">▼</span>
+                    </div>
+                    <div class="section-content active" id="personalContent">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="fullName">Full Name *</label>
+                                <input type="text" id="fullName" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="email">Email *</label>
+                                <input type="email" id="email" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="phone">Phone</label>
+                                <input type="tel" id="phone">
+                            </div>
+                            <div class="form-group">
+                                <label for="location">Location</label>
+                                <input type="text" id="location" placeholder="City, State">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group full-width">
+                                <label for="citizenship">Citizenship/Work Authorization</label>
+                                <input type="text" id="citizenship" placeholder="e.g., US Citizen, Work Visa, etc.">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Professional Summary Section -->
+                <div class="resume-section">
+                    <div class="section-header" onclick="toggleSection('summary')">
+                        <input type="checkbox" id="includeSummary" checked>
+                        <h3>📋 Professional Summary</h3>
+                        <span id="summaryToggle">▼</span>
+                    </div>
+                    <div class="section-content active" id="summaryContent">
+                        <div class="form-group full-width">
+                            <label for="professionalSummary">Professional Summary</label>
+                            <textarea id="professionalSummary" placeholder="2-3 sentence summary of your experience and expertise..." rows="4"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Core Skills Section -->
+                <div class="resume-section">
+                    <div class="section-header" onclick="toggleSection('skills')">
+                        <input type="checkbox" id="includeSkills" checked>
+                        <h3>🛠️ Core Skills</h3>
+                        <span id="skillsToggle">▼</span>
+                    </div>
+                    <div class="section-content active" id="skillsContent">
+                        <div class="form-group full-width">
+                            <label for="coreSkills">Core Skills (one per line or comma-separated)</label>
+                            <textarea id="coreSkills" placeholder="JavaScript, Python, Project Management, Contract Negotiation..." rows="4"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Work Experience Section -->
+                <div class="resume-section">
+                    <div class="section-header" onclick="toggleSection('experience')">
+                        <input type="checkbox" id="includeExperience" checked>
+                        <h3>💼 Work Experience</h3>
+                        <span id="experienceToggle">▼</span>
+                    </div>
+                    <div class="section-content active" id="experienceContent">
+                        <div id="experienceContainer">
+                            <!-- Experience items will be added here -->
+                        </div>
+                        <button type="button" class="add-button" onclick="addExperienceItem()">
+                            + Add Experience
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Education Section -->
+                <div class="resume-section">
+                    <div class="section-header" onclick="toggleSection('education')">
+                        <input type="checkbox" id="includeEducation" checked>
+                        <h3>🎓 Education</h3>
+                        <span id="educationToggle">▼</span>
+                    </div>
+                    <div class="section-content active" id="educationContent">
+                        <div id="educationContainer">
+                            <!-- Education items will be added here -->
+                        </div>
+                        <button type="button" class="add-button" onclick="addEducationItem()">
+                            + Add Education
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Optional Sections -->
+                <div class="resume-section">
+                    <div class="section-header" onclick="toggleSection('certifications')">
+                        <input type="checkbox" id="includeCertifications">
+                        <h3>🏆 Certifications & Licenses</h3>
+                        <span id="certificationsToggle">▼</span>
+                    </div>
+                    <div class="section-content" id="certificationsContent">
+                        <div class="form-group full-width">
+                            <label for="certifications">Certifications & Licenses</label>
+                            <textarea id="certifications" placeholder="List your certifications, licenses, and professional credentials..." rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="resume-section">
+                    <div class="section-header" onclick="toggleSection('additional')">
+                        <input type="checkbox" id="includeAdditional">
+                        <h3>🌟 Additional Information</h3>
+                        <span id="additionalToggle">▼</span>
+                    </div>
+                    <div class="section-content" id="additionalContent">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="languages">Languages</label>
+                                <textarea id="languages" placeholder="English (Native), Spanish (Fluent)..." rows="2"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="tools">Tools & Software</label>
+                                <textarea id="tools" placeholder="Microsoft Office, Salesforce, Adobe Creative Suite..." rows="2"></textarea>
+                            </div>
+                        </div>
+                        <div class="form-group full-width">
+                            <label for="projects">Key Projects</label>
+                            <textarea id="projects" placeholder="Notable projects, achievements, or publications..." rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </form>
+            
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="action-button" onclick="generateStructuredData()">
+                    📊 Generate Structured Data
+                </button>
+                <button class="action-button" onclick="clearForm()">
+                    🗑️ Clear Form
+                </button>
+                <button class="action-button" onclick="loadSampleData()">
+                    📋 Load Sample Data
+                </button>
+            </div>
+        </div>
+
+        <!-- Test Section 3: Results and Comparison -->
+        <div class="test-section">
+            <h2>📊 Test 3: Results & Data Structure</h2>
+            <div class="two-column">
+                <div>
+                    <h3>📤 Extracted Data (from file)</h3>
+                    <div id="extractedDataDisplay" class="json-display">
+                        Upload a file to see extracted data...
+                    </div>
+                </div>
+                <div>
+                    <h3>📝 Structured Data (from form)</h3>
+                    <div id="structuredDataDisplay" class="json-display">
+                        Fill out the form to see structured data...
+                    </div>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="action-button" onclick="compareDataStructures()">
+                    🔍 Compare Data Structures
+                </button>
+                <button class="action-button" onclick="testJobMatching()">
+                    🎯 Test Job Matching
+                </button>
+            </div>
+            
+            <div id="comparisonResults" class="results" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables to store data
+        let extractedResumeData = null;
+        let structuredResumeData = null;
+        let experienceCounter = 0;
+        let educationCounter = 0;
+
+        // Initialize the form
+        document.addEventListener('DOMContentLoaded', function() {
+            setupFileUpload();
+            addExperienceItem(); // Add initial experience item
+            addEducationItem(); // Add initial education item
+        });
+
+        // File Upload and Drag & Drop
+        function setupFileUpload() {
+            const uploadArea = document.getElementById('uploadArea');
+            const fileInput = document.getElementById('fileInput');
+
+            uploadArea.addEventListener('click', () => fileInput.click());
+            uploadArea.addEventListener('dragover', handleDragOver);
+            uploadArea.addEventListener('drop', handleDrop);
+            uploadArea.addEventListener('dragleave', handleDragLeave);
+            fileInput.addEventListener('change', handleFileSelect);
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.currentTarget.classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            e.currentTarget.classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                processFile(files[0]);
+            }
+        }
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                processFile(file);
+            }
+        }
+
+        // File Processing
+        async function processFile(file) {
+            const statusDiv = document.getElementById('extractionStatus');
+            statusDiv.innerHTML = `<div class="status info">📄 Processing ${file.name}...</div>`;
+
+            try {
+                console.log('📄 Processing file:', file.name, 'Type:', file.type, 'Size:', file.size);
+                const text = await readFileAsText(file);
+                console.log('📄 File content length:', text.length);
+                console.log('📄 File content preview:', text.substring(0, 500));
+                
+                // Simulate AI extraction (in real app, this would call OpenAI)
+                const extracted = await simulateAIExtraction(text);
+                extractedResumeData = extracted;
+
+                // Check extraction quality
+                const hasName = extracted.personalInfo?.name && extracted.personalInfo?.name !== '';
+                const hasEmail = extracted.personalInfo?.email && extracted.personalInfo?.email !== '';
+                const hasSkills = extracted.coreSkills && extracted.coreSkills.length > 0;
+                const hasSummary = extracted.professionalSummary && extracted.professionalSummary.length > 50;
+                
+                const extractionQuality = [hasName, hasEmail, hasSkills, hasSummary].filter(Boolean).length;
+                
+                if (extractionQuality >= 2) {
+                    statusDiv.innerHTML = `<div class="status success">✅ Successfully extracted data from ${file.name} (${extractionQuality}/4 key fields found)</div>`;
+                } else {
+                    statusDiv.innerHTML = `<div class="status error">⚠️ Extraction quality was poor (${extractionQuality}/4 key fields found). Consider using alternative methods.</div>`;
+                    document.getElementById('extractionTips').style.display = 'block';
+                }
+                
+                // Display extracted data
+                document.getElementById('extractedDataDisplay').textContent = JSON.stringify(extracted, null, 2);
+                document.getElementById('extractionResults').style.display = 'block';
+                document.getElementById('mapToStructuredBtn').disabled = false;
+
+            } catch (error) {
+                statusDiv.innerHTML = `<div class="status error">❌ Error processing file: ${error.message}</div>`;
+                console.error('File processing error:', error);
+            }
+        }
+
+        // File Reading (simplified version of the main app's logic)
+        async function readFileAsText(file) {
+            const fileType = file.type.toLowerCase();
+            const fileName = file.name.toLowerCase();
+
+            if (fileType === 'text/plain' || fileName.endsWith('.txt')) {
+                return await readPlainText(file);
+            } else if (fileName.endsWith('.docx') || fileType.includes('wordprocessingml')) {
+                return await readDocxFile(file);
+            } else if (fileName.endsWith('.pdf')) {
+                throw new Error('PDF parsing not implemented in test. Please convert to .txt first.');
+            } else {
+                // Try to read as plain text for other formats
+                return await readPlainText(file);
+            }
+        }
+
+        function readPlainText(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = () => reject(new Error('Failed to read file'));
+                reader.readAsText(file);
+            });
+        }
+
+        async function readDocxFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    try {
+                        const arrayBuffer = e.target.result;
+                        console.log('📄 Processing DOCX file...');
+                        
+                        // Try comprehensive DOCX extraction
+                        const text = await extractTextFromDocx(arrayBuffer);
+                        if (text && text.trim().length > 20) {
+                            console.log(`✅ DOCX text extracted: ${text.length} characters`);
+                            console.log(`📋 Preview: ${text.substring(0, 200)}...`);
+                            resolve(text);
+                        } else {
+                            // Fallback: try binary text extraction
+                            const binaryText = extractBinaryText(arrayBuffer);
+                            if (binaryText && binaryText.length > 50) {
+                                console.log(`✅ DOCX binary extraction: ${binaryText.length} characters`);
+                                resolve(binaryText);
+                            } else {
+                                // Final fallback: provide helpful error with new system info
+                                const errorMsg = `
+❌ DOCX extraction failed despite enhanced ZIP parsing.
+
+📋 The new system tried:
+• ZIP file structure parsing
+• XML decompression 
+• Multiple fallback methods
+
+🔧 Try these alternatives:
+1. Check browser console (F12) for detailed error logs
+2. Save as .txt file: File → Save As → Plain Text (.txt)
+3. Copy/paste content directly into the form fields
+4. Use "Load Sample Data" to see the expected format
+
+Your document may use unsupported compression or have complex formatting.
+                                `.trim();
+                                
+                                reject(new Error(errorMsg));
+                            }
+                        }
+                    } catch (error) {
+                        console.error('DOCX processing error:', error);
+                        const errorMsg = `
+❌ Failed to process DOCX file: ${error.message}
+
+📋 Try these alternatives:
+1. Save as .txt file: File → Save As → Plain Text (.txt)
+2. Copy/paste content directly into the form
+3. Use "Load Sample Data" to see the expected format
+
+DOCX processing can fail with complex formatting or newer Word versions.
+                        `.trim();
+                        
+                        reject(new Error(errorMsg));
+                    }
+                };
+                reader.onerror = () => reject(new Error('Failed to read DOCX file'));
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        // Improved DOCX text extraction with proper ZIP handling
+        async function extractTextFromDocx(arrayBuffer) {
+            console.log('🔍 Starting comprehensive DOCX extraction...');
+            
+            // Method 1: Try to extract using proper ZIP file parsing
+            try {
+                const zipText = await extractFromZipStructure(arrayBuffer);
+                if (zipText && zipText.length > 50) {
+                    console.log('✅ ZIP structure extraction successful');
+                    return zipText;
+                }
+            } catch (error) {
+                console.log('⚠️ ZIP structure extraction failed:', error.message);
+            }
+            
+            // Method 2: Try to find XML text patterns
+            try {
+                const xmlText = extractXmlText(arrayBuffer);
+                if (xmlText && xmlText.length > 50) {
+                    console.log('✅ XML extraction successful');
+                    return xmlText;
+                }
+            } catch (error) {
+                console.log('⚠️ XML extraction failed:', error.message);
+            }
+            
+            // Method 3: Try broad text extraction
+            try {
+                const broadText = extractBroadText(arrayBuffer);
+                if (broadText && broadText.length > 50) {
+                    console.log('✅ Broad text extraction successful');
+                    return broadText;
+                }
+            } catch (error) {
+                console.log('⚠️ Broad text extraction failed:', error.message);
+            }
+            
+            // Method 4: Smart binary extraction
+            try {
+                const smartText = extractSmartBinary(arrayBuffer);
+                if (smartText && smartText.length > 50) {
+                    console.log('✅ Smart binary extraction successful');
+                    return smartText;
+                }
+            } catch (error) {
+                console.log('⚠️ Smart binary extraction failed:', error.message);
+            }
+            
+            throw new Error('All extraction methods failed - document may be corrupted or heavily formatted');
+        }
+        
+        // Proper ZIP file parser for DOCX files
+        async function extractFromZipStructure(arrayBuffer) {
+            console.log('🔍 Implementing proper ZIP extraction for DOCX...');
+            
+            try {
+                const zipData = await parseZipFile(arrayBuffer);
+                console.log('📁 ZIP entries found:', Object.keys(zipData).length);
+                
+                // Look for the main document
+                const documentXml = zipData['word/document.xml'];
+                if (documentXml) {
+                    console.log('📄 Found word/document.xml, size:', documentXml.length);
+                    const textContent = extractTextFromWordXml(documentXml);
+                    if (textContent && textContent.length > 20) {
+                        console.log('✅ Successfully extracted text from document.xml');
+                        return textContent;
+                    }
+                }
+                
+                // Fallback: try any XML files in the word directory
+                for (const [filename, content] of Object.entries(zipData)) {
+                    if (filename.startsWith('word/') && filename.endsWith('.xml')) {
+                        console.log('📄 Trying fallback XML file:', filename);
+                        const textContent = extractTextFromWordXml(content);
+                        if (textContent && textContent.length > 20) {
+                            console.log('✅ Successfully extracted text from', filename);
+                            return textContent;
+                        }
+                    }
+                }
+                
+                throw new Error('No readable text found in any XML files');
+                
+            } catch (error) {
+                console.error('ZIP structure extraction failed:', error);
+                throw error;
+            }
+        }
+
+        // Proper ZIP file parser (simplified for DOCX)
+        async function parseZipFile(arrayBuffer) {
+            const data = new Uint8Array(arrayBuffer);
+            const zipEntries = {};
+            
+            console.log('🗜️ Parsing ZIP file structure...');
+            
+            // Find ZIP entries using central directory
+            let pos = data.length - 22; // Start from end of central directory record
+            
+            // Search for end of central directory signature
+            while (pos >= 0) {
+                if (data[pos] === 0x50 && data[pos + 1] === 0x4b && 
+                    data[pos + 2] === 0x05 && data[pos + 3] === 0x06) {
+                    break;
+                }
+                pos--;
+            }
+            
+            if (pos < 0) {
+                throw new Error('Invalid ZIP file: End of central directory not found');
+            }
+            
+            // Read central directory offset
+            const centralDirOffset = readUint32LE(data, pos + 16);
+            const centralDirEntries = readUint16LE(data, pos + 10);
+            
+            console.log('📁 Central directory entries:', centralDirEntries);
+            
+            // Parse central directory entries
+            let cdPos = centralDirOffset;
+            for (let i = 0; i < centralDirEntries; i++) {
+                if (readUint32LE(data, cdPos) !== 0x02014b50) {
+                    break; // Invalid central directory entry
+                }
+                
+                const filenameLength = readUint16LE(data, cdPos + 28);
+                const extraFieldLength = readUint16LE(data, cdPos + 30);
+                const commentLength = readUint16LE(data, cdPos + 32);
+                const localHeaderOffset = readUint32LE(data, cdPos + 42);
+                
+                // Extract filename
+                const filename = new TextDecoder('utf-8').decode(
+                    data.slice(cdPos + 46, cdPos + 46 + filenameLength)
+                );
+                
+                // Extract file content from local file header
+                const content = await extractFileContent(data, localHeaderOffset, filename);
+                if (content) {
+                    zipEntries[filename] = content;
+                    console.log('📄 Extracted:', filename, 'Size:', content.length);
+                }
+                
+                cdPos += 46 + filenameLength + extraFieldLength + commentLength;
+            }
+            
+            return zipEntries;
+        }
+
+        // Extract individual file content from ZIP
+        async function extractFileContent(data, offset, filename) {
+            if (readUint32LE(data, offset) !== 0x04034b50) {
+                return null; // Invalid local file header
+            }
+            
+            const compressionMethod = readUint16LE(data, offset + 8);
+            const compressedSize = readUint32LE(data, offset + 18);
+            const uncompressedSize = readUint32LE(data, offset + 22);
+            const filenameLength = readUint16LE(data, offset + 26);
+            const extraFieldLength = readUint16LE(data, offset + 28);
+            
+            console.log(`📦 Extracting ${filename}: method=${compressionMethod}, compressed=${compressedSize}, uncompressed=${uncompressedSize}`);
+            
+            const contentStart = offset + 30 + filenameLength + extraFieldLength;
+            const contentData = data.slice(contentStart, contentStart + compressedSize);
+            
+            if (compressionMethod === 0) {
+                // No compression - stored
+                console.log(`📄 ${filename}: Using stored (no compression)`);
+                return new TextDecoder('utf-8').decode(contentData);
+            } else if (compressionMethod === 8) {
+                // DEFLATE compression - use browser's decompression
+                console.log(`📄 ${filename}: Using DEFLATE decompression`);
+                try {
+                    const decompressed = await decompressDeflate(contentData);
+                    const result = new TextDecoder('utf-8').decode(decompressed);
+                    console.log(`✅ ${filename}: Decompressed successfully, ${result.length} chars`);
+                    return result;
+                } catch (error) {
+                    console.warn(`❌ ${filename}: Decompression failed, trying as raw text:`, error);
+                    return new TextDecoder('utf-8', { fatal: false }).decode(contentData);
+                }
+            } else {
+                console.warn(`❌ ${filename}: Unsupported compression method:`, compressionMethod);
+                return new TextDecoder('utf-8', { fatal: false }).decode(contentData);
+            }
+        }
+
+        // Simple DEFLATE decompression using browser APIs
+        async function decompressDeflate(compressedData) {
+            try {
+                if (typeof DecompressionStream !== 'undefined') {
+                    // ZIP uses raw DEFLATE, not zlib-wrapped DEFLATE
+                    const stream = new DecompressionStream('deflate-raw');
+                    const writer = stream.writable.getWriter();
+                    const reader = stream.readable.getReader();
+                    
+                    writer.write(compressedData);
+                    writer.close();
+                    
+                    const chunks = [];
+                    let result;
+                    while (!(result = await reader.read()).done) {
+                        chunks.push(result.value);
+                    }
+                    
+                    const totalLength = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
+                    const decompressed = new Uint8Array(totalLength);
+                    let offset = 0;
+                    for (const chunk of chunks) {
+                        decompressed.set(chunk, offset);
+                        offset += chunk.length;
+                    }
+                    
+                    return decompressed;
+                }
+            } catch (error) {
+                console.warn('DecompressionStream failed:', error);
+                // Try with zlib format as fallback
+                try {
+                    const zlibData = new Uint8Array(compressedData.length + 2);
+                    zlibData[0] = 0x78; // CMF
+                    zlibData[1] = 0x9C; // FLG
+                    zlibData.set(compressedData, 2);
+                    
+                    const stream = new DecompressionStream('deflate');
+                    const writer = stream.writable.getWriter();
+                    const reader = stream.readable.getReader();
+                    
+                    writer.write(zlibData);
+                    writer.close();
+                    
+                    const chunks = [];
+                    let result;
+                    while (!(result = await reader.read()).done) {
+                        chunks.push(result.value);
+                    }
+                    
+                    const totalLength = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
+                    const decompressed = new Uint8Array(totalLength);
+                    let offset = 0;
+                    for (const chunk of chunks) {
+                        decompressed.set(chunk, offset);
+                        offset += chunk.length;
+                    }
+                    
+                    return decompressed;
+                } catch (fallbackError) {
+                    console.warn('Fallback decompression also failed:', fallbackError);
+                }
+            }
+            
+            // Final fallback: return compressed data as-is
+            return compressedData;
+        }
+
+        // Helper functions for reading ZIP data
+        function readUint16LE(data, offset) {
+            return data[offset] | (data[offset + 1] << 8);
+        }
+
+        function readUint32LE(data, offset) {
+            return data[offset] | (data[offset + 1] << 8) | 
+                   (data[offset + 2] << 16) | (data[offset + 3] << 24);
+        }
+
+        // Enhanced function to extract text from Word XML with proper structure
+        function extractTextFromWordXml(xmlContent) {
+            console.log('🔍 Extracting text from Word XML...');
+            console.log('📄 XML content preview:', xmlContent.substring(0, 200));
+            
+            const textParts = [];
+            const paragraphTexts = [];
+            
+            // Method 1: Extract by paragraphs (w:p elements) to preserve structure
+            const paragraphPattern = /<w:p[^>]*>(.*?)<\/w:p>/gs;
+            let paragraphMatch;
+            
+            while ((paragraphMatch = paragraphPattern.exec(xmlContent)) !== null) {
+                const paragraphContent = paragraphMatch[1];
+                const paragraphText = extractTextFromParagraph(paragraphContent);
+                if (paragraphText.trim().length > 0) {
+                    paragraphTexts.push(paragraphText.trim());
+                }
+            }
+            
+            if (paragraphTexts.length > 0) {
+                const structuredText = paragraphTexts.join('\n').replace(/\n+/g, '\n').trim();
+                console.log('✅ Extracted', paragraphTexts.length, 'paragraphs, total length:', structuredText.length);
+                console.log('📄 First paragraph:', paragraphTexts[0] ? paragraphTexts[0].substring(0, 100) + '...' : 'None');
+                return structuredText;
+            }
+            
+            // Method 2: Direct w:t element extraction (fallback)
+            const wtPattern = /<w:t[^>]*>([^<]+)<\/w:t>/g;
+            let textMatch;
+            
+            while ((textMatch = wtPattern.exec(xmlContent)) !== null) {
+                let text = textMatch[1];
+                if (text) {
+                    // Clean up XML entities
+                    text = cleanXmlText(text);
+                    if (text.length > 0 && /[a-zA-Z0-9]/.test(text)) {
+                        textParts.push(text);
+                    }
+                }
+            }
+            
+            if (textParts.length > 0) {
+                const extractedText = textParts.join(' ').replace(/\s+/g, ' ').trim();
+                console.log('📋 Fallback extraction - text parts:', textParts.length, 'Total length:', extractedText.length);
+                return extractedText;
+            }
+            
+            console.log('❌ No text found in XML content');
+            return '';
+        }
+
+        // Extract text from a single paragraph
+        function extractTextFromParagraph(paragraphContent) {
+            const textParts = [];
+            
+            // Look for all w:t elements within this paragraph
+            const wtPattern = /<w:t[^>]*>([^<]*)<\/w:t>/g;
+            let match;
+            
+            while ((match = wtPattern.exec(paragraphContent)) !== null) {
+                let text = match[1];
+                if (text) {
+                    text = cleanXmlText(text);
+                    if (text.length > 0) {
+                        textParts.push(text);
+                    }
+                }
+            }
+            
+            return textParts.join('').trim();
+        }
+
+        // Clean XML text content
+        function cleanXmlText(text) {
+            return text
+                .replace(/&lt;/g, '<')
+                .replace(/&gt;/g, '>')
+                .replace(/&amp;/g, '&')
+                .replace(/&quot;/g, '"')
+                .replace(/&#39;/g, "'")
+                .replace(/&apos;/g, "'")
+                .replace(/&#x([0-9A-Fa-f]+);/g, (match, hex) => {
+                    const code = parseInt(hex, 16);
+                    return code >= 32 && code <= 126 ? String.fromCharCode(code) : ' ';
+                })
+                .replace(/&#(\d+);/g, (match, num) => {
+                    const code = parseInt(num, 10);
+                    return code >= 32 && code <= 126 ? String.fromCharCode(code) : ' ';
+                })
+                .trim();
+        }
+
+        function extractXmlText(arrayBuffer) {
+            const uint8Array = new Uint8Array(arrayBuffer);
+            const text = new TextDecoder('utf-8', { fatal: false }).decode(uint8Array);
+            
+            console.log('🔍 XML extraction - text length:', text.length);
+            console.log('📋 XML extraction - first 200 chars:', text.substring(0, 200));
+            
+            // Multiple XML patterns for different Word document structures
+            const xmlPatterns = [
+                /<w:t[^>]*>([^<]+)<\/w:t>/gi,
+                /<w:t>([^<]+)<\/w:t>/gi,
+                /<text[^>]*>([^<]+)<\/text>/gi,
+                /<t[^>]*>([^<]+)<\/t>/gi,
+                />[^<]{4,}</gi  // Any content between tags that's at least 4 chars
+            ];
+            
+            const foundTexts = new Set(); // Use Set to avoid duplicates
+            
+            for (const pattern of xmlPatterns) {
+                let match;
+                pattern.lastIndex = 0; // Reset regex
+                while ((match = pattern.exec(text)) !== null) {
+                    let textContent = match[1] || match[0];
+                    if (textContent) {
+                        // Clean up the text
+                        textContent = textContent
+                            .replace(/[<>]/g, '')  // Remove any remaining brackets
+                            .replace(/&lt;/g, '<')
+                            .replace(/&gt;/g, '>')
+                            .replace(/&amp;/g, '&')
+                            .replace(/&quot;/g, '"')
+                            .replace(/&#39;/g, "'")
+                            .replace(/[^\x20-\x7E\n\r\t]/g, ' ')  // Remove non-printable chars
+                            .trim();
+                        
+                        if (textContent.length > 2 && /[a-zA-Z]/.test(textContent)) {
+                            foundTexts.add(textContent);
+                        }
+                    }
+                }
+            }
+            
+            if (foundTexts.size > 0) {
+                const extractedText = Array.from(foundTexts).join(' ').replace(/\s+/g, ' ').trim();
+                console.log('✅ XML extraction successful:', extractedText.length, 'chars');
+                return extractedText;
+            }
+            
+            throw new Error('No XML text patterns found');
+        }
+        
+        function extractBroadText(arrayBuffer) {
+            console.log('🔍 Broad text extraction - aggressive pattern matching...');
+            
+            try {
+                // First try the proper ZIP extraction as fallback
+                const zipText = extractFromZipStructure(arrayBuffer);
+                if (zipText && zipText.length > 50) {
+                    console.log('✅ ZIP extraction worked in broad text mode');
+                    return zipText;
+                }
+            } catch (error) {
+                console.log('⚠️ ZIP extraction failed in broad mode, trying raw patterns');
+            }
+            
+            const uint8Array = new Uint8Array(arrayBuffer);
+            const text = new TextDecoder('utf-8', { fatal: false }).decode(uint8Array);
+            
+            // Method 1: Look for specific Word XML patterns more aggressively
+            const wordXmlPatterns = [
+                /<w:t[^>]*>([^<]+)<\/w:t>/gi,
+                /<w:t>([^<]+)<\/w:t>/gi,
+                /<w:r><w:t>([^<]+)<\/w:t><\/w:r>/gi,
+                /<w:p[^>]*>.*?<w:t[^>]*>([^<]+)<\/w:t>.*?<\/w:p>/gi
+            ];
+            
+            const wordTexts = new Set();
+            
+            for (const pattern of wordXmlPatterns) {
+                let match;
+                pattern.lastIndex = 0;
+                while ((match = pattern.exec(text)) !== null) {
+                    let textContent = match[1];
+                    if (textContent) {
+                        textContent = cleanXmlText(textContent);
+                        if (textContent.length > 2 && /[a-zA-Z]/.test(textContent)) {
+                            wordTexts.add(textContent);
+                        }
+                    }
+                }
+            }
+            
+            if (wordTexts.size > 0) {
+                const extractedText = Array.from(wordTexts).join(' ').replace(/\s+/g, ' ').trim();
+                console.log('✅ Found Word XML patterns:', wordTexts.size, 'text elements');
+                return extractedText;
+            }
+            
+            // Method 2: Look for any readable text sequences (fallback)
+            const textMatches = text.match(/[a-zA-Z][a-zA-Z\s\.,;:!?\-'"\d()@]{8,}/g);
+            
+            if (textMatches && textMatches.length > 0) {
+                const cleanedTexts = textMatches
+                    .map(match => match.replace(/[^\x20-\x7E]/g, ' ').replace(/\s+/g, ' ').trim())
+                    .filter(match => match.length > 8 && /[a-zA-Z]/.test(match))
+                    .filter(match => !match.includes('PK') && !match.includes('_rels') && !match.includes('xml'))
+                    .filter(match => !/^[^a-zA-Z]*$/.test(match)); // Must contain letters
+                
+                if (cleanedTexts.length > 0) {
+                    console.log('✅ Found readable text sequences:', cleanedTexts.length);
+                    return cleanedTexts.join(' ').substring(0, 2000);
+                }
+            }
+            
+            throw new Error('No broad text patterns found');
+        }
+        
+        function extractSmartBinary(arrayBuffer) {
+            const uint8Array = new Uint8Array(arrayBuffer);
+            
+            // Convert to string and look for human-readable patterns
+            let text = '';
+            for (let i = 0; i < uint8Array.length; i++) {
+                const byte = uint8Array[i];
+                if ((byte >= 32 && byte <= 126) || byte === 10 || byte === 13 || byte === 9) {
+                    text += String.fromCharCode(byte);
+                } else {
+                    text += ' ';
+                }
+            }
+            
+            // Extract meaningful text chunks
+            const chunks = text
+                .split(/\s{5,}/) // Split on large whitespace gaps
+                .map(chunk => chunk.replace(/\s+/g, ' ').trim())
+                .filter(chunk => {
+                    return chunk.length > 5 && 
+                           /[a-zA-Z]{3,}/.test(chunk) && // Has at least 3 consecutive letters
+                           chunk.length < 200; // Not too long to be garbage
+                });
+            
+            if (chunks.length > 0) {
+                return chunks.join(' ').substring(0, 2000);
+            }
+            
+            throw new Error('No readable text found in binary data');
+        }
+
+        // Enhanced binary text extraction fallback
+        function extractBinaryText(arrayBuffer) {
+            console.log('🔧 Using enhanced binary extraction as final fallback...');
+            
+            try {
+                const uint8Array = new Uint8Array(arrayBuffer);
+                
+                // Method 1: Try character-by-character extraction
+                let cleanText = '';
+                for (let i = 0; i < uint8Array.length; i++) {
+                    const byte = uint8Array[i];
+                    if ((byte >= 32 && byte <= 126) || byte === 10 || byte === 13 || byte === 9) {
+                        cleanText += String.fromCharCode(byte);
+                    } else if (byte >= 128) {
+                        // Handle extended ASCII/Unicode characters
+                        cleanText += ' ';
+                    } else {
+                        cleanText += ' ';
+                    }
+                }
+                
+                // Clean up the text
+                cleanText = cleanText
+                    .replace(/\s{3,}/g, ' ')  // Replace multiple spaces with single space
+                    .replace(/(.)\1{10,}/g, '$1')  // Remove long repeated characters
+                    .trim();
+                
+                // Extract meaningful sentences and phrases
+                const meaningfulChunks = cleanText
+                    .split(/[.!?]+\s+/)  // Split on sentence endings
+                    .concat(cleanText.split(/\s{2,}/))  // Also split on double spaces
+                    .map(chunk => chunk.trim())
+                    .filter(chunk => {
+                        return chunk.length > 10 && 
+                               chunk.length < 300 &&
+                               /[a-zA-Z]{3,}/.test(chunk) &&  // Has meaningful letters
+                               !/[^\x20-\x7E\n\r\t]/.test(chunk);  // Only printable chars
+                    })
+                    .slice(0, 20);  // Limit to first 20 chunks
+                
+                if (meaningfulChunks.length > 0) {
+                    const extractedText = meaningfulChunks.join(' ');
+                    console.log(`✅ Binary extraction found ${extractedText.length} characters of text`);
+                    return extractedText;
+                }
+                
+                // Method 2: Pattern-based extraction as last resort
+                const patterns = [
+                    /[A-Z][a-z]+ [A-Z][a-z]+/g,  // Names
+                    /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g,  // Emails
+                    /\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b/g,  // Phone numbers
+                    /\b[A-Z][a-z]+,\s*[A-Z]{2}\b/g,  // Locations
+                    /\b[A-Z][a-z]+\s+[A-Z][a-z]+\s*,?\s*[A-Z][a-z]*\b/g  // Company names
+                ];
+                
+                const extractedParts = new Set();
+                patterns.forEach(pattern => {
+                    const matches = cleanText.match(pattern);
+                    if (matches) {
+                        matches.forEach(match => extractedParts.add(match));
+                    }
+                });
+                
+                if (extractedParts.size > 2) {
+                    const patternText = Array.from(extractedParts).join(' ') + '\n\n' + 
+                                      cleanText.substring(0, 500).replace(/\s+/g, ' ');
+                    console.log(`✅ Pattern extraction found ${extractedParts.size} patterns`);
+                    return patternText;
+                }
+                
+                return null;
+            } catch (error) {
+                console.error('Enhanced binary text extraction failed:', error);
+                return null;
+            }
+        }
+
+        // Enhanced AI Extraction simulation with better parsing
+        async function simulateAIExtraction(text) {
+            console.log('🤖 Starting enhanced resume extraction...');
+            console.log('📄 Text length:', text.length);
+            console.log('📄 First 200 chars:', text.substring(0, 200));
+            
+            // Check for suspicious binary data patterns
+            const suspiciousBinary = /[\x00-\x08\x0E-\x1F\x7F-\xFF]{10,}/g;
+            const binaryMatches = text.match(suspiciousBinary);
+            if (binaryMatches) {
+                console.warn('⚠️ Detected', binaryMatches.length, 'binary data chunks - cleaning...');
+            }
+            
+            // Simulate API delay
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            // Enhanced text cleaning to remove binary data
+            const cleanedText = text
+                .replace(/[^\x20-\x7E\n\r\t]/g, ' ')  // Remove non-printable characters
+                .replace(/\s{3,}/g, ' ')  // Replace multiple spaces with single space
+                .replace(/(.)\1{5,}/g, '$1')  // Remove long repeated characters
+                .trim();
+            
+            // Clean lines more thoroughly
+            const lines = cleanedText.split(/[\n\r]+/)
+                .map(line => line.trim())
+                .filter(line => line.length > 2 && /[a-zA-Z]/.test(line))  // Must have letters
+                .filter(line => line.length < 1000)  // Not too long to be garbage
+                .filter(line => !/^[^a-zA-Z0-9\s]{5,}/.test(line));  // No lines that start with lots of special chars
+            
+            console.log('📝 Found', lines.length, 'clean lines');
+            console.log('🧹 Cleaned first 200 chars:', cleanedText.substring(0, 200));
+            
+            // Validate that we have enough clean text to work with
+            if (lines.length < 5) {
+                console.warn('⚠️ Very few clean lines found - extraction may be poor');
+            }
+            
+            // Enhanced extraction logic
+            const extracted = {
+                personalInfo: {
+                    name: extractName(cleanedText, lines),
+                    email: extractEmail(cleanedText, lines),
+                    phone: extractPhone(cleanedText, lines),
+                    location: extractLocation(cleanedText, lines),
+                    citizenship: extractCitizenship(cleanedText, lines)
+                },
+                professionalSummary: extractProfessionalSummary(cleanedText, lines),
+                coreSkills: extractSkillsEnhanced(cleanedText, lines),
+                experience: extractExperienceEnhanced(cleanedText, lines),
+                education: extractEducationEnhanced(cleanedText, lines),
+                licenses: extractLicenses(cleanedText, lines),
+                additionalSections: {
+                    tools: extractTools(cleanedText, lines),
+                    languages: extractLanguages(cleanedText, lines),
+                    projects: extractProjects(cleanedText, lines),
+                    certifications: extractCertifications(cleanedText, lines)
+                }
+            };
+
+            console.log('✅ Extraction completed:', extracted);
+            return extracted;
+        }
+
+        // Enhanced extraction functions for better resume parsing
+        function extractName(text, lines) {
+            console.log('🔍 Extracting name...');
+            console.log('📋 First 10 lines for name extraction:', lines.slice(0, 10));
+            
+            // Enhanced name patterns
+            const namePatterns = [
+                /^([A-Z][a-z]+ [A-Z]\. [A-Z][a-z]+)/,  // First M. Last
+                /^([A-Z][a-z]+ [A-Z][a-z]+ [A-Z][a-z]+)/,  // First Middle Last
+                /^([A-Z][a-z]+ [A-Z][a-z]+)/,  // First Last
+                /([A-Z][a-z]+\s[A-Z]\.\s[A-Z][a-z]+)/,  // First M. Last anywhere
+                /([A-Z][A-Z\s]+[A-Z])/,  // ALL CAPS names
+                /^([A-Z][A-Za-z]+ [A-Z][A-Za-z]+)/,  // More flexible case
+                /\b([A-Z][a-z]{2,}\s[A-Z][a-z]{2,})\b/  // Common names
+            ];
+            
+            // Check first 10 lines for name with multiple attempts
+            for (let i = 0; i < Math.min(10, lines.length); i++) {
+                const line = lines[i];
+                console.log(`🔍 Checking line ${i}: "${line}"`);
+                
+                for (const pattern of namePatterns) {
+                    const match = line.match(pattern);
+                    if (match && match[1]) {
+                        const name = match[1].trim();
+                        // Validate name length and content
+                        if (name.length > 4 && name.length < 50 && 
+                            !name.toLowerCase().includes('phone') && 
+                            !name.toLowerCase().includes('email') &&
+                            !name.toLowerCase().includes('new york') &&
+                            name.split(' ').length >= 2) {
+                            console.log('✅ Found name:', name);
+                            return name;
+                        }
+                    }
+                }
+            }
+            
+            // Fallback: look for any reasonable name in full text
+            const fallbackPatterns = [
+                /([A-Z][a-z]{2,}\s[A-Z][a-z]{2,})/g,  // Any two capitalized words
+                /\b([A-Z][a-z]+\s[A-Z][a-z]+)\b/g  // Word boundaries
+            ];
+            
+            for (const pattern of fallbackPatterns) {
+                const matches = text.match(pattern);
+                if (matches) {
+                    for (const match of matches) {
+                        const name = match.trim();
+                        if (name.length > 4 && name.length < 50 && 
+                            !name.toLowerCase().includes('phone') && 
+                            !name.toLowerCase().includes('email') &&
+                            !name.toLowerCase().includes('new york') &&
+                            !name.toLowerCase().includes('university') &&
+                            name.split(' ').length >= 2) {
+                            console.log('✅ Found name (fallback):', name);
+                            return name;
+                        }
+                    }
+                }
+            }
+            
+            console.log('❌ No name found');
+            return '';
+        }
+
+        function extractEmail(text, lines) {
+            console.log('🔍 Extracting email...');
+            console.log('📋 First 10 lines for email extraction:', lines.slice(0, 10));
+            
+            const emailPattern = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g;
+            
+            // First try line by line
+            for (let i = 0; i < Math.min(10, lines.length); i++) {
+                const line = lines[i];
+                const match = line.match(emailPattern);
+                if (match) {
+                    console.log('✅ Found email in line', i, ':', match[0]);
+                    return match[0];
+                }
+            }
+            
+            // Then try full text
+            const matches = text.match(emailPattern);
+            if (matches) {
+                console.log('✅ Found email in full text:', matches[0]);
+                return matches[0];
+            }
+            
+            console.log('❌ No email found');
+            return '';
+        }
+
+        function extractPhone(text, lines) {
+            console.log('🔍 Extracting phone...');
+            const phonePatterns = [
+                /(\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/,
+                /\+\d{1,3}\s\d{3}[-.\s]?\d{3}[-.\s]?\d{4}/,
+                /\(\d{3}\)\s?\d{3}[-.\s]?\d{4}/
+            ];
+            
+            for (const pattern of phonePatterns) {
+                const match = text.match(pattern);
+                if (match) {
+                    console.log('✅ Found phone:', match[0]);
+                    return match[0];
+                }
+            }
+            
+            console.log('❌ No phone found');
+            return '';
+        }
+
+        function extractLocation(text, lines) {
+            console.log('🔍 Extracting location...');
+            const locationPatterns = [
+                /([A-Z][a-z]+,\s*[A-Z]{2})/,  // City, ST
+                /([A-Z][a-z]+,\s*[A-Z][a-z]+)/,  // City, State
+                /(New York,?\s*NY)/i,
+                /(Los Angeles,?\s*CA)/i,
+                /(Chicago,?\s*IL)/i
+            ];
+            
+            for (const pattern of locationPatterns) {
+                const match = text.match(pattern);
+                if (match) {
+                    console.log('✅ Found location:', match[1]);
+                    return match[1];
+                }
+            }
+            
+            console.log('❌ No location found');
+            return '';
+        }
+
+        function extractCitizenship(text, lines) {
+            console.log('🔍 Extracting citizenship...');
+            const citizenshipPatterns = [
+                /(US Citizen)/i,
+                /(United States Citizen)/i,
+                /(Work Authorization)/i,
+                /(Permanent Resident)/i,
+                /(Green Card)/i,
+                /(H1B)/i,
+                /(Visa)/i
+            ];
+            
+            for (const pattern of citizenshipPatterns) {
+                const match = text.match(pattern);
+                if (match) {
+                    console.log('✅ Found citizenship:', match[1]);
+                    return match[1];
+                }
+            }
+            
+            console.log('❌ No citizenship info found');
+            return '';
+        }
+
+        function extractProfessionalSummary(text, lines) {
+            console.log('🔍 Extracting professional summary...');
+            console.log('📋 All lines for summary extraction:', lines);
+            
+            const summaryKeywords = ['summary', 'profile', 'objective', 'overview', 'about', 'professional summary'];
+            
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].toLowerCase();
+                console.log(`🔍 Checking line ${i} for summary keywords: "${line}"`);
+                
+                if (summaryKeywords.some(keyword => line.includes(keyword))) {
+                    console.log('✅ Found summary section at line', i);
+                    // Found section header, get next 2-4 lines
+                    const summaryLines = [];
+                    for (let j = i + 1; j < Math.min(i + 8, lines.length); j++) {
+                        if (lines[j] && lines[j].length > 10 && !lines[j].toLowerCase().includes('core skills')) {
+                            summaryLines.push(lines[j]);
+                        }
+                    }
+                    if (summaryLines.length > 0) {
+                        const summary = summaryLines.join(' ').substring(0, 500);
+                        console.log('✅ Found summary:', summary.substring(0, 100) + '...');
+                        return summary;
+                    }
+                }
+            }
+            
+            // Fallback: look for paragraph-like text in first part of resume
+            const paragraphs = text.split(/\n\s*\n/).filter(p => p.length > 50 && p.length < 800);
+            console.log('📋 Found paragraphs:', paragraphs.length);
+            if (paragraphs.length > 0) {
+                for (const paragraph of paragraphs) {
+                    const summary = paragraph.replace(/\s+/g, ' ').trim();
+                    // Skip if it looks like contact info or section headers
+                    if (!summary.toLowerCase().includes('phone') && 
+                        !summary.toLowerCase().includes('email') &&
+                        !summary.toLowerCase().includes('new york') &&
+                        summary.split(' ').length > 8) {
+                        console.log('✅ Found summary (fallback):', summary.substring(0, 100) + '...');
+                        return summary;
+                    }
+                }
+            }
+            
+            console.log('❌ No summary found');
+            return '';
+        }
+
+        function extractSkillsEnhanced(text, lines) {
+            console.log('🔍 Extracting skills...');
+            console.log('📋 All lines for skills extraction:', lines);
+            
+            const skillsKeywords = ['skills', 'technical', 'expertise', 'proficient', 'technologies', 'competencies', 'core skills'];
+            const skills = new Set();
+            
+            // Method 1: Find skills section
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].toLowerCase();
+                console.log(`🔍 Checking line ${i} for skills keywords: "${line}"`);
+                
+                if (skillsKeywords.some(keyword => line.includes(keyword))) {
+                    console.log('✅ Found skills section at line', i);
+                    // Found skills section, extract next several lines
+                    for (let j = i + 1; j < Math.min(i + 15, lines.length); j++) {
+                        if (lines[j] && lines[j].length > 3 && !lines[j].toLowerCase().includes('professional experience')) {
+                            const skillLine = lines[j];
+                            console.log(`📋 Processing skill line: "${skillLine}"`);
+                            
+                            // Stop if we hit the experience section
+                            if (skillLine.toLowerCase().includes('professional experience') || 
+                                skillLine.toLowerCase().includes('contracts manager') ||
+                                skillLine.toLowerCase().includes('legal & compliance')) {
+                                console.log('📋 Stopping skills extraction - hit experience section');
+                                break;
+                            }
+                            
+                            // Skip lines that look like job titles or company names
+                            if (skillLine.includes(' | ') || skillLine.includes('20') || 
+                                skillLine.match(/^[A-Za-z\s]+\s+Corp\.|Inc\.|LLC/)) {
+                                console.log('📋 Skipping job/company line');
+                                continue;
+                            }
+                            
+                            // Handle skill categories and actual skills content
+                            if (skillLine.includes('drafting') || skillLine.includes('contract') || 
+                                skillLine.includes('management') || skillLine.includes('compliance') ||
+                                skillLine.includes('analysis') || skillLine.includes('negotiating') ||
+                                skillLine.includes('process improvement') || skillLine.includes('collaboration')) {
+                                
+                                console.log('📋 Found skills content line');
+                                const lineSkills = skillLine.replace(/^[•\-\*]\s*/, '')
+                                    .split(/[,;|•&]/)
+                                    .map(s => s.trim())
+                                    .filter(skill => skill.length > 5 && skill.length < 80 && 
+                                           !skill.includes('20') && !skill.includes(' | '));
+                                
+                                lineSkills.forEach(skill => {
+                                    if (skill.length > 5 && skill.length < 80) {
+                                        skills.add(skill);
+                                    }
+                                });
+                            }
+                        }
+                    }
+                    break;
+                }
+            }
+            
+            // Method 2: Look for common professional skills throughout
+            const commonSkills = [
+                'JavaScript', 'Python', 'Java', 'React', 'Node.js', 'SQL', 'HTML', 'CSS',
+                'Project Management', 'Leadership', 'Communication', 'Analysis', 'Negotiation',
+                'Microsoft Office', 'Excel', 'PowerPoint', 'Salesforce', 'Adobe', 'Photoshop',
+                'Contract Management', 'Legal Analysis', 'Risk Assessment', 'Compliance',
+                'Data Analysis', 'Financial Analysis', 'Business Analysis', 'Strategic Planning',
+                'Vendor Management', 'Cross-functional Collaboration', 'SaaS Agreements'
+            ];
+            
+            commonSkills.forEach(skill => {
+                if (text.toLowerCase().includes(skill.toLowerCase())) {
+                    skills.add(skill);
+                }
+            });
+            
+            const skillsArray = Array.from(skills).slice(0, 20); // Limit to 20 skills
+            console.log('✅ Found skills:', skillsArray.length, skillsArray);
+            return skillsArray;
+        }
+
+        function extractExperienceEnhanced(text, lines) {
+            console.log('🔍 Extracting experience...');
+            
+            const experience = [];
+            const experienceKeywords = ['professional experience', 'experience', 'employment', 'work history', 'career'];
+            
+            // Clean lines to remove binary data
+            const cleanLines = lines.map(line => {
+                return line.replace(/[^\x20-\x7E]/g, ' ')
+                          .replace(/\s+/g, ' ')
+                          .trim();
+            }).filter(line => line.length > 2 && /[a-zA-Z]/.test(line));
+            
+            console.log('📝 Experience cleaned lines:', cleanLines.length);
+            
+            // Look for experience section
+            let startIndex = -1;
+            let endIndex = -1;
+            for (let i = 0; i < cleanLines.length; i++) {
+                const line = cleanLines[i].toLowerCase();
+                if (experienceKeywords.some(keyword => line.includes(keyword))) {
+                    startIndex = i + 1;
+                    console.log('✅ Found experience section at line:', i);
+                    break;
+                }
+            }
+            
+            // Find end of experience section (before education)
+            if (startIndex !== -1) {
+                for (let i = startIndex; i < cleanLines.length; i++) {
+                    const line = cleanLines[i].toLowerCase();
+                    if (line.includes('education') || line.includes('licenses') || line.includes('certifications')) {
+                        endIndex = i;
+                        console.log('✅ Found experience section end at line:', i);
+                        break;
+                    }
+                }
+            }
+            
+            if (startIndex !== -1) {
+                const experienceLines = cleanLines.slice(startIndex, endIndex !== -1 ? endIndex : cleanLines.length);
+                console.log('📋 Experience lines to process:', experienceLines.length);
+                console.log('📋 Experience lines:', experienceLines);
+                
+                // Parse experience entries more carefully
+                let currentJob = null;
+                let collectingResponsibilities = false;
+                
+                for (let i = 0; i < experienceLines.length; i++) {
+                    const line = experienceLines[i].trim();
+                    
+                    // Skip empty lines
+                    if (!line) continue;
+                    
+                    console.log(`📋 Processing line ${i}: "${line}"`);
+                    
+                    // Check if this line contains date pattern (company/location info)
+                    if (line.includes(' | ') && line.includes('20') && (line.includes('Present') || line.match(/\d{4}/))) {
+                        console.log('📋 Found job entry line:', line);
+                        
+                        // If we were building a previous job, save it
+                        if (currentJob) {
+                            console.log('✅ Saving previous job:', currentJob);
+                            experience.push(currentJob);
+                        }
+                        
+                        // Parse this job entry
+                        const pipeIndex = line.indexOf(' | ');
+                        const companyLocationPart = line.substring(0, pipeIndex).trim();
+                        const datesAndDescriptionPart = line.substring(pipeIndex + 3).trim();
+                        
+                        // Extract dates and description
+                        let startDate = '', endDate = '', jobDescription = '';
+                        
+                        // Try different date patterns and extract description
+                        if (datesAndDescriptionPart.includes('Present')) {
+                            // Pattern: "2020 Present Description..."
+                            const presentMatch = datesAndDescriptionPart.match(/(\d{4})\s+Present\s+(.+)/);
+                            if (presentMatch) {
+                                startDate = presentMatch[1];
+                                endDate = 'Present';
+                                jobDescription = presentMatch[2] || '';
+                            } else {
+                                // Fallback: just find the year
+                                const yearMatch = datesAndDescriptionPart.match(/(\d{4})/);
+                                if (yearMatch) {
+                                    startDate = yearMatch[1];
+                                    endDate = 'Present';
+                                    // Extract everything after "Present"
+                                    jobDescription = datesAndDescriptionPart.replace(/\d{4}\s+Present\s*/, '').trim();
+                                }
+                            }
+                        } else {
+                            // Pattern: "2017 2018 Description..." or "2020 Description..."
+                            const yearMatches = datesAndDescriptionPart.match(/(\d{4})/g);
+                            if (yearMatches) {
+                                startDate = yearMatches[0];
+                                endDate = yearMatches.length > 1 ? yearMatches[1] : '';
+                                
+                                // Extract description after the dates
+                                let datePattern = yearMatches.length > 1 ? 
+                                    `${yearMatches[0]}\\s+${yearMatches[1]}\\s*` : 
+                                    `${yearMatches[0]}\\s*`;
+                                jobDescription = datesAndDescriptionPart.replace(new RegExp(datePattern), '').trim();
+                            }
+                        }
+                        
+                        // Get title from previous line if available
+                        let title = '';
+                        if (i > 0) {
+                            const prevLine = experienceLines[i - 1].trim();
+                            // Check if previous line looks like a job title (not a description)
+                            if (prevLine && !prevLine.includes('|') && !prevLine.includes('20') && prevLine.length < 100) {
+                                title = prevLine;
+                            }
+                        }
+                        
+                        // Leave company empty for manual entry (as discussed)
+                        // This eliminates parsing errors and lets users input accurate company info
+                        
+                        currentJob = {
+                            title: title || 'Position Title',
+                            company: '', // Leave empty for manual entry
+                            location: '', // Leave empty for manual entry  
+                            startDate: startDate || '',
+                            endDate: endDate || '',
+                            responsibilities: []
+                        };
+                        
+                        // Add job description to responsibilities if found
+                        if (jobDescription && jobDescription.length > 20) {
+                            // Split long job descriptions into sentences
+                            const sentences = jobDescription.split(/\.\s+/)
+                                .filter(s => s.trim().length > 15)
+                                .map(s => s.trim() + (s.endsWith('.') ? '' : '.'));
+                            
+                            if (sentences.length > 1) {
+                                sentences.forEach(sentence => {
+                                    currentJob.responsibilities.push(sentence);
+                                    console.log('📋 Added responsibility from job description:', sentence);
+                                });
+                            } else {
+                                currentJob.responsibilities.push(jobDescription);
+                                console.log('📋 Added full job description:', jobDescription);
+                            }
+                        }
+                        
+                        collectingResponsibilities = true;
+                        console.log('📋 Created new job entry:', currentJob);
+                        
+                    } else if (collectingResponsibilities && currentJob) {
+                        // This might be a responsibility line
+                        // Skip if it looks like another job title or contains dates
+                        if (!line.includes('|') && !line.match(/\d{4}/) && line.length > 10) {
+                            // Clean up the responsibility text
+                            const cleanResp = line.replace(/^[•\-\*]\s*/, '').trim();
+                            if (cleanResp.length > 0) {
+                                // Split long paragraphs into sentences for better readability
+                                const sentences = cleanResp.split(/\.\s+/)
+                                    .filter(s => s.trim().length > 20)
+                                    .map(s => s.trim() + (s.endsWith('.') ? '' : '.'));
+                                
+                                if (sentences.length > 1) {
+                                    // Add each sentence as a separate responsibility
+                                    sentences.forEach(sentence => {
+                                        currentJob.responsibilities.push(sentence);
+                                        console.log('📋 Added responsibility (sentence):', sentence);
+                                    });
+                                } else {
+                                    // Add the whole line as one responsibility
+                                    currentJob.responsibilities.push(cleanResp);
+                                    console.log('📋 Added responsibility (whole):', cleanResp);
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // Don't forget the last job
+                if (currentJob) {
+                    console.log('✅ Saving final job:', currentJob);
+                    experience.push(currentJob);
+                }
+            }
+            
+            // If no experience found, create placeholder
+            if (experience.length === 0) {
+                experience.push({
+                    title: "Professional Experience",
+                    company: "Company Name",
+                    location: "Location",
+                    startDate: "Start Date",
+                    endDate: "End Date",
+                    responsibilities: ["Key responsibilities and achievements"]
+                });
+            }
+            
+            console.log('✅ Found experience entries:', experience.length);
+            return experience;
+        }
+
+        function extractEducationEnhanced(text, lines) {
+            console.log('🔍 Extracting education...');
+            
+            const education = [];
+            const educationKeywords = ['education', 'academic', 'degree', 'university', 'college', 'school'];
+            const degrees = ['bachelor', 'master', 'phd', 'mba', 'jd', 'md', 'bs', 'ba', 'ms', 'ma', 'll.m'];
+            
+            // Clean lines to remove binary data
+            const cleanLines = lines.map(line => {
+                // Remove binary data and non-printable characters
+                return line.replace(/[^\x20-\x7E]/g, ' ')
+                          .replace(/\s+/g, ' ')
+                          .trim();
+            }).filter(line => line.length > 2 && /[a-zA-Z]/.test(line));
+            
+            console.log('📝 Cleaned lines:', cleanLines.length);
+            
+            // Look for education section
+            let startIndex = -1;
+            for (let i = 0; i < cleanLines.length; i++) {
+                const line = cleanLines[i].toLowerCase();
+                if (educationKeywords.some(keyword => line.includes(keyword))) {
+                    startIndex = i + 1;
+                    console.log('✅ Found education section at line:', i, 'Line content:', cleanLines[i]);
+                    break;
+                }
+            }
+            
+            console.log('📋 Education search start index:', startIndex);
+            console.log('📋 Lines from education section:', cleanLines.slice(startIndex !== -1 ? startIndex : 0, startIndex !== -1 ? startIndex + 5 : 5));
+            
+            // Look for degree patterns starting from education section
+            const searchStart = startIndex !== -1 ? startIndex : 0;
+            let foundEducation = false;
+            
+            for (let i = searchStart; i < cleanLines.length; i++) {
+                const line = cleanLines[i].toLowerCase();
+                const originalLine = cleanLines[i];
+                
+                console.log(`📋 Checking line ${i} for education: "${originalLine}"`);
+                
+                // Skip if we're looking at licenses or other sections
+                if (line.includes('licenses') || line.includes('bar admissions') || line.includes('certifications')) {
+                    console.log('📋 Stopping at licenses/bar section');
+                    break;
+                }
+                
+                if (degrees.some(degree => line.includes(degree))) {
+                    console.log('📋 Processing education line:', originalLine);
+                    foundEducation = true;
+                    
+                    // Parse education entries - format: "Institution, Degree - Location | Year - Year"
+                    // Example: "Duke University School of Law, LL.M. - Durham, NC | 2013 - 2014"
+                    
+                    // Split by | to get individual education entries
+                    const educationEntries = originalLine.split(/\s*\|\s*/);
+                    
+                    for (const entry of educationEntries) {
+                        const trimmedEntry = entry.trim();
+                        if (trimmedEntry.length < 10) continue;
+                        
+                        console.log('📋 Processing education entry:', trimmedEntry);
+                        
+                        // Handle the format: "Institution, Degree Location | Year Year"
+                        // Example: "Duke University School of Law, LL.M. Durham, NC | 2013 2014"
+                        let institution = '', degree = '', location = '', year = '';
+                        
+                        // Find the last comma before the degree
+                        const lastCommaIndex = trimmedEntry.lastIndexOf(', ');
+                        if (lastCommaIndex > 0) {
+                            const beforeComma = trimmedEntry.substring(0, lastCommaIndex).trim();
+                            const afterComma = trimmedEntry.substring(lastCommaIndex + 2).trim();
+                            
+                            // Check if what's after the comma contains a degree
+                            const degreeMatch = afterComma.match(/^(bachelor|master|phd|mba|jd|md|bs|ba|ms|ma|ll\.m)/i);
+                            
+                            if (degreeMatch) {
+                                // Format: "Institution, Degree. Location | Year Year"
+                                institution = beforeComma;
+                                
+                                // Find where the degree ends and location starts
+                                const degreeEnd = afterComma.indexOf(degreeMatch[0]) + degreeMatch[0].length;
+                                degree = afterComma.substring(0, degreeEnd).trim();
+                                const remainder = afterComma.substring(degreeEnd).trim();
+                                
+                                // Extract location and year from remainder
+                                const yearMatch = remainder.match(/(\d{4})/);
+                                if (yearMatch) {
+                                    const yearIndex = remainder.indexOf(yearMatch[0]);
+                                    location = remainder.substring(0, yearIndex).trim().replace(/^\.\s*/, '');
+                                    year = yearMatch[0];
+                                } else {
+                                    location = remainder.replace(/^\.\s*/, '');
+                                }
+                            } else {
+                                // Format might be: "Institution Name, City, State | Year Year"
+                                // Look for degree in the institution part
+                                const institutionDegreeMatch = beforeComma.match(/^(.+?),?\s+(bachelor|master|phd|mba|jd|md|bs|ba|ms|ma|ll\.m)/i);
+                                
+                                if (institutionDegreeMatch) {
+                                    institution = institutionDegreeMatch[1].trim();
+                                    degree = institutionDegreeMatch[2].trim();
+                                } else {
+                                    institution = beforeComma;
+                                    degree = 'Degree';
+                                }
+                                
+                                // Location and year from after comma
+                                const yearMatch = afterComma.match(/(\d{4})/);
+                                if (yearMatch) {
+                                    const yearIndex = afterComma.indexOf(yearMatch[0]);
+                                    location = afterComma.substring(0, yearIndex).trim();
+                                    year = yearMatch[0];
+                                } else {
+                                    location = afterComma;
+                                }
+                            }
+                        } else {
+                            // Fallback: try to parse without commas
+                            const degreeMatch = trimmedEntry.match(/\b(bachelor|master|phd|mba|jd|md|bs|ba|ms|ma|ll\.m)[^\n,]*/i);
+                            
+                            if (degreeMatch) {
+                                const degreeIndex = trimmedEntry.toLowerCase().indexOf(degreeMatch[0].toLowerCase());
+                                institution = trimmedEntry.substring(0, degreeIndex).trim();
+                                degree = degreeMatch[0].trim();
+                                
+                                const remainder = trimmedEntry.substring(degreeIndex + degreeMatch[0].length).trim();
+                                const yearMatch = remainder.match(/(\d{4})/);
+                                if (yearMatch) {
+                                    const yearIndex = remainder.indexOf(yearMatch[0]);
+                                    location = remainder.substring(0, yearIndex).trim();
+                                    year = yearMatch[0];
+                                }
+                            } else {
+                                // Look for university/college/school patterns
+                                const institutionMatch = trimmedEntry.match(/([\w\s]+?(?:university|college|school|institute)[^\n,]*)/i);
+                                if (institutionMatch) {
+                                    institution = institutionMatch[0].trim();
+                                }
+                                degree = trimmedEntry.includes('LL.M') ? 'LL.M' : (trimmedEntry.includes('J.D') ? 'J.D' : 'Degree');
+                                
+                                const yearMatch = trimmedEntry.match(/\b(19|20)\d{2}\b/);
+                                if (yearMatch) {
+                                    year = yearMatch[0];
+                                }
+                            }
+                        }
+                        
+                        const edu = {
+                            degree: degree || 'Degree',
+                            institution: institution || 'Institution',
+                            location: location || '',
+                            year: year || ''
+                        };
+                        
+                        console.log('✅ Found education:', edu);
+                        education.push(edu);
+                    }
+                    break; // Found education section, stop looking
+                }
+            }
+            
+            console.log('📋 Education search completed. Found education:', foundEducation);
+            
+            // If no education found, create placeholder
+            if (education.length === 0) {
+                education.push({
+                    degree: "Degree/Certification *",
+                    institution: "Institution",
+                    location: "",
+                    year: ""
+                });
+            }
+            
+            console.log('✅ Found education entries:', education.length);
+            return education;
+        }
+
+        function extractLicenses(text, lines) {
+            const licenses = [];
+            const licenseKeywords = ['license', 'certification', 'certified', 'credential'];
+            
+            licenseKeywords.forEach(keyword => {
+                const regex = new RegExp(`${keyword}[^\\n]*`, 'gi');
+                const matches = text.match(regex);
+                if (matches) {
+                    licenses.push(...matches.map(m => m.trim()));
+                }
+            });
+            
+            return licenses.slice(0, 5); // Limit to 5
+        }
+
+        function extractTools(text, lines) {
+            const tools = new Set();
+            const toolKeywords = ['microsoft office', 'excel', 'powerpoint', 'word', 'outlook', 'salesforce', 'adobe', 'photoshop'];
+            
+            toolKeywords.forEach(tool => {
+                if (text.toLowerCase().includes(tool)) {
+                    tools.add(tool);
+                }
+            });
+            
+            return Array.from(tools);
+        }
+
+        function extractLanguages(text, lines) {
+            const languages = [];
+            const languagePattern = /(english|spanish|french|german|chinese|japanese|korean|italian|portuguese|russian|arabic)\s*(native|fluent|proficient|basic|conversational)?/gi;
+            
+            let match;
+            while ((match = languagePattern.exec(text)) !== null) {
+                const lang = match[1] + (match[2] ? ` (${match[2]})` : '');
+                languages.push(lang);
+            }
+            
+            return languages;
+        }
+
+        function extractProjects(text, lines) {
+            const projects = [];
+            const projectKeywords = ['project', 'portfolio', 'achievement'];
+            
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].toLowerCase();
+                if (projectKeywords.some(keyword => line.includes(keyword))) {
+                    // Get next few lines as projects
+                    for (let j = i + 1; j < Math.min(i + 5, lines.length); j++) {
+                        if (lines[j] && lines[j].length > 10) {
+                            projects.push(lines[j]);
+                        }
+                    }
+                    break;
+                }
+            }
+            
+            return projects.slice(0, 3);
+        }
+
+        function extractCertifications(text, lines) {
+            return extractLicenses(text, lines); // Same logic for now
+        }
+
+        // Map extracted data to structured form
+        function mapExtractedToStructured() {
+            if (!extractedResumeData) {
+                alert('No extracted data available. Please upload a file first.');
+                return;
+            }
+
+            const data = extractedResumeData;
+            
+            // Map personal info
+            document.getElementById('fullName').value = data.personalInfo.name || '';
+            document.getElementById('email').value = data.personalInfo.email || '';
+            document.getElementById('phone').value = data.personalInfo.phone || '';
+            document.getElementById('location').value = data.personalInfo.location || '';
+            document.getElementById('citizenship').value = data.personalInfo.citizenship || '';
+            
+            // Map other sections
+            document.getElementById('professionalSummary').value = data.professionalSummary || '';
+            document.getElementById('coreSkills').value = Array.isArray(data.coreSkills) ? data.coreSkills.join(', ') : data.coreSkills || '';
+            document.getElementById('certifications').value = data.licenses || '';
+            document.getElementById('languages').value = data.additionalSections.languages || '';
+            document.getElementById('tools').value = data.additionalSections.tools || '';
+            document.getElementById('projects').value = data.additionalSections.projects || '';
+
+            // Clear and populate experience
+            document.getElementById('experienceContainer').innerHTML = '';
+            experienceCounter = 0;
+            if (data.experience && data.experience.length > 0) {
+                data.experience.forEach(exp => {
+                    addExperienceItem();
+                    const container = document.getElementById(`experience-${experienceCounter}`);
+                    container.querySelector('.exp-title').value = exp.title || '';
+                    container.querySelector('.exp-company').value = exp.company || '';
+                    container.querySelector('.exp-location').value = exp.location || '';
+                    container.querySelector('.exp-start').value = exp.startDate || '';
+                    container.querySelector('.exp-end').value = exp.endDate || '';
+                    container.querySelector('.exp-desc').value = Array.isArray(exp.responsibilities) 
+                        ? exp.responsibilities.join('\n') : exp.responsibilities || '';
+                });
+            } else {
+                addExperienceItem();
+            }
+
+            // Clear and populate education
+            document.getElementById('educationContainer').innerHTML = '';
+            educationCounter = 0;
+            if (data.education && data.education.length > 0) {
+                data.education.forEach(edu => {
+                    addEducationItem();
+                    const container = document.getElementById(`education-${educationCounter}`);
+                    container.querySelector('.edu-degree').value = edu.degree || '';
+                    container.querySelector('.edu-institution').value = edu.institution || '';
+                    container.querySelector('.edu-location').value = edu.location || '';
+                    container.querySelector('.edu-year').value = edu.year || '';
+                });
+            } else {
+                addEducationItem();
+            }
+
+            alert('✅ Extracted data mapped to structured form!');
+        }
+
+        // Section Toggle Functions
+        function toggleSection(sectionName) {
+            const content = document.getElementById(sectionName + 'Content');
+            const toggle = document.getElementById(sectionName + 'Toggle');
+            const checkbox = document.getElementById('include' + sectionName.charAt(0).toUpperCase() + sectionName.slice(1));
+            
+            if (content.classList.contains('active')) {
+                content.classList.remove('active');
+                toggle.textContent = '▶';
+            } else {
+                content.classList.add('active');
+                toggle.textContent = '▼';
+                checkbox.checked = true; // Auto-check when expanding
+            }
+        }
+
+        // Dynamic Form Functions
+        function addExperienceItem() {
+            experienceCounter++;
+            const container = document.getElementById('experienceContainer');
+            const item = document.createElement('div');
+            item.className = 'experience-item';
+            item.id = `experience-${experienceCounter}`;
+            
+            item.innerHTML = `
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Job Title *</label>
+                        <input type="text" class="exp-title" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Company *</label>
+                        <input type="text" class="exp-company" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Location</label>
+                        <input type="text" class="exp-location" placeholder="City, State">
+                    </div>
+                    <div class="form-group">
+                        <label>Start Date</label>
+                        <input type="text" class="exp-start" placeholder="MM/YYYY">
+                    </div>
+                    <div class="form-group">
+                        <label>End Date</label>
+                        <input type="text" class="exp-end" placeholder="MM/YYYY or Present">
+                    </div>
+                </div>
+                <div class="form-group full-width">
+                    <label>Job Description & Achievements</label>
+                    <textarea class="exp-desc" placeholder="Describe your responsibilities and achievements..." rows="4"></textarea>
+                </div>
+                <button type="button" class="remove-button" onclick="removeExperienceItem(${experienceCounter})">
+                    Remove Experience
+                </button>
+            `;
+            
+            container.appendChild(item);
+        }
+
+        function removeExperienceItem(id) {
+            const item = document.getElementById(`experience-${id}`);
+            if (item) {
+                item.remove();
+            }
+        }
+
+        function addEducationItem() {
+            educationCounter++;
+            const container = document.getElementById('educationContainer');
+            const item = document.createElement('div');
+            item.className = 'education-item';
+            item.id = `education-${educationCounter}`;
+            
+            item.innerHTML = `
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Degree/Certification *</label>
+                        <input type="text" class="edu-degree" required placeholder="e.g., Bachelor of Science">
+                    </div>
+                    <div class="form-group">
+                        <label>Institution *</label>
+                        <input type="text" class="edu-institution" required placeholder="e.g., University Name">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Location</label>
+                        <input type="text" class="edu-location" placeholder="City, State">
+                    </div>
+                    <div class="form-group">
+                        <label>Year/Date Range</label>
+                        <input type="text" class="edu-year" placeholder="2020 or 2016-2020">
+                    </div>
+                </div>
+                <button type="button" class="remove-button" onclick="removeEducationItem(${educationCounter})">
+                    Remove Education
+                </button>
+            `;
+            
+            container.appendChild(item);
+        }
+
+        function removeEducationItem(id) {
+            const item = document.getElementById(`education-${id}`);
+            if (item) {
+                item.remove();
+            }
+        }
+
+        // Generate structured data from form
+        function generateStructuredData() {
+            const data = {
+                personalInfo: {},
+                professionalSummary: '',
+                coreSkills: [],
+                experience: [],
+                education: [],
+                licenses: [],
+                additionalSections: {}
+            };
+
+            // Personal Information
+            if (document.getElementById('includePersonal').checked) {
+                data.personalInfo = {
+                    name: document.getElementById('fullName').value,
+                    email: document.getElementById('email').value,
+                    phone: document.getElementById('phone').value,
+                    location: document.getElementById('location').value,
+                    citizenship: document.getElementById('citizenship').value
+                };
+            }
+
+            // Professional Summary
+            if (document.getElementById('includeSummary').checked) {
+                data.professionalSummary = document.getElementById('professionalSummary').value;
+            }
+
+            // Core Skills
+            if (document.getElementById('includeSkills').checked) {
+                const skillsText = document.getElementById('coreSkills').value;
+                data.coreSkills = skillsText.split(/[,\n]/).map(skill => skill.trim()).filter(skill => skill.length > 0);
+            }
+
+            // Experience
+            if (document.getElementById('includeExperience').checked) {
+                const experienceItems = document.querySelectorAll('.experience-item');
+                experienceItems.forEach(item => {
+                    const exp = {
+                        title: item.querySelector('.exp-title').value,
+                        company: item.querySelector('.exp-company').value,
+                        location: item.querySelector('.exp-location').value,
+                        startDate: item.querySelector('.exp-start').value,
+                        endDate: item.querySelector('.exp-end').value,
+                        responsibilities: item.querySelector('.exp-desc').value.split('\n').filter(r => r.trim().length > 0)
+                    };
+                    if (exp.title && exp.company) {
+                        data.experience.push(exp);
+                    }
+                });
+            }
+
+            // Education
+            if (document.getElementById('includeEducation').checked) {
+                const educationItems = document.querySelectorAll('.education-item');
+                educationItems.forEach(item => {
+                    const edu = {
+                        degree: item.querySelector('.edu-degree').value,
+                        institution: item.querySelector('.edu-institution').value,
+                        location: item.querySelector('.edu-location').value,
+                        year: item.querySelector('.edu-year').value
+                    };
+                    if (edu.degree && edu.institution) {
+                        data.education.push(edu);
+                    }
+                });
+            }
+
+            // Certifications
+            if (document.getElementById('includeCertifications').checked) {
+                const certs = document.getElementById('certifications').value;
+                data.licenses = certs.split('\n').filter(cert => cert.trim().length > 0);
+            }
+
+            // Additional Information
+            if (document.getElementById('includeAdditional').checked) {
+                data.additionalSections = {
+                    languages: document.getElementById('languages').value.split(/[,\n]/).map(lang => lang.trim()).filter(lang => lang.length > 0),
+                    tools: document.getElementById('tools').value.split(/[,\n]/).map(tool => tool.trim()).filter(tool => tool.length > 0),
+                    projects: document.getElementById('projects').value.split('\n').filter(proj => proj.trim().length > 0)
+                };
+            }
+
+            structuredResumeData = data;
+            document.getElementById('structuredDataDisplay').textContent = JSON.stringify(data, null, 2);
+            
+            // Show success message
+            const statusDiv = document.createElement('div');
+            statusDiv.className = 'status success';
+            statusDiv.innerHTML = '✅ Structured data generated successfully!';
+            document.body.appendChild(statusDiv);
+            setTimeout(() => statusDiv.remove(), 3000);
+        }
+
+        // Clear form
+        function clearForm() {
+            if (confirm('Are you sure you want to clear all form data?')) {
+                document.getElementById('structuredResumeForm').reset();
+                document.getElementById('experienceContainer').innerHTML = '';
+                document.getElementById('educationContainer').innerHTML = '';
+                experienceCounter = 0;
+                educationCounter = 0;
+                addExperienceItem();
+                addEducationItem();
+                structuredResumeData = null;
+                document.getElementById('structuredDataDisplay').textContent = 'Fill out the form to see structured data...';
+            }
+        }
+
+        // Load sample data for testing
+        function loadSampleData() {
+            // Personal Info
+            document.getElementById('fullName').value = 'Ricardo E. Zuloaga';
+            document.getElementById('email').value = 'ricardozuloaga@gmail.com';
+            document.getElementById('phone').value = '+1 917-254-9676';
+            document.getElementById('location').value = 'New York, NY';
+            document.getElementById('citizenship').value = 'United States & Venezuela';
+
+            // Professional Summary
+            document.getElementById('professionalSummary').value = 'Experienced legal and commercial advisor with over a decade of expertise in contract lifecycle management, negotiations, and cross-functional collaboration in dynamic business environments.';
+
+            // Core Skills
+            document.getElementById('coreSkills').value = 'Contract Management, Legal Analysis, Commercial Negotiations, Vendor Management, SaaS Agreements, Risk Assessment, Compliance, Cross-functional Collaboration';
+
+            // Clear and add sample experience
+            document.getElementById('experienceContainer').innerHTML = '';
+            experienceCounter = 0;
+            
+            addExperienceItem();
+            let container = document.getElementById(`experience-${experienceCounter}`);
+            container.querySelector('.exp-title').value = 'Contracts Manager / Senior Legal & Commercial Advisor';
+            container.querySelector('.exp-company').value = 'Zumar Trading Corp.';
+            container.querySelector('.exp-location').value = 'New York, NY';
+            container.querySelector('.exp-start').value = '2020';
+            container.querySelector('.exp-end').value = 'Present';
+            container.querySelector('.exp-desc').value = 'Lead contract lifecycle management and commercial negotiations\nManage vendor agreements and SaaS arrangements\nDevelop contract templates and approval workflows\nEnsure compliance and risk mitigation across all agreements';
+
+            // Clear and add sample education
+            document.getElementById('educationContainer').innerHTML = '';
+            educationCounter = 0;
+            
+            addEducationItem();
+            container = document.getElementById(`education-${educationCounter}`);
+            container.querySelector('.edu-degree').value = 'LL.M.';
+            container.querySelector('.edu-institution').value = 'Duke University School of Law';
+            container.querySelector('.edu-location').value = 'Durham, NC';
+            container.querySelector('.edu-year').value = '2013-2014';
+
+            // Additional sections
+            document.getElementById('certifications').value = 'Licensed Attorney\nContract Management Certification';
+            document.getElementById('languages').value = 'English (Native), Spanish (Fluent)';
+            document.getElementById('tools').value = 'Ironclad, DocuSign CLM, Microsoft Office Suite, Power BI';
+            document.getElementById('projects').value = 'Contract Template Standardization Project\nVendor Management System Implementation';
+
+            // Check relevant boxes
+            document.getElementById('includeCertifications').checked = true;
+            document.getElementById('includeAdditional').checked = true;
+
+            alert('✅ Sample data loaded!');
+        }
+
+        // Compare data structures
+        function compareDataStructures() {
+            if (!extractedResumeData || !structuredResumeData) {
+                alert('Please generate both extracted and structured data first.');
+                return;
+            }
+
+            const resultsDiv = document.getElementById('comparisonResults');
+            resultsDiv.style.display = 'block';
+            
+            const comparison = {
+                extractedFields: Object.keys(flattenObject(extractedResumeData)).length,
+                structuredFields: Object.keys(flattenObject(structuredResumeData)).length,
+                commonFields: findCommonFields(extractedResumeData, structuredResumeData),
+                qualityScore: calculateDataQuality(structuredResumeData)
+            };
+
+            resultsDiv.innerHTML = `
+                <h3>📊 Data Structure Comparison</h3>
+                <div class="json-display">
+                ${JSON.stringify(comparison, null, 2)}
+                </div>
+                <p><strong>Quality Score:</strong> ${comparison.qualityScore}/100</p>
+                <p><strong>Recommendation:</strong> ${comparison.qualityScore > 80 ? '✅ Data structure looks excellent!' : '⚠️ Consider filling out more fields for better results.'}</p>
+            `;
+        }
+
+        // Helper functions
+        function flattenObject(obj, prefix = '') {
+            const flattened = {};
+            for (const key in obj) {
+                if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
+                    Object.assign(flattened, flattenObject(obj[key], prefix + key + '.'));
+                } else {
+                    flattened[prefix + key] = obj[key];
+                }
+            }
+            return flattened;
+        }
+
+        function findCommonFields(obj1, obj2) {
+            const fields1 = Object.keys(flattenObject(obj1));
+            const fields2 = Object.keys(flattenObject(obj2));
+            return fields1.filter(field => fields2.includes(field));
+        }
+
+        function calculateDataQuality(data) {
+            let score = 0;
+            const weights = {
+                personalInfo: 20,
+                professionalSummary: 15,
+                coreSkills: 15,
+                experience: 30,
+                education: 20
+            };
+
+            // Check personal info completeness
+            if (data.personalInfo?.name && data.personalInfo?.email) score += weights.personalInfo;
+            
+            // Check professional summary
+            if (data.professionalSummary && data.professionalSummary.length > 50) score += weights.professionalSummary;
+            
+            // Check skills
+            if (data.coreSkills && data.coreSkills.length >= 3) score += weights.coreSkills;
+            
+            // Check experience
+            if (data.experience && data.experience.length > 0) score += weights.experience;
+            
+            // Check education
+            if (data.education && data.education.length > 0) score += weights.education;
+
+            return score;
+        }
+
+        // Initialize file input handlers
+        document.addEventListener('DOMContentLoaded', function() {
+            const fileInput = document.getElementById('fileInput');
+            const uploadArea = document.getElementById('uploadArea');
+            
+            // File input change handler
+            fileInput.addEventListener('change', handleFileSelect);
+            
+            // Drag and drop handlers
+            uploadArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                uploadArea.style.borderColor = '#007bff';
+                uploadArea.style.backgroundColor = '#f8f9fa';
+            });
+            
+            uploadArea.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                uploadArea.style.borderColor = '#ddd';
+                uploadArea.style.backgroundColor = '#fff';
+            });
+            
+            uploadArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                uploadArea.style.borderColor = '#ddd';
+                uploadArea.style.backgroundColor = '#fff';
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    processFile(files[0]);
+                }
+            });
+            
+            // Click handler for upload area
+            uploadArea.addEventListener('click', function() {
+                fileInput.click();
+            });
+            
+            // Initialize form with first experience and education items
+            addExperienceItem();
+            addEducationItem();
+        });
+
+        // Test job matching with structured data
+        function testJobMatching() {
+            if (!structuredResumeData) {
+                alert('Please generate structured data first.');
+                return;
+            }
+
+            const sampleJob = {
+                title: 'Legal Counsel - Commercial Contracts',
+                company: 'Tech Startup Inc.',
+                description: 'Seeking an experienced legal counsel to manage commercial contracts, vendor agreements, and compliance matters. Must have experience with SaaS agreements and contract lifecycle management.'
+            };
+
+            // Simulate matching logic
+            const matchScore = simulateJobMatching(structuredResumeData, sampleJob);
+            
+            alert(`🎯 Job Matching Test\n\nJob: ${sampleJob.title}\nCompany: ${sampleJob.company}\n\nMatch Score: ${matchScore}%\n\nStructured data is ready for job matching!`);
+        }
+
+        function simulateJobMatching(resumeData, job) {
+            let score = 0;
+            const jobDesc = job.description.toLowerCase();
+            
+            // Check skills match
+            if (resumeData.coreSkills) {
+                const matchingSkills = resumeData.coreSkills.filter(skill => 
+                    jobDesc.includes(skill.toLowerCase())
+                );
+                score += (matchingSkills.length / resumeData.coreSkills.length) * 40;
+            }
+            
+            // Check experience relevance
+            if (resumeData.experience) {
+                const relevantExp = resumeData.experience.filter(exp => 
+                    jobDesc.includes(exp.title.toLowerCase()) || 
+                    exp.responsibilities.some(resp => jobDesc.includes(resp.toLowerCase()))
+                );
+                score += (relevantExp.length / resumeData.experience.length) * 60;
+            }
+            
+            return Math.min(100, Math.round(score));
+        }
+    </script>
+</body>
+</html> 

@@ -114,6 +114,111 @@
             padding: 5px 10px;
             margin: 2px;
         }
+        
+        /* Matrix Styles */
+        .analysis-matrix {
+            margin: 20px 0;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            overflow: hidden;
+        }
+        
+        .analysis-matrix h4 {
+            margin: 0;
+            padding: 16px 20px;
+            background: #f8fafc;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 16px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+        
+        .matrix-table {
+            overflow-x: auto;
+        }
+        
+        .matrix-table table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        
+        .matrix-table th {
+            background: #f8fafc;
+            padding: 12px 8px;
+            text-align: left;
+            font-weight: 600;
+            color: #374151;
+            border-bottom: 2px solid #e5e7eb;
+            white-space: nowrap;
+        }
+        
+        .matrix-table td {
+            padding: 12px 8px;
+            border-bottom: 1px solid #f3f4f6;
+            vertical-align: top;
+            line-height: 1.4;
+        }
+        
+        .matrix-table tr:hover {
+            background: #f9fafb;
+        }
+        
+        .matrix-category {
+            font-weight: 600;
+            color: #374151;
+            max-width: 100px;
+        }
+        
+        .matrix-requirement {
+            color: #6b7280;
+            max-width: 200px;
+        }
+        
+        .matrix-evidence {
+            color: #374151;
+            max-width: 200px;
+        }
+        
+        .matrix-match {
+            font-weight: 600;
+            text-align: center;
+            white-space: nowrap;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 11px;
+        }
+        
+        .match-strong {
+            background: rgba(34, 197, 94, 0.15);
+            color: #15803d;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+        
+        .match-exceeds {
+            background: rgba(59, 130, 246, 0.15);
+            color: #1d4ed8;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+        
+        .match-partial {
+            background: rgba(251, 191, 36, 0.15);
+            color: #d97706;
+            border: 1px solid rgba(251, 191, 36, 0.3);
+        }
+        
+        .match-missing {
+            background: rgba(239, 68, 68, 0.15);
+            color: #dc2626;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        
+        .matrix-action {
+            color: #6b7280;
+            font-style: italic;
+            max-width: 150px;
+        }
     </style>
 </head>
 <body>
@@ -339,7 +444,7 @@ PREFERRED:
         }
 
         async function calculateJobMatch(job, resumeText, apiKey, useGPT4, detailedAnalysis, showPrompt) {
-            const matchPrompt = `You are an expert career counselor and ATS system. Analyze how well this resume matches the job requirements and provide a detailed scoring.
+            const matchPrompt = `You are an expert career counselor and ATS system. Analyze how well this resume matches the job requirements.
 
 JOB POSTING:
 Title: ${job.title}
@@ -349,20 +454,34 @@ Description: ${job.description}
 RESUME:
 ${resumeText}
 
-Please provide a comprehensive match analysis with:
-1. Overall match score (0-100)
-2. Key strengths (skills/experience that match well)
-3. Key gaps (missing requirements)
-4. Specific recommendations for improvement
+Create a Requirements vs Evidence Matrix analysis. Break down job requirements by category and match them with resume evidence.
 
-Format your response as JSON:
+Format response as JSON with matrix structure:
 {
   "overallScore": 85,
-  "strengths": ["5+ years Python experience matches senior requirement", "Machine learning background aligns with AI focus"],
-  "gaps": ["No AWS certification mentioned", "Limited team leadership experience"],
-  "recommendations": ["Highlight any cloud experience", "Emphasize collaborative projects"],
-  "reasoning": "Strong technical match with minor gaps in infrastructure and leadership"
-}`;
+  "reasoning": "Strong technical match with minor gaps in leadership",
+  "strengths": ["5+ years Python experience", "Strong React background"],
+  "gaps": ["No AWS certification", "Limited team leadership"],
+  "recommendations": ["Highlight cloud experience", "Emphasize collaborative projects"],
+  "matrix": [
+    {
+      "category": "Technical Skills",
+      "requirement": "5+ years Python experience",
+      "evidence": "5+ years developing web applications using Python",
+      "matchLevel": "strong",
+      "gapAction": ""
+    },
+    {
+      "category": "Leadership",
+      "requirement": "Team leadership experience",
+      "evidence": "Not mentioned",
+      "matchLevel": "missing",
+      "gapAction": "Add examples of leading projects or mentoring"
+    }
+  ]
+}
+
+Use these match levels: "strong", "exceeds", "partial", "missing"`;
 
             const model = useGPT4 ? 'gpt-4' : 'gpt-3.5-turbo';
             const startTime = Date.now();
@@ -427,6 +546,7 @@ Format your response as JSON:
                 gaps: matchData.gaps || [],
                 recommendations: matchData.recommendations || [],
                 reasoning: matchData.reasoning || '',
+                matrix: matchData.matrix || [],
                 analyzedAt: new Date().toISOString(),
                 // Test metadata
                 model: model,
@@ -442,12 +562,16 @@ Format your response as JSON:
             const scoreClass = getScoreClass(matchData.score);
             const scoreIcon = getScoreIcon(matchData.score);
             
+            const matrixHtml = matchData.matrix && matchData.matrix.length > 0 ? renderMatrix(matchData.matrix) : '';
+            
             const html = `
                 <div class="section">
                     <h3>📊 Match Results</h3>
                     <div class="match-score ${scoreClass}">
                         ${scoreIcon} ${matchData.score}%
                     </div>
+                    
+                    ${matrixHtml}
                     
                     <div class="result success">
 <strong>✅ Strengths:</strong>
@@ -502,6 +626,70 @@ ${matchData.reasoning}
             if (score >= 50) return '🟡';
             if (score >= 30) return '🟠';
             return '🔴';
+        }
+
+        function renderMatrix(matrix) {
+            if (!matrix || !Array.isArray(matrix) || matrix.length === 0) {
+                return '';
+            }
+            
+            function getMatchClass(matchLevel) {
+                const levelMap = {
+                    'strong': 'match-strong',
+                    'exceeds': 'match-exceeds', 
+                    'partial': 'match-partial',
+                    'missing': 'match-missing'
+                };
+                return levelMap[matchLevel] || 'match-missing';
+            }
+            
+            function getMatchIcon(matchLevel) {
+                const iconMap = {
+                    'strong': '🟢',
+                    'exceeds': '🔵',
+                    'partial': '🟡', 
+                    'missing': '🔴'
+                };
+                return iconMap[matchLevel] || '⚪';
+            }
+            
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+            
+            return `
+            <div class="analysis-matrix">
+                <h4>📋 Requirements vs Evidence Matrix</h4>
+                <div class="matrix-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Job Requirement</th>
+                                <th>Resume Evidence</th>
+                                <th>Match Level</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${matrix.map(row => `
+                                <tr>
+                                    <td class="matrix-category">${escapeHtml(row.category || '')}</td>
+                                    <td class="matrix-requirement">${escapeHtml(row.requirement || '')}</td>
+                                    <td class="matrix-evidence">${escapeHtml(row.evidence || 'Not mentioned')}</td>
+                                    <td class="matrix-match ${getMatchClass(row.matchLevel)}">
+                                        ${getMatchIcon(row.matchLevel)} ${row.matchLevel || 'unknown'}
+                                    </td>
+                                    <td class="matrix-action">${escapeHtml(row.gapAction || '')}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            `;
         }
 
         function showResult(message, type) {

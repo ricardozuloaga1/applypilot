@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>8-Variable Job Matching System Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .system-info {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        
+        .system-info h2 {
+            color: #1976d2;
+            margin-top: 0;
+        }
+        
+        .variables-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .variable-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #1976d2;
+        }
+        
+        .variable-name {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .variable-weight {
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .variable-description {
+            color: #555;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+        
+        .input-section {
+            margin-bottom: 30px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .primary-btn {
+            background-color: #1976d2;
+            color: white;
+        }
+        
+        .primary-btn:hover {
+            background-color: #1565c0;
+        }
+        
+        .secondary-btn {
+            background-color: #666;
+            color: white;
+        }
+        
+        .secondary-btn:hover {
+            background-color: #555;
+        }
+        
+        .success-btn {
+            background-color: #2e7d32;
+            color: white;
+        }
+        
+        .success-btn:hover {
+            background-color: #1b5e20;
+        }
+        
+        .warning-btn {
+            background-color: #ed6c02;
+            color: white;
+        }
+        
+        .warning-btn:hover {
+            background-color: #c15003;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .error {
+            background-color: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+        
+        .results-container {
+            margin-top: 30px;
+            padding: 20px;
+            background: #fafafa;
+            border-radius: 8px;
+        }
+        
+        .score-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .score-header h3 {
+            color: #1976d2;
+            font-size: 1.8em;
+            margin-bottom: 10px;
+        }
+        
+        /* NEW: Score Visualization Styles */
+        .score-visualization {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 20px;
+            margin: 10px 0 20px 0;
+        }
+        
+        .overall-score-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #e0e0e0;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .score-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: conic-gradient(#1976d2 0% var(--score-percent, 0%), #e5e7eb var(--score-percent, 0%) 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            position: relative;
+        }
+        
+        .score-circle::before {
+            content: '';
+            position: absolute;
+            width: 90px;
+            height: 90px;
+            background: white;
+            border-radius: 50%;
+            top: 15px;
+            left: 15px;
+        }
+        
+        .score-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #1976d2;
+            z-index: 1;
+        }
+        
+        .score-label {
+            font-size: 0.9em;
+            color: #666;
+            z-index: 1;
+        }
+        
+        .score-status {
+            font-weight: bold;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+        
+        .score-status.high {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .score-status.medium {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .score-status.low {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .score-status.very-low {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .variables-chart {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .variables-chart h4 {
+            color: #1976d2;
+            margin: 0 0 15px 0;
+            font-size: 1.2em;
+        }
+        
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .chart-tabs {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .chart-tab {
+            padding: 8px 12px;
+            border: 1px solid #e0e0e0;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+        }
+        
+        .chart-tab:hover {
+            background: #f5f5f5;
+            border-color: #1976d2;
+        }
+        
+        .chart-tab.active {
+            background: #1976d2;
+            color: white;
+            border-color: #1976d2;
+        }
+        
+        .chart-content {
+            position: relative;
+        }
+        
+        .chart-view {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        
+        .chart-view.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .chart-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .bar-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            opacity: 0;
+            animation: slideInUp 0.5s ease-out forwards;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .bar-item:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        
+        @keyframes slideInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .bar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .bar-name-section {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        
+        .bar-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 0.9em;
+        }
+        
+        .bar-contribution {
+            font-size: 0.8em;
+            color: #666;
+            font-style: italic;
+        }
+        
+        .bar-score {
+            font-weight: bold;
+            color: #1976d2;
+            font-size: 0.9em;
+        }
+        
+        .bar-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+        
+        .bar-background {
+            flex: 1;
+            height: 20px;
+            background: #e5e7eb;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .bar-fill {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.8s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .bar-fill::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            animation: shimmer 2s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+        
+        .bar-fill.high {
+            background: linear-gradient(90deg, #22c55e, #16a34a);
+        }
+        
+        .bar-fill.medium {
+            background: linear-gradient(90deg, #eab308, #ca8a04);
+        }
+        
+        .bar-fill.low {
+            background: linear-gradient(90deg, #f97316, #ea580c);
+        }
+        
+        .bar-fill.very-low {
+            background: linear-gradient(90deg, #ef4444, #dc2626);
+        }
+        
+        .bar-fill.na {
+            background: linear-gradient(90deg, #9ca3af, #6b7280);
+        }
+        
+        .bar-benchmark {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #374151;
+            opacity: 0.7;
+        }
+        
+        .bar-weight {
+            font-size: 0.8em;
+            color: #666;
+            white-space: nowrap;
+            min-width: 80px;
+        }
+        
+        .bar-details {
+            display: none;
+            background: #f8f9fa;
+            border-radius: 6px;
+            padding: 10px;
+            margin-top: 8px;
+            font-size: 0.85em;
+        }
+        
+        .bar-item:hover .bar-details {
+            display: block;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        
+        .bar-requirement {
+            margin-bottom: 8px;
+            color: #333;
+        }
+        
+        .bar-evidence {
+            color: #333;
+        }
+        
+        .bar-requirement strong,
+        .bar-evidence strong {
+            color: #1976d2;
+        }
+        
+        /* Not Applicable (N/A) Variable Styling */
+        .bar-item.not-applicable {
+            opacity: 0.7;
+            background: #f9fafb;
+            border-color: #d1d5db;
+        }
+        
+        .bar-item.not-applicable .bar-name {
+            color: #6b7280;
+        }
+        
+        .bar-item.not-applicable .bar-contribution {
+            color: #9ca3af;
+        }
+        
+        .variable-item.not-applicable {
+            opacity: 0.7;
+            background: #f9fafb;
+            border-left-color: #d1d5db;
+        }
+        
+        .variable-item.not-applicable .variable-name {
+            color: #6b7280;
+        }
+        
+        /* Vertical Bar Chart Styles */
+        .vertical-chart-container {
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-end;
+            height: 300px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            gap: 10px;
+        }
+        
+        .vertical-bar-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            opacity: 0;
+            animation: slideInUp 0.5s ease-out forwards;
+        }
+        
+        .vertical-bar-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 200px;
+            position: relative;
+        }
+        
+        .vertical-bar-background {
+            width: 40px;
+            height: 180px;
+            background: #e5e7eb;
+            border-radius: 20px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: flex-end;
+        }
+        
+        .vertical-bar-fill {
+            width: 100%;
+            border-radius: 20px;
+            transition: height 0.8s ease-out;
+            position: relative;
+        }
+        
+        .vertical-bar-fill.high {
+            background: linear-gradient(180deg, #22c55e, #16a34a);
+        }
+        
+        .vertical-bar-fill.medium {
+            background: linear-gradient(180deg, #eab308, #ca8a04);
+        }
+        
+        .vertical-bar-fill.low {
+            background: linear-gradient(180deg, #f97316, #ea580c);
+        }
+        
+        .vertical-bar-fill.very-low {
+            background: linear-gradient(180deg, #ef4444, #dc2626);
+        }
+        
+        .vertical-bar-fill.na {
+            background: linear-gradient(180deg, #9ca3af, #6b7280);
+        }
+        
+        .vertical-bar-item.not-applicable {
+            opacity: 0.7;
+        }
+        
+        .vertical-bar-item.not-applicable .vertical-bar-name {
+            color: #6b7280;
+        }
+        
+        .vertical-bar-item.not-applicable .vertical-bar-weight {
+            color: #9ca3af;
+        }
+        
+        .vertical-bar-benchmark {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #374151;
+            opacity: 0.7;
+        }
+        
+        .vertical-bar-score {
+            font-size: 0.9em;
+            font-weight: bold;
+            color: #1976d2;
+            margin-top: 10px;
+        }
+        
+        .vertical-bar-label {
+            text-align: center;
+            margin-top: 10px;
+            max-width: 80px;
+        }
+        
+        .vertical-bar-name {
+            font-size: 0.8em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+            line-height: 1.2;
+        }
+        
+        .vertical-bar-weight {
+            font-size: 0.7em;
+            color: #666;
+        }
+        
+        /* Comparison Chart Styles */
+        .comparison-chart-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .comparison-item {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            opacity: 0;
+            animation: slideInUp 0.5s ease-out forwards;
+            transition: all 0.3s ease;
+        }
+        
+        .comparison-item:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        
+        .comparison-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .comparison-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 0.9em;
+        }
+        
+        .comparison-status {
+            font-size: 1.2em;
+            font-weight: bold;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        
+        .comparison-status.meets {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .comparison-status.below {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .comparison-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .comparison-bar-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .comparison-label {
+            font-size: 0.8em;
+            color: #666;
+            min-width: 70px;
+        }
+        
+        .comparison-bar-bg {
+            flex: 1;
+            height: 16px;
+            background: #e5e7eb;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .comparison-bar-fill {
+            height: 100%;
+            border-radius: 8px;
+            transition: width 0.8s ease-out;
+        }
+        
+        .comparison-bar-fill.high {
+            background: linear-gradient(90deg, #22c55e, #16a34a);
+        }
+        
+        .comparison-bar-fill.medium {
+            background: linear-gradient(90deg, #eab308, #ca8a04);
+        }
+        
+        .comparison-bar-fill.low {
+            background: linear-gradient(90deg, #f97316, #ea580c);
+        }
+        
+        .comparison-bar-fill.very-low {
+            background: linear-gradient(90deg, #ef4444, #dc2626);
+        }
+        
+        .comparison-bar-fill.required {
+            background: linear-gradient(90deg, #6b7280, #4b5563);
+        }
+        
+        .comparison-bar-fill.na {
+            background: linear-gradient(90deg, #9ca3af, #6b7280);
+        }
+        
+        .comparison-item.not-applicable {
+            opacity: 0.7;
+            background: #f9fafb;
+            border-color: #d1d5db;
+        }
+        
+        .comparison-item.not-applicable .comparison-name {
+            color: #6b7280;
+        }
+        
+        .comparison-status.na {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+        
+        .comparison-score {
+            font-size: 0.8em;
+            font-weight: bold;
+            color: #1976d2;
+            min-width: 40px;
+            text-align: right;
+        }
+        
+        .comparison-weight {
+            font-size: 0.8em;
+            color: #666;
+        }
+        
+        /* Responsive design for score visualization */
+        @media (max-width: 768px) {
+            .score-visualization {
+                grid-template-columns: 1fr;
+            }
+            
+            .overall-score-card {
+                order: 2;
+            }
+            
+            .variables-chart {
+                order: 1;
+            }
+        }
+        
+        .variables-breakdown {
+            margin-bottom: 15px;
+        }
+        
+        .variables-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .variable-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #ddd;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .variable-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .variable-name {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .variable-score {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .score-high {
+            background-color: #22c55e;
+        }
+        
+        .score-medium {
+            background-color: #eab308;
+        }
+        
+        .score-low {
+            background-color: #f97316;
+        }
+        
+        .score-very-low {
+            background-color: #ef4444;
+        }
+        
+        .score-na {
+            background-color: #9ca3af;
+            color: white;
+        }
+        
+        .variable-weight {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+        }
+        
+        /* NEW: Improved variable requirements and evidence styling */
+        .variable-requirements {
+            margin-bottom: 10px;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border-left: 3px solid #1976d2;
+        }
+        
+        .variable-requirements strong {
+            color: #1976d2;
+            display: block;
+            margin-bottom: 6px;
+        }
+        
+        .variable-requirements p {
+            margin: 0;
+            color: #333;
+            line-height: 1.4;
+        }
+        
+        .variable-evidence {
+            padding: 12px;
+            background: #f0f8ff;
+            border-radius: 6px;
+            border-left: 3px solid #22c55e;
+        }
+        
+        .variable-evidence strong {
+            color: #22c55e;
+            display: block;
+            margin-bottom: 6px;
+        }
+        
+        .variable-evidence p {
+            margin: 0;
+            color: #333;
+            line-height: 1.4;
+        }
+        
+        .summary {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #1976d2;
+        }
+        
+        .summary h4 {
+            color: #1976d2;
+            margin-top: 0;
+        }
+        
+        .performance-info {
+            background: #e8f5e8;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .performance-info h3 {
+            color: #2e7d32;
+            margin-top: 0;
+        }
+        
+        .speed-comparison {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 10px;
+        }
+        
+        .speed-item {
+            text-align: center;
+        }
+        
+        .speed-time {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #1976d2;
+        }
+        
+        .speed-label {
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        /* Fallback text breakdown styles */
+        .text-breakdown {
+            max-width: 100%;
+            margin: 0 auto;
+            text-align: left;
+        }
+        
+        .breakdown-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        
+        .color-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+        
+        .breakdown-item .variable-name {
+            font-weight: normal;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>8-Variable Job Matching System Test</h1>
+        
+        <div class="system-info">
+            <h2>🎯 Fixed 8-Variable System</h2>
+            <p>This streamlined system focuses on 8 core essential requirements for fast, accurate job matching without overcomplicating the analysis.</p>
+            
+            <div class="variables-list">
+                <div class="variable-card">
+                    <div class="variable-name">Technical Skills</div>
+                    <div class="variable-weight">Weight: 31%</div>
+                    <div class="variable-description">Required technologies, tools, and software</div>
+                </div>
+                <div class="variable-card">
+                    <div class="variable-name">Experience Level</div>
+                    <div class="variable-weight">Weight: 20%</div>
+                    <div class="variable-description">Years of relevant experience required</div>
+                </div>
+                <div class="variable-card">
+                    <div class="variable-name">Job Functions</div>
+                    <div class="variable-weight">Weight: 13%</div>
+                    <div class="variable-description">Core responsibilities and duties</div>
+                </div>
+                <div class="variable-card">
+                    <div class="variable-name">Industry Experience</div>
+                    <div class="variable-weight">Weight: 11%</div>
+                    <div class="variable-description">Specific industry or domain knowledge</div>
+                </div>
+                <div class="variable-card">
+                    <div class="variable-name">Education Requirements</div>
+                    <div class="variable-weight">Weight: 9%</div>
+                    <div class="variable-description">Degree level and field requirements</div>
+                </div>
+                <div class="variable-card">
+                    <div class="variable-name">Certifications</div>
+                    <div class="variable-weight">Weight: 9%</div>
+                    <div class="variable-description">Professional certifications and licenses</div>
+                </div>
+                <div class="variable-card">
+                    <div class="variable-name">Soft Skills</div>
+                    <div class="variable-weight">Weight: 7%</div>
+                    <div class="variable-description">Communication, leadership, and interpersonal skills</div>
+                </div>
+                <div class="variable-card">
+                    <div class="variable-name">Special Requirements</div>
+                    <div class="variable-weight">Weight: 0% (BINARY GATE)</div>
+                    <div class="variable-description">Security clearance, travel, work authorization - Must meet if required</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="performance-info">
+            <h3>⚡ Performance Optimized</h3>
+            <p>This system is designed for speed and accuracy with strict matching criteria.</p>
+            <div class="speed-comparison">
+                <div class="speed-item">
+                    <div class="speed-time">5-10 seconds</div>
+                    <div class="speed-label">Target Processing Time</div>
+                </div>
+                <div class="speed-item">
+                    <div class="speed-time">8 variables</div>
+                    <div class="speed-label">Fixed Analysis Points</div>
+                </div>
+                <div class="speed-item">
+                    <div class="speed-time">100% match</div>
+                    <div class="speed-label">Evidence-Based Scoring</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="input-section">
+            <label for="apiKey">OpenAI API Key:</label>
+            <input type="text" id="apiKey" placeholder="Enter your OpenAI API key">
+        </div>
+        
+        <div class="input-section">
+            <label for="jobTitle">Job Title:</label>
+            <input type="text" id="jobTitle" placeholder="e.g., Senior Software Engineer">
+        </div>
+        
+        <div class="input-section">
+            <label for="company">Company:</label>
+            <input type="text" id="company" placeholder="e.g., Tech Corp">
+        </div>
+        
+        <div class="input-section">
+            <label for="jobDescription">Job Description:</label>
+            <textarea id="jobDescription" placeholder="Paste the complete job description here..."></textarea>
+        </div>
+        
+        <div class="input-section">
+            <label for="resume">Resume:</label>
+            <textarea id="resume" placeholder="Paste the candidate's resume here..."></textarea>
+        </div>
+        
+        <div class="buttons">
+            <button onclick="runFixedVariableTest()" class="primary-btn">
+                🎯 Run 8-Variable Analysis
+            </button>
+            <button onclick="clearResults()" class="secondary-btn">
+                Clear Results
+            </button>
+            <button onclick="loadSampleData()" class="success-btn">
+                Load Sample Data
+            </button>
+            <button onclick="testVisualization()" class="warning-btn">
+                🧪 Test Visualization
+            </button>
+        </div>
+        
+        <div id="results"></div>
+    </div>
+    
+    <script src="hybrid-dynamic-matching-system.js"></script>
+    
+    <script>
+        let matchingSystem;
+        
+        // Initialize the system
+        function initializeSystem() {
+            const apiKey = document.getElementById('apiKey').value;
+            if (!apiKey) {
+                alert('Please enter your OpenAI API key');
+                return false;
+            }
+            
+            matchingSystem = new HybridDynamicMatchingSystem(apiKey);
+            return true;
+        }
+        
+        // Run 8-variable analysis
+        async function runFixedVariableTest() {
+            if (!initializeSystem()) return;
+            
+            const jobTitle = document.getElementById('jobTitle').value;
+            const company = document.getElementById('company').value;
+            const jobDescription = document.getElementById('jobDescription').value;
+            const resume = document.getElementById('resume').value;
+            
+            if (!jobTitle || !company || !jobDescription || !resume) {
+                alert('Please fill in all fields');
+                return;
+            }
+            
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<div class="loading">🔄 Running 8-variable analysis... This should take 5-10 seconds.</div>';
+            
+            const startTime = Date.now();
+            
+            try {
+                const results = await matchingSystem.performMatching(
+                    jobDescription, 
+                    jobTitle, 
+                    company, 
+                    resume
+                );
+                
+                const endTime = Date.now();
+                const processingTime = ((endTime - startTime) / 1000).toFixed(1);
+                
+                if (results.success) {
+                    resultsDiv.innerHTML = matchingSystem.formatResults(results);
+                    
+                    // Add processing time info
+                    const processingInfo = document.createElement('div');
+                    processingInfo.className = 'performance-info';
+                    processingInfo.innerHTML = `
+                        <h3>⚡ Processing Complete</h3>
+                        <p>Analysis completed in ${processingTime} seconds</p>
+                        <div class="speed-comparison">
+                            <div class="speed-item">
+                                <div class="speed-time">${processingTime}s</div>
+                                <div class="speed-label">Actual Time</div>
+                            </div>
+                            <div class="speed-item">
+                                <div class="speed-time">${results.totalVariables}</div>
+                                <div class="speed-label">Variables Analyzed</div>
+                            </div>
+                            <div class="speed-item">
+                                <div class="speed-time">${results.weightedScore}%</div>
+                                <div class="speed-label">Match Score</div>
+                            </div>
+                        </div>
+                    `;
+                    resultsDiv.prepend(processingInfo);
+                    
+                    // Set up score circle animation
+                    const scoreCircle = document.querySelector('.score-circle');
+                    if (scoreCircle) {
+                        scoreCircle.style.setProperty('--score-percent', `${results.weightedScore}%`);
+                    }
+                    
+                    // Initialize chart tabs and animations
+                    initializeChartTabs();
+                    
+                    // Initialize bar chart animations after DOM is ready
+                    setTimeout(() => {
+                        if (matchingSystem) {
+                            matchingSystem.initializeBarChartAnimations();
+                        }
+                    }, 100);
+                } else {
+                    resultsDiv.innerHTML = `<div class="error">Error: ${results.error}</div>`;
+                }
+                
+            } catch (error) {
+                const endTime = Date.now();
+                const processingTime = ((endTime - startTime) / 1000).toFixed(1);
+                resultsDiv.innerHTML = `<div class="error">Error after ${processingTime}s: ${error.message}</div>`;
+            }
+        }
+        
+        // Clear results
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+        
+        // Test visualization functionality
+        function testVisualization() {
+            const resultsDiv = document.getElementById('results');
+            
+            // Create test evaluation data
+            const testEvaluation = {
+                evaluation: [
+                    { variable: 'Technical Skills', score: 85, job_requirements: 'Proficiency in JavaScript, React, and Node.js', candidate_evidence: 'Candidate has 5+ years experience with JavaScript, React, and Node.js' },
+                    { variable: 'Experience Level', score: 78, job_requirements: '5+ years of software development experience', candidate_evidence: 'Candidate has 6 years of professional software development experience' },
+                    { variable: 'Job Functions', score: 92, job_requirements: 'Design and develop scalable applications', candidate_evidence: 'Candidate has led development of multiple scalable applications' },
+                    { variable: 'Industry Experience', score: 45, job_requirements: 'Experience in fintech industry preferred', candidate_evidence: 'Limited fintech experience but strong general software background' },
+                    { variable: 'Education Requirements', score: 70, job_requirements: 'Bachelor\'s degree in Computer Science or related field', candidate_evidence: 'Bachelor\'s degree in Computer Science from accredited university' },
+                    { variable: 'Certifications', score: 'N/A', job_requirements: 'No specific certifications required', candidate_evidence: 'Not applicable - no requirements specified' },
+                    { variable: 'Soft Skills', score: 88, job_requirements: 'Strong communication and leadership skills', candidate_evidence: 'Demonstrated leadership through team management and mentoring roles' },
+                    { variable: 'Special Requirements', score: 'N/A', job_requirements: 'No special requirements mentioned', candidate_evidence: 'Not applicable - no requirements specified' }
+                ]
+            };
+            
+            // Create test results - recalculated with redistributed weights
+            // Active variables: Technical (85%), Experience (78%), Job Functions (92%), 
+            // Industry (45%), Education (70%), Soft Skills (88%)
+            // Weights redistributed: 31% -> 35.6%, 20% -> 23.0%, 13% -> 14.9%, 11% -> 12.6%, 9% -> 10.3%, 7% -> 8.0%
+            // Score: (85*0.356 + 78*0.230 + 92*0.149 + 45*0.126 + 70*0.103 + 88*0.080) = 76
+            const testResults = {
+                success: true,
+                evaluation: testEvaluation,
+                weightedScore: 76,
+                totalVariables: 8
+            };
+            
+            // Create a temporary matching system for testing
+            const tempSystem = new HybridDynamicMatchingSystem('test');
+            
+            // Generate and display results
+            resultsDiv.innerHTML = `
+                <div class="results-container">
+                    <div class="score-header">
+                        <h3>🧪 Test Visualization</h3>
+                        <p>Sample data to verify visualization functionality</p>
+                    </div>
+                    
+                    ${tempSystem.formatResults(testResults)}
+                </div>
+            `;
+            
+            // Set up score circle animation with test data
+            setTimeout(() => {
+                const scoreCircle = document.querySelector('.score-circle');
+                if (scoreCircle) {
+                    scoreCircle.style.setProperty('--score-percent', '76%');
+                }
+                
+                // Initialize chart tabs and animations
+                initializeChartTabs();
+                
+                // Initialize bar chart animations
+                if (tempSystem) {
+                    tempSystem.initializeBarChartAnimations();
+                }
+            }, 100);
+        }
+        
+        // Load sample data for testing
+        function loadSampleData() {
+            document.getElementById('jobTitle').value = 'Procurement Contracts Manager';
+            document.getElementById('company').value = 'Pacira BioSciences, Inc.';
+            document.getElementById('jobDescription').value = `About the job OverviewAbout PaciraPacira BioSciences, Inc. is a leading provider of non-opioid pain management and regenerative health solutions dedicated to improving outcomes for health care practitioners and their patients. Our in-depth knowledge of non-opioid pain management, coupled with our passion for advancing patient care, drives our commitment to providing solutions that address unmet medical needs and improve clinical results.Why work with us?Rarely do you have an opportunity to do work that really matters. What drives us is our mission. What makes us successful are our people. At Pacira, you are part of an inclusive culture that fosters collaboration, growth, and innovative thinking - a place where you can make an impact and help change the standard of care in non-opioid pain management. Be part of our movement, let's pursue excellence together.Summary:The Procurement Contracts Manager will oversee the entire lifecycle of the contracts from drafting and negotiating to execution, monitoring, and amending, as needed. This person will lead a small team and provide daily and on-going contracting and procurement support within Pacira BioSciences, Inc., with a specific focus on the procure-to-pay (P2P) process and contract management. The Procurement Contracts Manager will work closely with Business stakeholders, Suppliers, Procurement team members, Legal, and Finance to manage the preparation, negotiation, and execution of contracts across the organization, while also guiding and mentoring the team members. The ideal candidate will possess strong leadership, research negotiation, and contract management skills, along with a sense of urgency and strong business acumen.ResponsibilitiesEssential Duties & Responsibilities:The following statements are intended to describe the general nature and level of work being performed by an individual assigned to this job. Other duties may be assigned. Lead and mentor a team of two Procure to Pay/Contracting Specialists, providing guidance, support, and performance feedback; delegate tasks and responsibilities to ensure efficient workflow and timely completion of contracts. Draft, review, and negotiate complex SOWs and contracts Collaborate with Legal, procurement members, suppliers and business stakeholders to ensure contract terms align with business objectives while complying with internal policies and applicable laws. Track the contract timelines, renewals, obligations, and deliverables to ensure compliance and take timely action, escalating issues as necessary. Manage the Contract Request process in Ariba P2P to ensure the team facilitates the timely completion of contracts and SOWs. Guide team members in their negotiation efforts; recommend strategies to reduce risk and enhance value. Oversee the maintenance and updating of supplier databases, contracts, and documentation by the team. Coordinate with internal stakeholders and suppliers to resolve complex contractual issues or disputes, providing guidance to the team on issue resolution. Communicate with internal and external stakeholders regarding contract status, issues and resolutions. Oversee the team's support of the P2P process, including requisition creation, purchase order tracking, and invoice reconciliation. Serve as a subject matter expert and superuser in Ariba, supporting end-users on day-to-day queries; oversee the onboarding and management of vendor relationships by the team, ensuring proper documentation and system setup; provide guidance on procurement best practices. Establish KPIs and tracking performance against KPIs and identifying opportunities to improve performance. Support audit and compliance efforts by ensuring accurate record-keeping and adherence to procurement guidelines within the team's responsibilities. Collaborate with finance, legal, and other relevant departments to streamline procurement and contracting processes, identifying opportunities for process improvement and cost savings. Supervisory Responsibilities:This position has supervisory responsibilities for a team of two Procure to Pay/Contracting Specialists.Interaction:The incumbent works closely with employees in finance and legal as well as the department to which they are assigned to provide support and updates on contract processing issues.QualificationsEducation and Experience: Bachelor's degree in business, Supply Chain, Legal studies, or Paralegal certification 2-4 years of experience in procurement, contract drafting, negotiations and management, or related functions Demonstrated experience leading or mentoring team members. Experience with Ariba or other procure-to-pay system is a plus Qualifications:To perform this job successfully, an individual must be able to perform each essential duty satisfactorily. The requirements listed below are representative of the knowledge, skill and/or ability required. Reasonable accommodation may be made to enable individuals with disabilities to perform the essential functions.Knowledge, Skills, And Abilities: Strong leadership, team management, and motivational skills. Excellent organizational and multitasking skills with exceptional attention to detail. Comprehensive understanding of business contracts, procurement processes, and risk management. Proactive approach to identifying needs, gaps, and accordingly making proposals for improvement. Excellent communication (written and verbal) and negotiation abilities, including the ability to influence stakeholders. Strong interpersonal skills to work effectively with internal and external stakeholders at all levels. Proficiency in Microsoft Office Suite (Excel, Word, PowerPoint). Advanced experience in Ariba or other P2P/contract management systems. Ability to analyze data and generate insights for process improvement Physical Demands:Ability to safely navigate and work in office environment consistent with pharmaceutical industry. Moderate noise level, work in cubicles. While performing the duties of this job, the employee is regularly required to sit, talk, move between spaces, reach with hands and arms, and stoop. Close vision and the need to focus on computer screen, use of hands, fingers, and wrist to type on keyboard and manipulate mouse.Work Environment:Typical office setting, staff in cubicles, noise level is moderate with consistent printer, telephone ringing and conversation. Employees are in a cubicle setting when in the office.Benefits Medical, Prescription, Dental, Vision CoverageFlexible Spending Account & Health Savings Account with Company matchEmployee Assistance ProgramMental Health ResourcesDisability CoverageLife insuranceCritical Illness and Accident InsuranceLegal and Identity Theft ProtectionPet InsuranceFertility and Maternity Assistance401(k) with company matchFlexible Time Off (FTO) and 11 paid holidaysPaid Parental Leave Pay TransparencyThe base pay range for this role is $102,000 annually to $141,000 annually.The range is what we reasonably expect to pay for this role. The range considers a wide range of factors that are considered in making compensation decisions, including but not limited to: geographic markets, business or organizational needs, skill sets, experience, training, licensure, and certifications.EEO StatementEEO Statement: Pacira is proud to be an Equal Opportunity Employer and does not discriminate against applicants because of race, color, religion, sex (including gender identity, sexual orientation, and pregnancy), national origin, age (40 or older), veteran status, disability or genetic information, or any other characteristic protected under applicable federal, state, or local law. At Pacira we are committed to intentionally cultivating a culture of inclusion where all feel welcomed and valued for their background, perspectives, and experiences. We hold one another accountable to promote trust and transparency in support of our communities and collective purpose.Agency Disclaimer: Pacira Biosciences, Inc. (Hereafter, Pacira) does not accept unsolicited resumes from recruiters or employment agencies in response to the Pacira Careers page or a Pacira social media post. Pacira will not consider or agree to payment of any referral compensation or recruiter fee relating to unsolicited resumes. Pacira explicitly reserves the right to hire said candidate(s) without any financial obligation to the recruiter or agency. Any unsolicited resumes, including those submitted to hiring managers, are deemed to be the property of Pacira.`;
+            
+            document.getElementById('resume').value = `Ricardo E. Zuloaga
+
+New York, NY | Citizenship: United States & Venezuela
+
+Phone: +1 917-254-9076 | Email: rzuloagamachado@gmail.com
+
+Professional Summary
+Senior contracts and legal operations professional with over 10 years of experience
+drafting, negotiating, and managing commercial agreements in high-growth, cross-border
+environments. Proven track record of supporting vendor, partner, and technology
+agreements from intake to execution. Skilled in contract lifecycle management (CLM), risk
+assessment, and cross-functional collaboration with legal, procurement, and compliance
+teams. Committed to mission-driven work and building scalable contract frameworks for
+operational efficiency.
+
+Core Skills
+• Drafting and negotiating commercial and technology contracts
+• Contract lifecycle management & operational compliance
+• Indemnity, liability, confidentiality, and vendor agreement terms
+• Process improvement, policy development, and playbook creation
+• Cross-functional collaboration and stakeholder training
+• Contract tools: Ironclad, DocuSign CLM, Jira, Power BI (in progress)
+
+Professional Experience
+
+Contracts Manager / Senior Legal & Commercial Advisor
+Zumar Trading Corp. – New York, NY | 2020 – Present
+
+• Draft, negotiate, and execute commercial contracts including vendor agreements,
+MSAs, SaaS arrangements, and service terms
+• Lead contract lifecycle from intake through execution, amendments, and renewals
+using CLM tools such as Ironclad
+• Create contract templates, approval workflows, and internal policy documentation to
+enhance team efficiency and maintain legal risk
+• Collaborate with finance, procurement, and compliance teams to align contract terms
+with operational goals
+• Provide internal training on contract management best practices and redlining
+techniques`;
+        }
+        
+        // Initialize chart tabs functionality
+        function initializeChartTabs() {
+            const chartTabs = document.querySelectorAll('.chart-tab');
+            const chartViews = document.querySelectorAll('.chart-view');
+            
+            chartTabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const chartType = this.getAttribute('data-chart');
+                    
+                    // Remove active class from all tabs and views
+                    chartTabs.forEach(t => t.classList.remove('active'));
+                    chartViews.forEach(v => v.classList.remove('active'));
+                    
+                    // Add active class to clicked tab and corresponding view
+                    this.classList.add('active');
+                    const targetView = document.querySelector(`.chart-view[data-chart="${chartType}"]`);
+                    if (targetView) {
+                        targetView.classList.add('active');
+                        
+                        // Re-initialize animations for the active chart
+                        setTimeout(() => {
+                            if (matchingSystem) {
+                                matchingSystem.initializeBarChartAnimations();
+                            }
+                        }, 100);
+                    }
+                });
+            });
+        }
+        
+        // Page load event listener
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('📄 Page loaded, checking system readiness...');
+            
+            // Check Chart.js after a brief delay
+            setTimeout(() => {
+                checkChartJsLoaded();
+            }, 1000);
+        });
+    </script>
+</body>
+</html> 

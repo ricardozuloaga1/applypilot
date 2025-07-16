@@ -17,6 +17,14 @@
       "js": ["content.js"],
       "css": ["content.css"],
       "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "http://localhost:*/*",
+        "https://localhost:*/*"
+      ],
+      "js": ["web-content-bridge.js"],
+      "run_at": "document_start"
     }
   ],
   "background": {
@@ -26,7 +34,17 @@
     "default_popup": "popup.html",
     "default_title": "AutoApply AI"
   },
+
   "host_permissions": [
-    "https://api.openai.com/*"
-  ]
+    "https://api.openai.com/*",
+    "https://*/*",
+    "http://*/*",
+    "http://localhost:*/*"
+  ],
+  "externally_connectable": {
+    "matches": [
+      "http://localhost:*/*",
+      "https://localhost:*/*"
+    ]
+  }
 }

@@ -3,9 +3,17 @@ class AutoApplyAI {
     constructor() {
         this.jobs = []; // Initialize as empty array
         this.selectedJob = null;
+        this.selectedJobs = new Set(); // For multi-job selection (up to 3)
+        this.maxSelectedJobs = 3; // Limit for selected jobs
         this.resumeFile = null;
+        this.storedResumes = []; // Array to store multiple resumes
+        this.activeResumeId = null; // ID of currently active resume
         this.currentTab = 'capture';
         this.scoringPaused = false;
+        this.scoringMode = 'automatic'; // 'automatic' or 'manual'
+        
+        // Initialize API service
+        this.apiService = new APIService();
         this.matchColors = {
             excellent: { bg: 'rgba(34, 197, 94, 0.2)', border: 'rgba(34, 197, 94, 0.6)', icon: '🟢', label: 'Excellent Match' },
             good: { bg: 'rgba(59, 130, 246, 0.2)', border: 'rgba(59, 130, 246, 0.6)', icon: '🔵', label: 'Good Match' },
@@ -14,6 +22,10 @@ class AutoApplyAI {
             poor: { bg: 'rgba(239, 68, 68, 0.2)', border: 'rgba(239, 68, 68, 0.6)', icon: '🔴', label: 'Poor Match' },
             unscored: { bg: 'rgba(156, 163, 175, 0.2)', border: 'rgba(156, 163, 175, 0.6)', icon: '⚪', label: 'Not Scored' }
         };
+        this.scoringJobId = null; // Track which job is being scored
+        this.expandedJobs = new Set(); // Track expanded jobs
+        this.selectedEnhancements = new Set(); // Track selected enhancement hashtags
+        this.currentEnhancements = []; // Store current enhancement suggestions
         this.init();
     }
 
@@ -25,15 +37,44 @@ class AutoApplyAI {
             this.jobs = [];
             
             await this.loadJobs();
+            await this.loadStoredResumes();
+            await this.loadActiveResumeId();
             await this.loadResume();
+            await this.loadScoringPreference();
+            await this.loadAmplificationMode();
+            
+            // Auto-select first resume if no active resume is set but resumes exist
+            if (!this.activeResumeId && this.storedResumes && this.storedResumes.length > 0) {
+                console.log('No active resume set, auto-selecting first available resume');
+                await this.setActiveResume(this.storedResumes[0].id);
+            }
+            
             this.setupEventListeners();
             this.setupTabs();
             this.renderJobs();
+            this.renderStoredResumes();
+            this.updateActiveResumeDisplay();
             this.updateJobsCount();
             this.updateGenerateButton();
             this.updateApiStatus();
+            this.initializeDocumentType();
+            this.reattachSortEventListeners();
+            this.setupApiConfiguration(); // Setup API configuration UI
             
             console.log('AutoApply AI popup initialized successfully');
+            
+            // Test tab switching immediately
+            console.log('Testing tab elements...');
+            const tabs = document.querySelectorAll('.tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+            console.log('Found tabs:', tabs.length);
+            console.log('Found tab contents:', tabContents.length);
+            
+            // Add a simple test click handler
+            tabs.forEach((tab, index) => {
+                console.log(`Tab ${index}:`, tab.getAttribute('data-tab'), tab.textContent.trim());
+            });
+            
         } catch (error) {
             console.error('Error initializing AutoApply AI popup:', error);
             // Set a safe fallback state
@@ -45,39 +86,82 @@ class AutoApplyAI {
     }
 
     setupEventListeners() {
-        // Capture tab
-        document.getElementById('capture-btn').addEventListener('click', () => this.captureJob());
+        // Resume Upload tab
         document.getElementById('resume-upload').addEventListener('change', (e) => this.handleResumeUpload(e));
-        document.getElementById('score-all-btn').addEventListener('click', () => this.scoreAllJobs());
+        document.getElementById('score-all-btn').addEventListener('click', () => this.scoreAllJobsAndShowResults());
         document.getElementById('pause-scoring-btn').addEventListener('click', () => this.toggleScoringPause());
+        document.getElementById('clear-resumes-btn').addEventListener('click', () => this.clearAllResumes());
+        
+        // Active resume selector
+        document.getElementById('change-resume-btn').addEventListener('click', () => this.toggleResumeSelector());
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.active-resume-actions')) {
+                this.closeResumeSelector();
+            }
+        });
+        
+        // Scoring preference listeners
+        document.getElementById('auto-scoring').addEventListener('change', () => this.saveScoringPreference());
+        document.getElementById('manual-scoring').addEventListener('change', () => this.saveScoringPreference());
         
         // Jobs tab
         document.getElementById('clear-jobs-btn').addEventListener('click', () => this.clearAllJobs());
         document.getElementById('search-jobs').addEventListener('input', (e) => this.searchJobs(e.target.value));
         
         // Sort dropdown
-        document.getElementById('sort-button').addEventListener('click', () => this.toggleSortDropdown());
+        const sortButton = document.getElementById('sort-button');
+        if (sortButton) {
+            sortButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.toggleSortDropdown();
+            });
+        }
+        
         document.addEventListener('click', (e) => {
             if (!e.target.closest('.sort-dropdown')) {
                 this.closeSortDropdown();
             }
         });
         
-        // Sort options
-        document.querySelectorAll('.sort-option').forEach(option => {
-            option.addEventListener('click', (e) => {
+        // Ensure sort dropdown works immediately
+        this.reattachSortEventListeners();
+        
+        // Sort options - using event delegation
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('sort-option')) {
                 const value = e.target.dataset.value;
                 this.selectSortOption(value);
                 this.sortJobs(value);
-            });
+            }
         });
         
         // Generate tab
         document.getElementById('generate-btn').addEventListener('click', () => this.generateDocument());
         
+        // Document type and format button listeners
+        this.setupDocumentTypeButtons();
+        this.setupDocumentFormatButtons();
+        
+        // Amplification mode listener
+        this.setupAmplificationModeListener();
+        
+        // Document type listener
+        this.setupDocumentTypeListener();
+        
         // Settings tab
         document.getElementById('save-api-key-btn').addEventListener('click', () => this.saveApiKey());
         document.getElementById('test-api-btn').addEventListener('click', () => this.testApiConnection());
+        
+        // Selection controls
+        document.getElementById('clear-selection-btn').addEventListener('click', () => this.clearJobSelection());
+        
+        // Proceed to generate buttons
+        document.getElementById('proceed-to-generate-top').addEventListener('click', () => this.proceedToGenerate());
+        document.getElementById('proceed-to-generate-bottom').addEventListener('click', () => this.proceedToGenerate());
+        
+        // Enhancement analysis
+        document.getElementById('analyze-gaps-btn').addEventListener('click', () => this.analyzeResumeGaps());
         
         // Listen for messages from content script
         chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -88,244 +172,75 @@ class AutoApplyAI {
     }
 
     setupTabs() {
+        console.log('setupTabs() called');
         const tabs = document.querySelectorAll('.tab');
         const tabContents = document.querySelectorAll('.tab-content');
         
-        tabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                const targetTab = tab.getAttribute('data-tab');
+        console.log('Setting up tabs, found:', tabs.length, 'tab buttons');
+        console.log('Found:', tabContents.length, 'tab content areas');
+        
+        if (tabs.length === 0) {
+            console.error('No tabs found! DOM might not be ready.');
+            return;
+        }
+        
+        tabs.forEach((tab, index) => {
+            const targetTab = tab.getAttribute('data-tab');
+            
+            // Add click event listener
+            tab.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 this.switchTab(targetTab);
             });
         });
     }
 
     switchTab(tabName) {
+        console.log('Switching to tab:', tabName);
+        
         // Update active tab
         document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
         
-        document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
-        document.getElementById(`${tabName}-tab`).classList.add('active');
+        // Find and activate the tab button
+        const tabButton = document.querySelector(`[data-tab="${tabName}"]`);
+        if (tabButton) {
+            tabButton.classList.add('active');
+        } else {
+            console.error('Tab button not found for:', tabName);
+        }
+        
+        // Find and activate the tab content
+        const tabContent = document.getElementById(`${tabName}-tab`);
+        if (tabContent) {
+            tabContent.classList.add('active');
+        } else {
+            console.error('Tab content not found for:', `${tabName}-tab`);
+        }
         
         this.currentTab = tabName;
         
         // Update content based on tab
         if (tabName === 'jobs') {
             this.renderJobs();
+            this.updateJobsCount();
+            this.updateProceedToGenerateButtons();
+            // Ensure sort dropdown works when switching to jobs tab
+            setTimeout(() => {
+                this.reattachSortEventListeners();
+            }, 100);
         } else if (tabName === 'generate') {
             this.updateGenerateButton();
+            this.toggleTemplateCustomization(); // Initialize template customization
+            this.initializeDocumentType(); // Initialize document type selection
         } else if (tabName === 'settings') {
             this.loadApiKeyForSettings();
         }
     }
 
-    async captureJob() {
-        const captureBtn = document.getElementById('capture-btn');
-        const originalText = captureBtn.textContent;
-        
-        // Disable button and show progress
-        captureBtn.disabled = true;
-        captureBtn.classList.add('capturing');
-        captureBtn.textContent = '⏳ Capturing...';
-        this.setStatus('capture-status', 'Capturing job...', 'info');
-        
-        try {
-            // Get current tab
-            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-            
-            if (!tab) {
-                throw new Error('No active tab found');
-            }
-
-            console.log('Current tab URL:', tab.url);
-            
-            // Check if we're on a supported job site
-            const hostname = new URL(tab.url).hostname.toLowerCase();
-            const supportedSites = ['linkedin.com', 'indeed.com', 'lever.co', 'greenhouse.io', 'workday.com'];
-            const isJobSite = supportedSites.some(site => hostname.includes(site)) || 
-                             hostname.includes('jobs') || hostname.includes('careers');
-            
-            console.log('Hostname:', hostname, 'Is job site:', isJobSite);
-            
-            if (!isJobSite) {
-                this.setStatus('capture-status', 'Please navigate to a job posting on LinkedIn, Indeed, or other job sites', 'error');
-                return;
-            }
-            
-            // Inject content script if needed
-            this.setStatus('capture-status', 'Preparing page...', 'info');
-            try {
-                // First inject CSS
-                await chrome.scripting.insertCSS({
-                    target: { tabId: tab.id },
-                    files: ['content.css']
-                });
-                console.log('Content CSS injected successfully');
-                
-                // Then inject JavaScript
-                await chrome.scripting.executeScript({
-                    target: { tabId: tab.id },
-                    files: ['content.js']
-                });
-                console.log('Content script injected successfully');
-                
-                // Also try to manually add the button via code injection
-                await chrome.scripting.executeScript({
-                    target: { tabId: tab.id },
-                    func: () => {
-                        console.log('🚀 MANUAL BUTTON INJECTION ATTEMPT');
-                        // Remove existing button first
-                        const existing = document.getElementById('autoapply-capture-btn');
-                        if (existing) existing.remove();
-                        
-                        // Create button with proper functionality
-                        const btn = document.createElement('div');
-                        btn.id = 'autoapply-capture-btn';
-                        btn.style.cssText = `
-                            position: fixed !important;
-                            top: 20px !important;
-                            right: 20px !important;
-                            z-index: 2147483647 !important;
-                            background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
-                            color: white !important;
-                            border-radius: 12px !important;
-                            padding: 16px 20px !important;
-                            cursor: pointer !important;
-                            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-                            font-size: 14px !important;
-                            font-weight: 600 !important;
-                            border: none !important;
-                            box-shadow: 0 4px 20px rgba(37, 99, 235, 0.4) !important;
-                            transition: all 0.3s ease !important;
-                        `;
-                        
-                        btn.innerHTML = `
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <span style="font-size: 16px;">🤖</span>
-                                <span>Capture Job</span>
-                            </div>
-                        `;
-                        
-                        // Add hover effects
-                        btn.onmouseenter = () => {
-                            btn.style.transform = 'translateY(-2px)';
-                            btn.style.boxShadow = '0 6px 25px rgba(37, 99, 235, 0.6)';
-                        };
-                        btn.onmouseleave = () => {
-                            btn.style.transform = 'translateY(0)';
-                            btn.style.boxShadow = '0 4px 20px rgba(37, 99, 235, 0.4)';
-                        };
-                        
-                        // Add click functionality to trigger job capture
-                        btn.onclick = () => {
-                            btn.style.background = 'linear-gradient(135deg, #f59e0b, #d97706)';
-                            btn.innerHTML = `
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <span style="font-size: 16px;">⏳</span>
-                                    <span>Capturing...</span>
-                                </div>
-                            `;
-                            
-                            // Send message to background script to trigger capture
-                            chrome.runtime.sendMessage({ 
-                                action: 'captureFromFloatingButton',
-                                url: window.location.href
-                            });
-                            
-                            // Reset button after delay
-                            setTimeout(() => {
-                                btn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
-                                btn.innerHTML = `
-                                    <div style="display: flex; align-items: center; gap: 8px;">
-                                        <span style="font-size: 16px;">✅</span>
-                                        <span>Captured!</span>
-                                    </div>
-                                `;
-                                
-                                setTimeout(() => {
-                                    btn.style.background = 'linear-gradient(135deg, #2563eb, #1d4ed8)';
-                                    btn.innerHTML = `
-                                        <div style="display: flex; align-items: center; gap: 8px;">
-                                            <span style="font-size: 16px;">🤖</span>
-                                            <span>Capture Job</span>
-                                        </div>
-                                    `;
-                                }, 2000);
-                            }, 1000);
-                        };
-                        
-                        document.body.appendChild(btn);
-                        console.log('✅ FUNCTIONAL CAPTURE BUTTON ADDED');
-                    }
-                });
-                console.log('Functional button injection attempted');
-                
-            } catch (injectionError) {
-                console.log('Content script injection result:', injectionError);
-                // Continue anyway - might already be injected
-            }
-            
-            // Longer delay to ensure content script is ready
-            this.setStatus('capture-status', 'Analyzing page content...', 'info');
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
-            // Send message to content script with timeout
-            this.setStatus('capture-status', 'Extracting job details...', 'info');
-            let response;
-            try {
-                console.log('Sending message to content script...');
-                response = await Promise.race([
-                    chrome.tabs.sendMessage(tab.id, { action: 'captureJob' }),
-                    new Promise((_, reject) => 
-                        setTimeout(() => reject(new Error('Capture timeout')), 15000)
-                    )
-                ]);
-                console.log('Content script response:', response);
-            } catch (timeoutError) {
-                console.error('Message sending error:', timeoutError);
-                if (timeoutError.message === 'Capture timeout') {
-                    this.setStatus('capture-status', 'Capture timed out. Please refresh the page and try again.', 'error');
-                    return;
-                } else if (timeoutError.message.includes('Receiving end does not exist')) {
-                    this.setStatus('capture-status', 'Content script not ready. Please refresh the page and try again.', 'error');
-                    return;
-                }
-                throw timeoutError;
-            }
-            
-            if (response && response.success) {
-                console.log('Job capture successful:', response.jobData);
-                await this.handleJobCaptured(response.jobData);
-            } else {
-                console.log('Job capture failed:', response);
-                this.setStatus('capture-status', response?.error || 'No job found on this page. Try refreshing and capturing again.', 'error');
-            }
-        } catch (error) {
-            console.error('Capture error:', error);
-            
-            // Handle specific error types
-            if (error.message.includes('context invalidated')) {
-                this.setStatus('capture-status', 'Extension was reloaded. Please refresh the page and try again.', 'error');
-            } else if (error.message.includes('Receiving end does not exist')) {
-                this.setStatus('capture-status', 'Content script not loaded. Please refresh the page and try again.', 'error');
-            } else {
-                this.setStatus('capture-status', `Error: ${error.message}. Try refreshing the page.`, 'error');
-            }
-        } finally {
-            // Always reset button state
-            captureBtn.disabled = false;
-            captureBtn.classList.remove('capturing');
-            captureBtn.textContent = originalText;
-            
-            // Reset status to ready after a delay (unless it's a success message)
-            setTimeout(() => {
-                const statusEl = document.getElementById('capture-status');
-                if (statusEl && !statusEl.classList.contains('success')) {
-                    this.setStatus('capture-status', 'Ready to capture jobs', 'info');
-                }
-            }, 5000);
-        }
-    }
+    // Job capture is now handled by the floating button in content.js
+    // This method is no longer needed
 
     async handleJobCaptured(jobData) {
         console.log('Handling captured job data:', jobData);
@@ -338,7 +253,6 @@ class AutoApplyAI {
         
         jobData.id = Date.now();
         jobData.capturedAt = new Date().toISOString();
-        jobData.starred = false;
         
         this.jobs.unshift(jobData);
         console.log('Jobs array after adding new job:', this.jobs.length);
@@ -352,8 +266,8 @@ class AutoApplyAI {
         this.selectedJob = jobData;
         this.updateGenerateButton();
         
-        // Auto-score the job if resume is available
-        if (this.resumeFile) {
+        // Auto-score the job if resume is available and automatic mode is enabled
+        if (this.resumeFile && this.scoringMode === 'automatic') {
             setTimeout(() => this.scoreJob(jobData.id), 1000); // Small delay to avoid overwhelming the UI
         }
         
@@ -379,19 +293,34 @@ class AutoApplyAI {
                     <small>Navigate to a job posting and click "Capture Current Job"</small>
                 </div>
             `;
+            this.reattachSortEventListeners(); // Ensure sort dropdown works even with no jobs
             return;
         }
         
         container.innerHTML = this.jobs.map(job => {
             const matchColor = this.getMatchColor(job.matchAnalysis?.score);
             const matchScore = job.matchAnalysis?.score;
-            
+            const isScoring = this.scoringJobId === job.id;
+            const isExpanded = this.expandedJobs.has(job.id);
+            // Render download links for generated docs
+            let docLinks = '';
+            if (job.generatedDocs && job.generatedDocs.length > 0) {
+                docLinks = `<div class=\"job-doc-links\">` + job.generatedDocs.map((doc, idx) => {
+                    let icon = '⬇️';
+                    if (doc.type === 'resume') icon = 'CV';
+                    else if (doc.type === 'cover-letter') icon = 'CL';
+                    return `<button class=\"job-doc-download\" title=\"Download ${doc.type.toUpperCase()} (${doc.format.toUpperCase()})\" data-job-id=\"${job.id}\" data-doc-idx=\"${idx}\">${icon}</button>`;
+                }).join('') + `</div>`;
+            }
             return `
-            <div class="job-item ${this.selectedJob && this.selectedJob.id === job.id ? 'selected' : ''}" 
+            <div class="job-item ${this.selectedJob && this.selectedJob.id === job.id ? 'selected' : ''} ${this.selectedJobs.has(job.id) ? 'multi-selected' : ''}" 
                  data-job-id="${job.id}">
                 <div class="job-content">
+                    <div class="job-checkbox-container">
+                        <input type="checkbox" class="job-checkbox" data-job-id="${job.id}" ${this.selectedJobs.has(job.id) ? 'checked' : ''} ${this.selectedJobs.size >= this.maxSelectedJobs && !this.selectedJobs.has(job.id) ? 'disabled' : ''}>
+                    </div>
                     <div class="job-info">
-                        <div class="job-title">${this.escapeHtml(job.title)}</div>
+                        <div class="job-title">${this.escapeHtml(job.title)} ${docLinks}</div>
                         <div class="job-company">${this.escapeHtml(job.company)} • ${this.escapeHtml(job.source)}</div>
                     </div>
                     <div class="match-score">
@@ -404,33 +333,33 @@ class AutoApplyAI {
                 <div class="job-meta">
                     <div class="job-date">${new Date(job.capturedAt).toLocaleDateString()}</div>
                     <div class="job-actions">
-                        <div class="job-action" data-action="expand" data-job-id="${job.id}">▼</div>
-                        <div class="job-action" data-action="star" data-job-id="${job.id}">
-                            ${job.starred ? '⭐' : '☆'}
-                        </div>
                         ${matchScore === null || matchScore === undefined ? 
-                            `<div class="job-action" data-action="score" data-job-id="${job.id}" title="Score this job">📊</div>` : 
-                            `<div class="job-action" data-action="rescore" data-job-id="${job.id}" title="Re-score this job">🔄</div>`
+                            `<div class="job-action${isScoring ? ' loading' : ''}" data-action="score" data-job-id="${job.id}" title="Score this job" ${isScoring ? 'style=\"pointer-events:none;opacity:0.6;\"' : ''}>
+                                ${isScoring ? '<span class=\"spinner\"></span>' : '📊'}
+                            </div>` : 
+                            `<div class="job-action${isScoring ? ' loading' : ''}" data-action="rescore" data-job-id="${job.id}" title="Re-score this job" ${isScoring ? 'style=\"pointer-events:none;opacity:0.6;\"' : ''}>
+                                ${isScoring ? '<span class=\"spinner\"></span>' : '🔄'}
+                            </div>`
                         }
-                        <div class="job-action" data-action="delete" data-job-id="${job.id}">🗑️</div>
+                        <div class="job-action" data-action="delete" data-job-id="${job.id}"><span class="delete-symbol">×</span></div>
                     </div>
                 </div>
-                <div class="job-expanded-content" data-job-id="${job.id}" style="display: none;">
+                <div class="job-expanded-content" data-job-id="${job.id}" style="display:${isExpanded ? 'block' : 'none'};">
                     ${job.matchAnalysis ? `
                         <div class="match-analysis">
-                            <h4>🎯 Match Analysis</h4>
+                            <h4><span class="analysis-symbol">▲</span> Match Analysis</h4>
                             ${job.matchAnalysis.matrix ? this.renderAnalysisMatrix(job.matchAnalysis.matrix) : ''}
                             <div class="match-details">
                                 <div class="match-section">
-                                    <strong>✅ Strengths:</strong>
+                                    <strong><span class="strength-symbol">✓</span> Strengths:</strong>
                                     <ul>${job.matchAnalysis.strengths.map(s => `<li>${this.escapeHtml(s)}</li>`).join('')}</ul>
                                 </div>
                                 <div class="match-section">
-                                    <strong>❌ Gaps:</strong>
+                                    <strong><span class="gap-symbol">✗</span> Gaps:</strong>
                                     <ul>${job.matchAnalysis.gaps.map(g => `<li>${this.escapeHtml(g)}</li>`).join('')}</ul>
                                 </div>
                                 <div class="match-section">
-                                    <strong>💡 Recommendations:</strong>
+                                    <strong><span class="recommendation-symbol">→</span> Recommendations:</strong>
                                     <ul>${job.matchAnalysis.recommendations.map(r => `<li>${this.escapeHtml(r)}</li>`).join('')}</ul>
                                 </div>
                                 <div class="match-reasoning">
@@ -439,19 +368,22 @@ class AutoApplyAI {
                             </div>
                         </div>
                     ` : ''}
-                    <div class="job-description">${this.escapeHtml(job.description)}</div>
+                    <div class="job-description-section">
+                        <h4 class="job-description-header">Job Description</h4>
+                        <div class="job-description">${this.escapeHtml(job.description)}</div>
+                    </div>
                     <div class="job-details">
                         <div class="job-detail-item">
                             <strong>Location:</strong> ${this.escapeHtml(job.location || 'Not specified')}
                         </div>
                         <div class="job-detail-item">
-                            <strong>Salary:</strong> ${this.escapeHtml(job.salary || 'Not specified')}
+                            <strong>Salary:</strong> 
                         </div>
                         ${job.recruiterName ? `<div class="job-detail-item">
                             <strong>Recruiter:</strong> ${job.recruiterLinkedIn ? `<a href="${job.recruiterLinkedIn}" target="_blank">${this.escapeHtml(job.recruiterName)}</a>` : this.escapeHtml(job.recruiterName)}
                         </div>` : ''}
                         <div class="job-detail-item">
-                            <strong>URL:</strong> <a href="${job.url}" target="_blank" title="${job.url}">🔗 View Job Posting</a>
+                            <strong>URL:</strong> <a href="${job.url}" target="_blank" title="${job.url}"><span class="link-symbol">↗</span> View Job Posting</a>
                         </div>
                     </div>
                 </div>
@@ -461,10 +393,19 @@ class AutoApplyAI {
         // Add event listeners to job items
         container.querySelectorAll('.job-item').forEach(item => {
             item.addEventListener('click', (e) => {
-                if (!e.target.classList.contains('job-action')) {
+                if (!e.target.classList.contains('job-action') && !e.target.classList.contains('job-checkbox') && !e.target.classList.contains('job-doc-download')) {
                     const jobId = parseInt(item.getAttribute('data-job-id'));
-                    this.selectJob(jobId);
+                    this.toggleJobExpansion(jobId);
                 }
+            });
+        });
+        
+        // Add event listeners to job checkboxes
+        container.querySelectorAll('.job-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', (e) => {
+                e.stopPropagation();
+                const jobId = parseInt(checkbox.getAttribute('data-job-id'));
+                this.toggleJobSelection(jobId);
             });
         });
         
@@ -480,20 +421,82 @@ class AutoApplyAI {
                 console.log('Job action clicked:', actionType, 'for job ID:', jobId);
                 
                 try {
-                    if (actionType === 'star') {
-                        this.toggleStar(jobId);
-                    } else if (actionType === 'delete') {
+                    if (actionType === 'delete') {
                         this.deleteJob(jobId);
-                    } else if (actionType === 'expand') {
-                        this.toggleJobExpansion(jobId);
                     } else if (actionType === 'score' || actionType === 'rescore') {
-                        this.scoreJob(jobId);
+                        this.scoreJobAndShowResults(jobId);
                     }
                 } catch (error) {
                     console.error('Error handling job action:', error);
                 }
             });
         });
+        
+
+        // Add download event listeners for generated docs
+        setTimeout(() => {
+            container.querySelectorAll('.job-doc-download').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const jobId = btn.getAttribute('data-job-id');
+                    const docIdx = btn.getAttribute('data-doc-idx');
+                    const job = this.jobs.find(j => j.id == jobId);
+                    if (job && job.generatedDocs && job.generatedDocs[docIdx]) {
+                        const doc = job.generatedDocs[docIdx];
+                        const byteChars = atob(doc.base64);
+                        const byteNumbers = new Array(byteChars.length);
+                        for (let i = 0; i < byteChars.length; i++) {
+                            byteNumbers[i] = byteChars.charCodeAt(i);
+                        }
+                        const byteArray = new Uint8Array(byteNumbers);
+                        const blob = new Blob([byteArray], { type: doc.mimeType });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `${doc.type}-${job.title.replace(/[^a-zA-Z0-9]/g, '-')}.${doc.format}`;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                    }
+                });
+            });
+        }, 0);
+        
+        // Reattach sort event listeners after rendering
+        this.reattachSortEventListeners();
+    }
+
+    reattachSortEventListeners() {
+        // Remove existing listeners and reattach to ensure they work
+        const sortButton = document.getElementById('sort-button');
+        if (sortButton) {
+            // Clone the node to remove all event listeners
+            const newSortButton = sortButton.cloneNode(true);
+            sortButton.parentNode.replaceChild(newSortButton, sortButton);
+            
+            // Add the click event listener
+            newSortButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Sort button clicked!');
+                this.toggleSortDropdown();
+            });
+            
+            console.log('Sort button event listener reattached');
+        }
+        
+        // Also ensure sort options work
+        setTimeout(() => {
+            document.querySelectorAll('.sort-option').forEach(option => {
+                option.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const value = e.target.dataset.value;
+                    console.log('Sort option clicked:', value);
+                    this.selectSortOption(value);
+                    this.sortJobs(value);
+                });
+            });
+        }, 100);
     }
 
     selectJob(jobId) {
@@ -501,36 +504,91 @@ class AutoApplyAI {
         this.renderJobs();
         this.updateGenerateButton();
     }
-
-    async toggleStar(jobId) {
-        console.log('Toggling star for job ID:', jobId);
-        const job = this.jobs.find(job => job.id === jobId);
-        if (job) {
-            job.starred = !job.starred;
-            console.log('Job starred status changed to:', job.starred);
-            await this.saveJobs();
-            this.renderJobs();
+    
+    toggleJobSelection(jobId) {
+        if (this.selectedJobs.has(jobId)) {
+            this.selectedJobs.delete(jobId);
+        } else if (this.selectedJobs.size < this.maxSelectedJobs) {
+            this.selectedJobs.add(jobId);
+        }
+        this.renderJobs();
+        this.updateGenerateButton();
+        this.updateSelectedJobsCounter();
+        this.updateEnhancementSectionVisibility();
+    }
+    
+    clearJobSelection() {
+        this.selectedJobs.clear();
+        this.renderJobs();
+        this.updateGenerateButton();
+        this.updateSelectedJobsCounter();
+        this.updateEnhancementSectionVisibility();
+    }
+    
+    updateSelectedJobsCounter() {
+        const counter = document.getElementById('selection-counter');
+        const controls = document.getElementById('job-selection-controls');
+        
+        if (this.selectedJobs.size > 0) {
+            counter.textContent = `${this.selectedJobs.size} / ${this.maxSelectedJobs} jobs selected`;
+            controls.style.display = 'flex';
         } else {
-            console.error('Job not found for ID:', jobId);
+            controls.style.display = 'none';
+        }
+        
+        // Update proceed to generate buttons
+        this.updateProceedToGenerateButtons();
+    }
+    
+    updateProceedToGenerateButtons() {
+        const topBtn = document.getElementById('proceed-to-generate-top');
+        const bottomBtn = document.getElementById('proceed-to-generate-bottom');
+        const topText = document.getElementById('proceed-text-top');
+        const bottomText = document.getElementById('proceed-text-bottom');
+        
+        const selectedCount = this.selectedJobs.size;
+        const isEnabled = selectedCount >= 1 && selectedCount <= 3;
+        
+        topBtn.disabled = !isEnabled;
+        bottomBtn.disabled = !isEnabled;
+        
+        if (selectedCount === 0) {
+            topText.textContent = 'Select 1-3 jobs to generate documents';
+            bottomText.textContent = 'Select 1-3 jobs to generate documents';
+        } else if (selectedCount === 1) {
+            topText.textContent = 'Proceed to Generate (1 job selected)';
+            bottomText.textContent = 'Proceed to Generate (1 job selected)';
+        } else if (selectedCount <= 3) {
+            topText.textContent = `Proceed to Generate (${selectedCount} jobs selected)`;
+            bottomText.textContent = `Proceed to Generate (${selectedCount} jobs selected)`;
+        } else {
+            topText.textContent = `Too many jobs selected (${selectedCount}/3 max)`;
+            bottomText.textContent = `Too many jobs selected (${selectedCount}/3 max)`;
+        }
+    }
+    
+    proceedToGenerate() {
+        if (this.selectedJobs.size >= 1 && this.selectedJobs.size <= 3) {
+            // Switch to generate tab
+            this.switchTab('generate');
+            
+            // Scroll to top of generate tab
+            const generateTab = document.getElementById('generate-tab');
+            if (generateTab) {
+                generateTab.scrollTop = 0;
+            }
         }
     }
 
+
+
     toggleJobExpansion(jobId) {
-        console.log('Toggling expansion for job ID:', jobId);
-        const expandedContent = document.querySelector(`[data-job-id="${jobId}"].job-expanded-content`);
-        const expandButton = document.querySelector(`[data-action="expand"][data-job-id="${jobId}"]`);
-        
-        console.log('Found expanded content:', !!expandedContent);
-        console.log('Found expand button:', !!expandButton);
-        
-        if (expandedContent && expandButton) {
-            const isExpanded = expandedContent.style.display !== 'none';
-            expandedContent.style.display = isExpanded ? 'none' : 'block';
-            expandButton.textContent = isExpanded ? '▼' : '▲';
-            console.log('Job expansion toggled. Is now expanded:', !isExpanded);
+        if (this.expandedJobs.has(jobId)) {
+            this.expandedJobs.delete(jobId);
         } else {
-            console.error('Could not find expansion elements for job ID:', jobId);
+            this.expandedJobs.add(jobId);
         }
+        this.renderJobs();
     }
 
     async deleteJob(jobId) {
@@ -578,13 +636,21 @@ class AutoApplyAI {
     }
 
     toggleSortDropdown() {
+        console.log('toggleSortDropdown called');
         const dropdown = document.getElementById('sort-dropdown');
-        dropdown.classList.toggle('show');
+        if (dropdown) {
+            dropdown.classList.toggle('show');
+            console.log('Dropdown toggled, classes:', dropdown.classList.toString());
+        } else {
+            console.error('Sort dropdown element not found');
+        }
     }
     
     closeSortDropdown() {
         const dropdown = document.getElementById('sort-dropdown');
-        dropdown.classList.remove('show');
+        if (dropdown) {
+            dropdown.classList.remove('show');
+        }
     }
     
     selectSortOption(value) {
@@ -595,7 +661,9 @@ class AutoApplyAI {
             option.classList.remove('selected');
             if (option.dataset.value === value) {
                 option.classList.add('selected');
-                sortText.textContent = option.textContent;
+                if (sortText) {
+                    sortText.textContent = option.textContent;
+                }
             }
         });
         
@@ -640,7 +708,15 @@ class AutoApplyAI {
         try {
         this.resumeFile = file;
         await this.saveResume();
+        
+        // Automatically set the newly uploaded resume as active
+        if (this.storedResumes.length > 0) {
+            this.activeResumeId = this.storedResumes[this.storedResumes.length - 1].id; // Last uploaded
+            await this.saveActiveResumeId();
+        }
+        
         this.updateResumeStatus();
+        this.updateActiveResumeDisplay();
         this.updateGenerateButton();
             
             // Show format-specific success messages
@@ -704,9 +780,130 @@ class AutoApplyAI {
                 lastModified: new Date(this.resumeFile.lastModified)
             });
         } else {
-            statusEl.textContent = 'No resume uploaded';
-            statusEl.style.color = 'rgba(255, 255, 255, 0.6)';
+            statusEl.textContent = '';
+            statusEl.style.color = '';
         }
+    }
+
+    renderStoredResumes() {
+        const container = document.getElementById('resume-items');
+        const managementSection = document.getElementById('resume-management');
+        
+        if (!container || !managementSection) return;
+
+        if (this.storedResumes.length === 0) {
+            managementSection.style.display = 'none';
+            return;
+        }
+
+        managementSection.style.display = 'block';
+        
+        container.innerHTML = this.storedResumes.map(resume => `
+            <div class="resume-item ${resume.id === this.activeResumeId ? 'active' : ''}" data-resume-id="${resume.id}">
+                <div class="resume-item-info">
+                    <div class="resume-item-name">${this.escapeHtml(resume.name)}</div>
+                    <div class="resume-item-details">
+                        ${resume.extractedLength} characters • Uploaded ${new Date(resume.uploadedAt).toLocaleDateString()}
+                        ${resume.id === this.activeResumeId ? ' • <strong>Currently Active</strong>' : ''}
+                    </div>
+                </div>
+                <div class="resume-item-actions">
+                    <button class="resume-action-btn danger" data-action="delete" data-resume-id="${resume.id}">Delete</button>
+                </div>
+            </div>
+        `).join('');
+
+        // Add event listeners
+        container.querySelectorAll('.resume-action-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const action = btn.getAttribute('data-action');
+                const resumeId = btn.getAttribute('data-resume-id');
+                
+                if (action === 'delete') {
+                    this.deleteStoredResume(resumeId);
+                }
+            });
+        });
+    }
+
+    async activateResume(resumeId) {
+        const resume = this.storedResumes.find(r => r.id === resumeId);
+        if (!resume) return;
+
+        this.activeResumeId = resumeId;
+        
+        // Create a File object from the stored resume
+        // Note: We store extracted text content, so we should use text/plain type
+        const blob = new Blob([resume.content], { type: 'text/plain' });
+        this.resumeFile = new File([blob], resume.name, { 
+            type: 'text/plain',
+            lastModified: new Date(resume.uploadedAt).getTime()
+        });
+        this.resumeData = resume.content;
+        
+        // Save the active resume ID
+        await this.saveActiveResumeId();
+        
+        // Update UI
+        this.renderStoredResumes();
+        this.updateActiveResumeDisplay();
+        this.updateResumeStatus();
+        this.updateGenerateButton();
+        
+        console.log(`Activated resume: ${resume.name}`);
+    }
+
+    async deleteStoredResume(resumeId) {
+        if (!confirm('Are you sure you want to delete this resume?')) return;
+
+        const resumeIndex = this.storedResumes.findIndex(r => r.id === resumeId);
+        if (resumeIndex === -1) return;
+
+        const deletedResume = this.storedResumes[resumeIndex];
+        this.storedResumes.splice(resumeIndex, 1);
+
+        // If we deleted the active resume, clear it
+        if (this.activeResumeId === resumeId) {
+            this.activeResumeId = null;
+            this.resumeFile = null;
+            this.resumeData = null;
+            
+            // If there are other resumes, activate the first one
+            if (this.storedResumes.length > 0) {
+                await this.activateResume(this.storedResumes[0].id);
+            } else {
+                await this.saveActiveResumeId(); // Save null activeResumeId
+            }
+        }
+
+        await this.saveStoredResumes();
+        this.renderStoredResumes();
+        this.updateActiveResumeDisplay();
+        this.updateResumeStatus();
+        this.updateGenerateButton();
+        
+        console.log(`Deleted resume: ${deletedResume.name}`);
+    }
+
+    async clearAllResumes() {
+        if (!confirm('Are you sure you want to delete all stored resumes? This action cannot be undone.')) return;
+
+        this.storedResumes = [];
+        this.activeResumeId = null;
+        this.resumeFile = null;
+        this.resumeData = null;
+
+        await this.saveStoredResumes();
+        await this.saveActiveResumeId();
+        await chrome.storage.local.remove(['resumeFile']); // Also clear legacy storage
+        
+        this.renderStoredResumes();
+        this.updateActiveResumeDisplay();
+        this.updateResumeStatus();
+        this.updateGenerateButton();
+        
+        console.log('Cleared all stored resumes');
     }
 
     updateJobsCount() {
@@ -723,34 +920,209 @@ class AutoApplyAI {
     updateGenerateButton() {
         const generateBtn = document.getElementById('generate-btn');
         const generateStatus = document.getElementById('generate-status');
+        const selectedJobsSection = document.getElementById('selected-jobs-section');
         
-        const hasJob = this.selectedJob !== null;
-        const hasResume = this.resumeFile !== null;
+        // Check if we have selected jobs (multi-selection mode) or a single selected job
+        const hasSelectedJobs = this.selectedJobs.size > 0;
+        const hasSingleJob = this.selectedJob && !hasSelectedJobs;
         
-        if (hasJob && hasResume) {
+        if (hasSelectedJobs) {
+            // Multi-job selection mode
+            generateBtn.disabled = false;
+            generateStatus.textContent = `Ready to generate documents for ${this.selectedJobs.size} job${this.selectedJobs.size > 1 ? 's' : ''}`;
+            selectedJobsSection.style.display = 'block';
+            this.renderSelectedJobs();
+        } else if (hasSingleJob) {
+            // Single job selection mode (legacy)
             generateBtn.disabled = false;
             generateStatus.textContent = `Ready to generate for: ${this.selectedJob.title}`;
-            generateStatus.className = 'status';
-        } else if (!hasJob && !hasResume) {
-            generateBtn.disabled = true;
-            generateStatus.textContent = 'Select a job and upload your resume first';
-            generateStatus.className = 'status';
-        } else if (!hasJob) {
-            generateBtn.disabled = true;
-            generateStatus.textContent = 'Select a job from the Jobs tab';
-            generateStatus.className = 'status';
+            selectedJobsSection.style.display = 'none';
         } else {
+            // No jobs selected
             generateBtn.disabled = true;
-            generateStatus.textContent = 'Upload your resume first';
-            generateStatus.className = 'status';
+            generateStatus.textContent = 'Select jobs from the Jobs tab';
+            selectedJobsSection.style.display = 'none';
+        }
+        
+        // Show/hide template customization based on document type
+        this.toggleTemplateCustomization();
+    }
+    
+    renderSelectedJobs() {
+        const container = document.getElementById('selected-jobs-list');
+        if (!container) return;
+        
+        const selectedJobsArray = Array.from(this.selectedJobs).map(jobId => 
+            this.jobs.find(job => job.id === jobId)
+        ).filter(job => job); // Filter out any undefined jobs
+        
+        container.innerHTML = selectedJobsArray.map(job => {
+            const generationStatus = job.generationStatus || 'pending';
+            
+            return `
+                <div class="selected-job-card" data-job-id="${job.id}">
+                    <div class="selected-job-header">
+                        <div class="selected-job-info">
+                            <div class="selected-job-title">${this.escapeHtml(job.title)}</div>
+                            <div class="selected-job-company">${this.escapeHtml(job.company)}</div>
+                        </div>
+                        <div class="selected-job-status">
+                            <div class="job-generation-status ${generationStatus}">
+                                ${this.getGenerationStatusText(generationStatus)}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+    
+    updateJobDocumentType(jobId, docType) {
+        const job = this.jobs.find(j => j.id === jobId);
+        if (job) {
+            job.selectedDocType = docType;
+            this.saveJobs(); // Save the selection
+        }
+    }
+    
+    getGenerationStatusText(status) {
+        switch (status) {
+            case 'pending': return 'Ready to generate';
+            case 'generating': return 'Generating...';
+            case 'completed': return 'Generated successfully';
+            case 'error': return 'Generation failed';
+            default: return 'Ready to generate';
         }
     }
 
     async generateDocument() {
-        if (!this.selectedJob || !this.resumeFile) return;
+        // Check if we have selected jobs
+        const hasSelectedJobs = this.selectedJobs.size > 0;
         
-        const docType = document.getElementById('doc-type').value;
-        this.setStatus('generate-status', 'Generating document with ChatGPT-4o...', 'info');
+        if (hasSelectedJobs) {
+            // Always generate for all selected jobs
+            await this.generateMultipleDocuments();
+        } else if (this.selectedJob && this.resumeFile) {
+            // Fallback for old single job selection (if any)
+            await this.generateSingleDocument();
+        } else {
+            this.setStatus('generate-status', 'Please select jobs from the Jobs tab first', 'info');
+        }
+    }
+
+
+    
+    async generateMultipleDocuments() {
+        const selectedJobsArray = Array.from(this.selectedJobs).map(jobId => 
+            this.jobs.find(job => job.id === jobId)
+        ).filter(job => job);
+        
+        if (selectedJobsArray.length === 0) return;
+        
+        const docFormat = this.getSelectedDocumentFormat();
+        const generateBtn = document.getElementById('generate-btn');
+        const generateStatus = document.getElementById('generate-status');
+        
+        // Disable generate button during generation
+        generateBtn.disabled = true;
+        generateStatus.textContent = 'Generating documents...';
+        
+        try {
+            // Get resume text and API key once
+            const activeResume = this.getActiveResume();
+            if (!activeResume) {
+                throw new Error('No active resume found. Please upload and select a resume first.');
+            }
+            
+            const resumeText = activeResume.content;
+            const apiKey = await this.getApiKey();
+            if (!apiKey) {
+                throw new Error('OpenAI API key not configured. Please set your API key in the extension settings.');
+            }
+            
+            let successCount = 0;
+            let errorCount = 0;
+            
+            // Get document type from global settings
+            const docType = this.getSelectedDocumentType();
+            
+            // Generate documents sequentially
+            for (let i = 0; i < selectedJobsArray.length; i++) {
+                const job = selectedJobsArray[i];
+                
+                try {
+                    // Update job status to generating
+                    job.generationStatus = 'generating';
+                    this.renderSelectedJobs();
+                    
+                    generateStatus.textContent = `Generating ${docType} for ${job.title} (${i + 1}/${selectedJobsArray.length})...`;
+                    
+                    // Generate document
+                    const content = await this.generateOptimizedDocument(resumeText, job, docType, apiKey);
+                    
+                    // Create blob and store document
+                    const blob = await this.createDocumentBlob(content, docType, job.title, docFormat);
+                    const mimeType = this.getDocumentMimeType(docFormat);
+                    
+                    // Initialize generatedDocs array if it doesn't exist
+                    if (!job.generatedDocs) {
+                        job.generatedDocs = [];
+                    }
+                    
+                    // Remove existing documents of the same type, keep others
+                    job.generatedDocs = job.generatedDocs.filter(doc => doc.type !== docType);
+                    
+                    // Store as base64 for persistence
+                    const arrayBuffer = await blob.arrayBuffer();
+                    const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+                    
+                    job.generatedDocs.push({
+                        type: docType,
+                        format: docFormat,
+                        mimeType,
+                        base64,
+                        timestamp: Date.now()
+                    });
+                    
+                    job.generationStatus = 'completed';
+                    successCount++;
+                    
+                } catch (error) {
+                    console.error(`Error generating document for job ${job.id}:`, error);
+                    job.generationStatus = 'error';
+                    errorCount++;
+                }
+                
+                // Update UI after each job
+                this.renderSelectedJobs();
+                await this.saveJobs();
+                
+                // Small delay between generations to avoid overwhelming the API
+                if (i < selectedJobsArray.length - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                }
+            }
+            
+            // Final status update
+            if (errorCount === 0) {
+                generateStatus.textContent = `Successfully generated ${successCount} documents!`;
+            } else {
+                generateStatus.textContent = `Generated ${successCount} documents, ${errorCount} failed.`;
+            }
+            
+        } catch (error) {
+            console.error('Multi-document generation error:', error);
+            generateStatus.textContent = `Error: ${error.message}`;
+        } finally {
+            generateBtn.disabled = false;
+        }
+    }
+    
+    async generateSingleDocument() {
+        const docType = this.getSelectedDocumentType();
+        const docFormat = this.getSelectedDocumentFormat();
+        
+        this.setStatus('generate-status', `Generating document with ChatGPT-4o...`, 'info');
         
         try {
             // Read resume file
@@ -758,18 +1130,63 @@ class AutoApplyAI {
             
             // Get API key from storage
             const apiKey = await this.getApiKey();
-            if (!apiKey) {
-                throw new Error('OpenAI API key not configured. Please set your API key in the extension settings.');
-            }
-
+            if (!apiKey) throw new Error('OpenAI API key not configured. Please set your API key in the extension settings.');
+            
             // Generate document with optimized prompts
             const content = await this.generateOptimizedDocument(resumeText, this.selectedJob, docType, apiKey);
-            this.downloadDocument(content, docType, this.selectedJob.title);
-            this.setStatus('generate-status', 'Document generated successfully!', 'success');
             
+            // Create blob and store document
+            const blob = await this.createDocumentBlob(content, docType, this.selectedJob.title, docFormat);
+            const mimeType = this.getDocumentMimeType(docFormat);
+            
+            // Initialize generatedDocs array if it doesn't exist
+            if (!this.selectedJob.generatedDocs) {
+                this.selectedJob.generatedDocs = [];
+            }
+            
+            // Remove existing documents of the same type, keep others
+            this.selectedJob.generatedDocs = this.selectedJob.generatedDocs.filter(doc => doc.type !== docType);
+            
+            // Store as base64 for persistence
+            const arrayBuffer = await blob.arrayBuffer();
+            const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+            
+            this.selectedJob.generatedDocs.push({
+                type: docType,
+                format: docFormat,
+                mimeType,
+                base64,
+                timestamp: Date.now()
+            });
+            
+            await this.saveJobs();
+            
+            // Download as usual
+            await this.downloadDocument(content, docType, this.selectedJob.title, docFormat);
+            
+            this.setStatus('generate-status', `Document generated successfully as ${docFormat.toUpperCase()}!`, 'success');
         } catch (error) {
             console.error('Generation error:', error);
             this.setStatus('generate-status', `Error: ${error.message}`, 'error');
+        }
+    }
+    
+    async createDocumentBlob(content, docType, jobTitle, docFormat) {
+        if (docFormat === 'pdf') {
+            return await this.generatePDF(content, docType, jobTitle);
+        } else if (docFormat === 'docx') {
+            return await this.generateWord(content, docType, jobTitle);
+        } else {
+            const formattedContent = `${this.formatDocumentTitle(docType, jobTitle)}\n\n${content}`;
+            return new Blob([formattedContent], { type: 'text/plain' });
+        }
+    }
+    
+    getDocumentMimeType(docFormat) {
+        switch (docFormat) {
+            case 'pdf': return 'application/pdf';
+            case 'docx': return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+            default: return 'text/plain';
         }
     }
 
@@ -779,84 +1196,170 @@ class AutoApplyAI {
         
         switch (docType) {
             case 'resume':
-                systemPrompt = `You are an expert resume writer and ATS optimization specialist. Your task is to tailor a resume for a specific job posting.
-
-CRITICAL RULES:
-- ONLY use information that exists in the original resume
-- NEVER invent new jobs, skills, companies, or experiences
-- NEVER add fictional details or accomplishments
-- Focus on reordering, rephrasing, and emphasizing relevant content
-- Use keywords from the job description naturally
-- Maintain professional formatting and structure
-- Keep all dates, company names, and factual information exactly as provided`;
-
-                userPrompt = `Tailor this resume for the following job posting. Optimize for ATS systems and highlight the most relevant experiences.
-
-JOB POSTING:
-Title: ${job.title}
-Company: ${job.company}
-Description: ${job.description}
-
-ORIGINAL RESUME:
-${resumeText}
-
-INSTRUCTIONS:
-1. Reorganize sections to highlight most relevant experience first
-2. Rewrite bullet points to emphasize skills mentioned in the job description
-3. Use action verbs and quantifiable achievements where they exist
-4. Include relevant keywords naturally
-5. Maintain the same factual content - do not invent anything
-6. Return ONLY the tailored resume content in clean markdown format`;
+                // Check if we have pre-extracted structured data
+                let extractedData;
+                const activeResume = this.storedResumes.find(r => r.id === this.activeResumeId);
+                
+                if (activeResume && activeResume.structuredData) {
+                    console.log('✅ Using pre-extracted structured data from resume upload');
+                    extractedData = activeResume.structuredData;
+                } else {
+                    console.log('🔍 No pre-extracted data found, extracting structured data now...');
+                    extractedData = await this.extractResumeData(resumeText, apiKey);
+                }
+                
+                // Then generate tailored resume using our template
+                return await this.generateTemplatedResume(extractedData, job, apiKey);
                 break;
 
             case 'cover-letter':
+                // Use structured data for cover letters too
+                let coverLetterExtractedData;
+                const coverLetterActiveResume = this.storedResumes.find(r => r.id === this.activeResumeId);
+                
+                if (coverLetterActiveResume && coverLetterActiveResume.structuredData) {
+                    console.log('✅ Using pre-extracted structured data for cover letter generation');
+                    coverLetterExtractedData = coverLetterActiveResume.structuredData;
+                } else {
+                    console.log('🔍 No pre-extracted data found, extracting structured data for cover letter...');
+                    coverLetterExtractedData = await this.extractResumeData(resumeText, apiKey);
+                }
+
                 systemPrompt = `You are a professional cover letter writer. Create compelling, personalized cover letters that demonstrate genuine interest and relevant qualifications.
 
 CRITICAL RULES:
 - Write in a professional, engaging tone
 - Reference specific details from the job posting
-- Highlight relevant experience from the resume
+- Highlight relevant experience from the resume data
 - Keep it concise (3-4 paragraphs maximum)
 - Show enthusiasm for the role and company
-- NEVER invent experience not in the resume`;
+- NEVER invent experience not in the resume data
+- Use the structured resume data to create targeted narratives`;
 
-                userPrompt = `Write a compelling cover letter for this job application:
+                userPrompt = `Write a compelling cover letter for this job application using the structured resume data:
 
 JOB POSTING:
 Title: ${job.title}
 Company: ${job.company}
 Description: ${job.description}
 
-RESUME SUMMARY:
-${resumeText.substring(0, 1500)}
+STRUCTURED RESUME DATA:
+${JSON.stringify(coverLetterExtractedData, null, 2)}
 
 REQUIREMENTS:
-1. Address the hiring manager professionally
-2. Open with enthusiasm for the specific role
-3. Highlight 2-3 most relevant experiences from the resume
-4. Show knowledge of the company/role requirements
-5. Close with a professional call to action
-6. Keep it under 400 words
-7. Format as a proper business letter`;
+1. Use the person's actual name from personalInfo
+2. Address the hiring manager professionally
+3. Open with enthusiasm for the specific role at the specific company
+4. Highlight 2-3 most relevant experiences from the experience array that match the job requirements
+5. Reference specific skills from coreSkills that align with the job description
+6. Show knowledge of the company/role requirements
+7. Close with a professional call to action
+8. Keep it under 400 words
+9. Format as a proper business letter with sender's contact information from personalInfo
+
+EXAMPLE STRUCTURE:
+[Your Name from personalInfo]
+[Your Address from personalInfo]
+[Your Phone and Email from personalInfo]
+
+[Date]
+
+Dear Hiring Manager,
+
+I am writing to express my strong interest in the [Job Title] position at [Company]. With [relevant experience summary from experience array], I am excited about the opportunity to contribute to [company-specific mention].
+
+In my role as [most relevant job title from experience], I [specific achievement or responsibility that matches job requirements]. My experience in [relevant skills from coreSkills] has prepared me well for the challenges outlined in your job posting, particularly [specific job requirement].
+
+Additionally, my background in [second relevant experience/skill] and [third relevant experience/skill] aligns perfectly with your needs for [job-specific requirement]. I am particularly drawn to [company/role-specific detail from job description].
+
+I would welcome the opportunity to discuss how my experience and enthusiasm can contribute to [Company]'s continued success. Thank you for considering my application.
+
+Sincerely,
+[Your Name]`;
                 break;
 
-            case 'follow-up':
-                systemPrompt = `You are a professional communication expert. Write polite, professional follow-up emails that demonstrate continued interest without being pushy.`;
+            case 'both':
+                // Generate both cover letter and resume
+                // Get structured data for both documents
+                let bothCoverLetterExtractedData;
+                const bothCoverLetterActiveResume = this.storedResumes.find(r => r.id === this.activeResumeId);
+                
+                if (bothCoverLetterActiveResume && bothCoverLetterActiveResume.structuredData) {
+                    console.log('✅ Using pre-extracted structured data for both document generation');
+                    bothCoverLetterExtractedData = bothCoverLetterActiveResume.structuredData;
+                } else {
+                    console.log('🔍 No pre-extracted data found, extracting structured data for both documents...');
+                    bothCoverLetterExtractedData = await this.extractResumeData(resumeText, apiKey);
+                }
 
-                userPrompt = `Write a professional follow-up email for this job application:
+                const coverLetterSystemPrompt = `You are a professional cover letter writer. Create compelling, personalized cover letters that demonstrate genuine interest and relevant qualifications.
 
-JOB DETAILS:
+CRITICAL RULES:
+- Write in a professional, engaging tone
+- Reference specific details from the job posting
+- Highlight relevant experience from the resume data
+- Keep it concise (3-4 paragraphs maximum)
+- Show enthusiasm for the role and company
+- NEVER invent experience not in the resume data
+- Use the structured resume data to create targeted narratives`;
+
+                const coverLetterUserPrompt = `Write a compelling cover letter for this job application using the structured resume data:
+
+JOB POSTING:
 Title: ${job.title}
 Company: ${job.company}
+Description: ${job.description}
+
+STRUCTURED RESUME DATA:
+${JSON.stringify(bothCoverLetterExtractedData, null, 2)}
 
 REQUIREMENTS:
-1. Professional subject line
-2. Polite greeting
-3. Brief reminder of the application and enthusiasm
-4. Offer to provide additional information
-5. Professional closing
-6. Keep it concise (under 150 words)
-7. Strike a balance between persistent and respectful`;
+1. Use the person's actual name from personalInfo
+2. Address the hiring manager professionally
+3. Open with enthusiasm for the specific role at the specific company
+4. Highlight 2-3 most relevant experiences from the experience array that match the job requirements
+5. Reference specific skills from coreSkills that align with the job description
+6. Show knowledge of the company/role requirements
+7. Close with a professional call to action
+8. Keep it under 400 words
+9. Format as a proper business letter with sender's contact information from personalInfo`;
+
+                // Generate cover letter first
+                const coverLetterResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify({
+                        model: 'gpt-4o',
+                        messages: [
+                            { role: 'system', content: coverLetterSystemPrompt },
+                            { role: 'user', content: coverLetterUserPrompt }
+                        ],
+                        max_tokens: 2000,
+                        temperature: 0.3
+                    })
+                });
+
+                let coverLetterContent = '';
+                if (coverLetterResponse.ok) {
+                    const coverLetterResult = await coverLetterResponse.json();
+                    coverLetterContent = coverLetterResult.choices[0].message.content;
+                    this.incrementApiCalls();
+                } else {
+                    const error = await coverLetterResponse.json();
+                    throw new Error(error.error?.message || `Cover Letter API Error: ${coverLetterResponse.status}`);
+                }
+
+                // Generate resume using the same structured data
+                const resumeContent = await this.generateTemplatedResume(bothCoverLetterExtractedData, job, apiKey, false);
+
+                // Increment document generated counter once for the combined document
+                this.incrementDocGenerated();
+
+                // Combine both documents
+                return `COVER LETTER\n\n${coverLetterContent}\n\n\n${'='.repeat(50)}\n\nTAILORED RESUME\n\n${resumeContent}`;
                 break;
         }
 
@@ -894,6 +1397,418 @@ REQUIREMENTS:
         }
     }
 
+    async extractResumeData(resumeText, apiKey) {
+        const systemPrompt = `You are a resume data extraction expert. Extract structured information from resumes and return it in a standardized JSON format.
+
+CRITICAL RULES:
+- Extract ONLY information that exists in the resume
+- Do NOT invent or assume any information
+- Preserve exact dates, company names, and job titles
+- Extract skills exactly as written
+- Maintain all factual accuracy`;
+
+        const userPrompt = `Extract structured data from this resume and return it in the following JSON format:
+
+RESUME TEXT:
+${resumeText}
+
+REQUIRED JSON STRUCTURE:
+{
+  "personalInfo": {
+    "name": "Full Name",
+    "location": "City, State",
+    "phone": "Phone Number",
+    "email": "Email Address",
+    "citizenship": "Citizenship status if mentioned"
+  },
+  "professionalSummary": "2-3 sentence summary of experience",
+  "coreSkills": [
+    "Skill 1",
+    "Skill 2",
+    "Skill 3"
+  ],
+  "experience": [
+    {
+      "title": "Job Title",
+      "company": "Company Name",
+      "location": "City, State",
+      "startDate": "Start Date",
+      "endDate": "End Date or Present",
+      "responsibilities": [
+        "Responsibility 1",
+        "Responsibility 2"
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "Degree Name",
+      "institution": "School Name",
+      "location": "City, State",
+      "year": "Graduation Year or Date Range"
+    }
+  ],
+  "licenses": [
+    "License or certification"
+  ],
+  "additionalSections": {
+    "tools": ["Tool 1", "Tool 2"],
+    "languages": ["Language 1", "Language 2"],
+    "projects": [],
+    "certifications": []
+  }
+}
+
+Return ONLY the JSON object with extracted data.`;
+
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+                model: 'gpt-4o',
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user', content: userPrompt }
+                ],
+                max_tokens: 4000,
+                temperature: 0.1
+            })
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+            const content = result.choices[0].message.content;
+            
+            try {
+                // Clean and parse JSON
+                let cleanContent = content.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+                cleanContent = cleanContent.replace(/^```\s*/, '').replace(/\s*```$/, '');
+                const extractedData = JSON.parse(cleanContent);
+                
+                // Log the extracted data to help debug
+                console.log('🔍 Extracted resume data:', extractedData);
+                console.log('📊 Experience entries:', extractedData.experience?.length || 0);
+                console.log('📚 Education entries:', extractedData.education?.length || 0);
+                console.log('🛠️ Skills count:', extractedData.coreSkills?.length || 0);
+                
+                return extractedData;
+            } catch (error) {
+                console.error('Error parsing extracted data:', error);
+                console.error('Raw content that failed to parse:', content);
+                throw new Error('Failed to extract resume data');
+            }
+        } else {
+            throw new Error('Failed to extract resume data from API');
+        }
+    }
+
+    getAmplificationModePrompt(mode) {
+        const prompts = {
+            precision: `You are a professional resume writer and markdown formatting expert. Create a tailored resume using the user's structured data and the job description provided.
+
+Use ONLY the user's structured resume data. Tailor language to match the job description, but do not infer or add experience. Be conservative and fact-based.
+
+🔧 FORMATTING RULES:
+1. Start with: # [Full Name]
+2. Section headers: ## [Section Name]
+3. Job titles: **[Job Title]**
+4. Degrees: **[Degree Name]**
+5. Bullet points: - [Start with action verb, use 1 bullet per line]
+6. Company format: [Company Name], [Location] | [Start Date] – [End Date]
+7. NO bold for company/location/dates
+8. Use proper em dash (–), not hyphen (-), for dates
+9. Separate each section with ONE blank line
+
+✍️ WRITING STYLE RULES:
+- Use action verbs and quantifiable outcomes
+- Frame each bullet in a Problem–Action–Result (PAR) or Action–Impact format
+- Each bullet should be 15–25 words unless shorter is more impactful
+- Avoid filler phrases (e.g., "responsible for")
+- Do not use first-person pronouns
+
+📐 STRUCTURE:
+- Professional Summary (2–3 lines)
+- Core Skills (thematic grouping)
+- Experience (highlight JD-relevant tasks, but preserve resume breadth)
+- Education, Licenses, Tools (at the bottom)
+
+📌 PRECISION MODE BEHAVIOR:
+- Use ONLY the user's provided data
+- Tailor language to match job description keywords
+- Do not infer or add any experience, tools, or responsibilities
+- Be conservative and fact-based in all descriptions
+
+📏 RESUME LENGTH:
+- Total word count: 400–600 words
+- Should fit within 1–2 pages of standard formatting
+- Focus on relevant experience without overcompressing
+`,
+
+            gap_filler: `You are a professional resume writer and markdown formatting expert. Create a tailored resume using the user's structured data and the job description provided.
+
+You may infer reasonable, adjacent experiences that logically align with the user's roles, career level, and tools. Do not invent employers, job titles, or degrees.
+
+🔧 FORMATTING RULES:
+1. Start with: # [Full Name]
+2. Section headers: ## [Section Name]
+3. Job titles: **[Job Title]**
+4. Degrees: **[Degree Name]**
+5. Bullet points: - [Start with action verb, use 1 bullet per line]
+6. Company format: [Company Name], [Location] | [Start Date] – [End Date]
+7. NO bold for company/location/dates
+8. Use proper em dash (–), not hyphen (-), for dates
+9. Separate each section with ONE blank line
+
+✍️ WRITING STYLE RULES:
+- Use action verbs and quantifiable outcomes
+- Frame each bullet in a Problem–Action–Result (PAR) or Action–Impact format
+- Each bullet should be 15–25 words unless shorter is more impactful
+- Avoid filler phrases (e.g., "responsible for")
+- Do not use first-person pronouns
+
+📐 STRUCTURE:
+- Professional Summary (2–3 lines)
+- Core Skills (thematic grouping)
+- Experience (highlight JD-relevant tasks, but preserve resume breadth)
+- Education, Licenses, Tools (at the bottom)
+
+📌 GAP-FILLING BEHAVIOR:
+- You may add context around tools, collaboration, or metrics that are likely associated with the user's experience
+- Add missing but credible support functions or team interactions (e.g., "collaborated with adjacent departments")
+- Add light outcome metrics where plausible (e.g., "reduced review cycles by 15%")
+- DO NOT invent new companies, degrees, or jobs
+
+📏 RESUME LENGTH:
+- Total word count: 450–700 words
+- Should fit within 1–2 pages of standard formatting
+- Focus on relevant experience without overcompressing
+`,
+
+            beast_mode: `You are an elite executive resume writer. Create a bold, high-impact resume using the user's structured experience and the job description provided.
+
+You are AGGRESSIVE in expanding the scope of roles to reflect leadership, cross-functional ownership, and strategic impact. Transform ordinary responsibilities into executive-level achievements with quantified results — but NEVER invent companies, job titles, or degrees.
+
+🔧 FORMATTING RULES:
+1. Start with: # [Full Name]
+2. Section headers: ## [Section Name]
+3. Job titles: **[Job Title]**
+4. Degrees: **[Degree Name]**
+5. Bullet points: - [Start with action verb, use 1 bullet per line]
+6. Company format: [Company Name], [Location] | [Start Date] – [End Date]
+7. NO bold for company/location/dates
+8. Use proper em dash (–), not hyphen (-), for dates
+9. Separate each section with ONE blank line
+
+✍️ WRITING STYLE RULES:
+- Each bullet MUST include quantified impact (percentages, dollar amounts, team sizes, timelines)
+- Transform basic tasks into strategic initiatives with measurable outcomes
+- Use power verbs: "Spearheaded", "Orchestrated", "Revolutionized", "Optimized", "Delivered"
+- Show scale and complexity: "across 5 departments", "managing $2M budget", "leading 15-person team"
+- Bullets should be 25–35 words with substantial impact claims
+- No generic responsibilities - everything must demonstrate value creation
+
+📐 STRUCTURE:
+- Professional Summary (3 bold, impact-heavy lines with specific achievements)
+- Core Skills (grouped strategically with expertise levels)
+- Experience (each role shows escalating responsibility and measurable impact)
+- Education, Licenses, Tools (concise but impressive)
+
+🔥 BEAST MODE BEHAVIOR - BE AGGRESSIVE:
+- QUANTIFY EVERYTHING with believable but impressive metrics:
+  - "Increased efficiency by 35%", "Reduced costs by $400K annually"
+  - "Led cross-functional team of 12", "Managed $1.5M project portfolio"
+  - "Accelerated processes by 50%", "Improved client satisfaction to 96%"
+  - "Generated $800K in additional revenue", "Streamlined operations saving 200 hours/month"
+
+- ELEVATE EVERY RESPONSIBILITY:
+  - "Managed contracts" → "Orchestrated $5M+ contract portfolio, reducing legal risks by 40% and accelerating deal closure by 25%"
+  - "Coordinated with teams" → "Led cross-functional initiatives across 4 departments, aligning strategic objectives and delivering 20% faster project completion"
+  - "Reviewed documents" → "Architected comprehensive review processes, eliminating 95% of compliance issues and preventing potential $2M in regulatory penalties"
+
+- USE STRATEGIC LANGUAGE:
+  - Position as driver of transformation, not executor of tasks
+  - Show influence beyond direct reports: "advised C-suite", "influenced company-wide policy"
+  - Demonstrate thought leadership: "pioneered new methodology", "established best practices"
+
+- CREDIBLE EXAGGERATION GUIDELINES:
+  - Stay within 2x of realistic expectations for the role level
+  - Use industry-appropriate metrics (tech: user growth, finance: cost savings, operations: efficiency)
+  - Scale achievements appropriately: coordinator level vs director level impacts
+
+📏 RESUME LENGTH:
+- Aim for 600–800 words max
+- Every word must justify its presence with impact demonstration
+- Focus on transformation stories and measurable business value
+`
+        };
+        
+        return prompts[mode] || prompts.precision;
+    }
+
+    async generateTemplatedResume(extractedData, job, apiKey, shouldIncrementDocGenerated = true) {
+        const selectedSections = this.getSelectedTemplateSections();
+        const amplificationMode = this.getSelectedAmplificationMode();
+        
+        const systemPrompt = this.getAmplificationModePrompt(amplificationMode);
+
+        // Build template format based on selected sections
+        let templateFormat = `# [Name]
+[Location] | [Citizenship if applicable]
+Phone: [Phone] | Email: [Email]`;
+
+        if (selectedSections.includeSummary) {
+            templateFormat += `
+
+## Professional Summary
+[2-3 sentences highlighting most relevant experience for this job]`;
+        }
+
+        if (selectedSections.includeSkills) {
+            templateFormat += `
+
+## Core Skills
+- [Most relevant skill 1]
+- [Most relevant skill 2]
+- [Most relevant skill 3]
+- [Additional relevant skills]`;
+        }
+
+        if (selectedSections.includeExperience) {
+            templateFormat += `
+
+## Professional Experience
+**[Job Title]**
+[Company Name], [Location] | [Start Date] – [End Date]
+- [Tailored responsibility emphasizing job-relevant skills]
+- [Achievement with quantifiable results if available]
+- [Additional relevant responsibility]`;
+        }
+
+        if (selectedSections.includeEducation) {
+            templateFormat += `
+
+## Education
+**[Degree Name]**
+[Institution Name], [Location] | [Year]`;
+        }
+
+        if (selectedSections.includeLicenses) {
+            templateFormat += `
+
+## Licenses & Admissions
+- [License/Certification 1]
+- [License/Certification 2]`;
+        }
+
+        if (selectedSections.includeTools) {
+            templateFormat += `
+
+## Tools & Platforms
+- [Relevant tools and technologies]`;
+        }
+
+        // Get selected enhancements for integration
+        const selectedEnhancements = this.getSelectedEnhancements();
+        const enhancementInstructions = selectedEnhancements.length > 0 ? 
+            `\n\nSPECIAL ENHANCEMENT INSTRUCTIONS:
+${selectedEnhancements.map(e => `- ${e.category} - ${e.title}: ${e.description} (Priority: ${e.priority})`).join('\n')}
+
+These enhancements should be woven naturally into the resume content to address identified gaps. Focus on high-priority enhancements first.` : '';
+
+        const userPrompt = `Create a tailored resume using this data and job requirements:
+
+EXTRACTED RESUME DATA:
+${JSON.stringify(extractedData, null, 2)}
+
+JOB REQUIREMENTS:
+Title: ${job.title}
+Company: ${job.company}
+Description: ${job.description}${enhancementInstructions}
+
+TEMPLATE FORMAT TO FOLLOW:
+${templateFormat}
+
+SECTION CONFIGURATION:
+- Professional Summary: ${selectedSections.includeSummary ? 'INCLUDE' : 'EXCLUDE'}
+- Core Skills: ${selectedSections.includeSkills ? 'INCLUDE' : 'EXCLUDE'}
+- Professional Experience: ${selectedSections.includeExperience ? 'INCLUDE' : 'EXCLUDE'}
+- Education: ${selectedSections.includeEducation ? 'INCLUDE' : 'EXCLUDE'}
+- Licenses & Admissions: ${selectedSections.includeLicenses ? 'INCLUDE' : 'EXCLUDE'}
+- Tools & Platforms: ${selectedSections.includeTools ? 'INCLUDE' : 'EXCLUDE'}
+
+CRITICAL FORMATTING RULES:
+1. Start with exactly: # [Full Name] (with # and space)
+2. Use exactly: ## [Section Name] (with ## and space) for ALL section headers
+3. For job titles use exactly: **[Job Title]** (with ** on both sides)
+4. For company info use exactly: [Company Name], [Location] | [Start Date] – [End Date]
+5. Use exactly: - [bullet point] (with - and space) for all bullet points
+6. Use exactly: **[Degree Name]** (with ** on both sides) for education
+7. Separate each section with exactly one blank line
+8. Do NOT use any other formatting like bold company names or italic text
+
+EXAMPLE FORMAT:
+# Ricardo E. Zuloaga
+New York, NY | United States & Venezuela
+Phone: +1 917-254-9676 | Email: ricardozuloaga@gmail.com
+
+## Professional Summary
+[Content here]
+
+## Core Skills
+- [Skill 1]
+- [Skill 2]
+
+## Professional Experience
+**Contracts Manager / Senior Legal & Commercial Advisor**
+Zumar Trading Corp., New York, NY | 2020 – Present
+- [Responsibility 1]
+- [Responsibility 2]
+
+## Education
+**LL.M.**
+Duke University School of Law, Durham, NC | 2013 – 2014
+
+INSTRUCTIONS:
+1. Follow the exact formatting rules above
+2. Prioritize information most relevant to the job
+3. Rewrite responsibilities to include job keywords naturally
+4. Emphasize achievements that match job requirements
+5. Order experience by relevance to target role
+6. Only include sections marked as INCLUDE above
+7. Return ONLY the formatted resume content, no explanations`;
+
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+                model: 'gpt-4o',
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user', content: userPrompt }
+                ],
+                max_tokens: 6000,
+                temperature: 0.3
+            })
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+            this.incrementApiCalls();
+            if (shouldIncrementDocGenerated) {
+                this.incrementDocGenerated();
+            }
+            return result.choices[0].message.content;
+        } else {
+            const error = await response.json();
+            throw new Error(error.error?.message || `API Error: ${response.status} - ${response.statusText}`);
+        }
+    }
 
     async readFileAsText(file) {
         const fileType = file.type.toLowerCase();
@@ -972,8 +1887,25 @@ REQUIREMENTS:
                         console.warn('Binary parsing failed:', binaryError.message);
                     }
                     
-                    // Method 3: Ask user to provide plain text
-                    const errorMsg = `❌ Unable to extract text from Word document. 
+                    // Method 3: Simple binary text extraction as last resort
+                    try {
+                        console.log('Trying simple binary text extraction...');
+                        const simpleText = String.fromCharCode.apply(null, new Uint8Array(arrayBuffer))
+                            .replace(/[\x00-\x1F\x7F-\x9F]/g, ' ')  // Remove control characters
+                            .replace(/\s+/g, ' ')  // Normalize whitespace
+                            .trim();
+                            
+                        if (simpleText && simpleText.length > 100) {
+                            console.log(`✅ Simple binary extraction found ${simpleText.length} characters`);
+                            resolve(simpleText);
+                            return;
+                        }
+                    } catch (simpleError) {
+                        console.warn('Simple binary extraction failed:', simpleError.message);
+                    }
+                    
+                    // Method 4: Ask user to provide plain text
+                    const errorMsg = `Resume file issue: Failed to extract text from ${file.name}: ❌ Unable to extract text from Word document. 
 
 IMMEDIATE SOLUTION:
 1. Open your Word document
@@ -1299,17 +2231,340 @@ This will give you immediate access to job matching while we improve Word suppor
             .trim();
     }
 
-    downloadDocument(content, type, jobTitle) {
-        const filename = `${type}-${jobTitle.replace(/[^a-zA-Z0-9]/g, '-')}.txt`;
-        const blob = new Blob([content], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
+    async downloadDocument(content, type, jobTitle, format = 'txt') {
+        const sanitizedTitle = jobTitle.replace(/[^a-zA-Z0-9]/g, '-');
+        const filename = `${type}-${sanitizedTitle}.${format}`;
         
+        let blob;
+        let mimeType;
+        
+        try {
+            switch (format) {
+                case 'pdf':
+                    blob = await this.generatePDF(content, type, jobTitle);
+                    mimeType = 'application/pdf';
+                    break;
+                    
+                case 'docx':
+                    blob = await this.generateWord(content, type, jobTitle);
+                    mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+                    break;
+                    
+                case 'txt':
+                default:
+                    const formattedContent = `${this.formatDocumentTitle(type, jobTitle)}\n\n${content}`;
+                    blob = new Blob([formattedContent], { type: 'text/plain' });
+                    mimeType = 'text/plain';
+                    break;
+            }
+            
+        const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
         a.download = filename;
         a.click();
         
         URL.revokeObjectURL(url);
+            
+        } catch (error) {
+            console.error('Error generating document:', error);
+            // Fallback to text format if other formats fail
+            if (format !== 'txt') {
+                console.log('Falling back to text format...');
+                const fallbackBlob = new Blob([content], { type: 'text/plain' });
+                const fallbackUrl = URL.createObjectURL(fallbackBlob);
+                const fallbackA = document.createElement('a');
+                fallbackA.href = fallbackUrl;
+                fallbackA.download = `${type}-${sanitizedTitle}.txt`;
+                fallbackA.click();
+                URL.revokeObjectURL(fallbackUrl);
+            }
+            throw error;
+        }
+    }
+
+    async generatePDF(content, type, jobTitle) {
+        try {
+            // Check if jsPDF library is loaded
+            if (!window.jspdf || !window.jspdf.jsPDF) {
+                throw new Error('jsPDF library not loaded');
+            }
+            
+            // Use locally loaded jsPDF library
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Set font and styling
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'normal');
+            
+            // Add title
+            doc.setFontSize(16);
+            doc.setFont('helvetica', 'bold');
+            doc.text(this.formatDocumentTitle(type, jobTitle), 20, 20);
+            
+            // Add content
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'normal');
+            
+            // Split content into lines that fit the page
+            const lines = doc.splitTextToSize(content, 170);
+            let yPosition = 40;
+            
+            lines.forEach((line, index) => {
+                if (yPosition > 280) {
+                    doc.addPage();
+                    yPosition = 20;
+                }
+                doc.text(line, 20, yPosition);
+                yPosition += 6;
+            });
+            
+            // Generate blob
+            const pdfBlob = doc.output('blob');
+            return pdfBlob;
+            
+        } catch (error) {
+            console.error('Error generating PDF:', error);
+            throw new Error(`PDF generation failed: ${error.message}`);
+        }
+    }
+
+    async generateWord(content, type, jobTitle) {
+        try {
+            // Check if docx library is loaded
+            if (!window.docx || !window.docx.Document) {
+                throw new Error('docx library not loaded');
+            }
+            
+            // Use locally loaded docx library
+            const { Document, Paragraph, TextRun, Packer, AlignmentType } = window.docx;
+            
+            // Parse markdown content and convert to Word elements
+            const wordElements = this.parseMarkdownToWordElements(content);
+            
+            // Create document with title and parsed content
+            const doc = new Document({
+                sections: [{
+                    properties: {
+                        page: {
+                            margin: {
+                                top: 720,    // 0.5 inch
+                                right: 720,  // 0.5 inch
+                                bottom: 720, // 0.5 inch
+                                left: 720    // 0.5 inch
+                            }
+                        }
+                    },
+                    children: [
+                        // Title
+                        new Paragraph({
+                            children: [
+                                new TextRun({
+                                    text: this.formatDocumentTitle(type, jobTitle),
+                                    bold: true,
+                                    size: 32
+                                })
+                            ],
+                            spacing: { after: 400 },
+                            alignment: AlignmentType.CENTER
+                        }),
+                        
+                        // Add a separator line
+                        new Paragraph({
+                            children: [
+                                new TextRun({
+                                    text: "___________________________________________",
+                                    size: 20
+                                })
+                            ],
+                            spacing: { after: 300 },
+                            alignment: AlignmentType.CENTER
+                        }),
+                        
+                        // Parsed content
+                        ...wordElements
+                    ]
+                }]
+            });
+            
+            // Generate blob
+            const blob = await Packer.toBlob(doc);
+            return blob;
+            
+        } catch (error) {
+            console.error('Error generating Word document:', error);
+            throw new Error(`Word generation failed: ${error.message}`);
+        }
+    }
+
+    parseMarkdownToWordElements(content) {
+        const { Paragraph, TextRun, AlignmentType } = window.docx;
+        const elements = [];
+        
+        // Remove the markdown code block wrapper if present
+        let cleanContent = content.replace(/^```markdown\s*/, '').replace(/\s*```$/, '');
+        cleanContent = cleanContent.replace(/^```\s*/, '').replace(/\s*```$/, '');
+        
+        // Split content into lines
+        const lines = cleanContent.split('\n');
+        
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            const trimmedLine = line.trim();
+            
+            if (!trimmedLine) {
+                // Empty line - add minimal spacing
+                elements.push(new Paragraph({
+                    children: [new TextRun({ text: "", size: 12 })],
+                    spacing: { after: 100 }
+                }));
+                continue;
+            }
+            
+            // Handle different markdown elements
+            if (trimmedLine.startsWith('# ')) {
+                // Main heading (H1) - Name - LEFT ALIGNED
+                elements.push(new Paragraph({
+                    children: [
+                        new TextRun({
+                            text: trimmedLine.replace(/^# /, ''),
+                            bold: true,
+                            size: 36,
+                            color: "1a1a1a"
+                        })
+                    ],
+                    spacing: { before: 0, after: 200 },
+                    alignment: AlignmentType.LEFT
+                }));
+            } else if (trimmedLine.startsWith('## ')) {
+                // Section heading (H2) - Clean professional style
+                const sectionTitle = trimmedLine.replace(/^## /, '');
+                elements.push(new Paragraph({
+                    children: [
+                        new TextRun({
+                            text: sectionTitle,
+                            bold: true,
+                            size: 28,
+                            color: "2563eb"
+                        })
+                    ],
+                    spacing: { before: 300, after: 150 },
+                    alignment: AlignmentType.LEFT
+                }));
+            } else if (trimmedLine.startsWith('**') && trimmedLine.endsWith('**') && !trimmedLine.includes('|')) {
+                // Bold standalone text (job titles, etc.)
+                elements.push(new Paragraph({
+                    children: [
+                        new TextRun({
+                            text: trimmedLine.replace(/^\*\*/, '').replace(/\*\*$/, ''),
+                            bold: true,
+                            size: 23
+                        })
+                    ],
+                    spacing: { before: 200, after: 80 },
+                    alignment: AlignmentType.LEFT
+                }));
+            } else if (trimmedLine.startsWith('- ')) {
+                // Bullet point
+                const bulletText = trimmedLine.replace(/^- /, '');
+                const bulletRuns = this.parseInlineFormatting(bulletText, 22);
+                
+                elements.push(new Paragraph({
+                    children: [
+                        new TextRun({ text: '• ', size: 22 }),
+                        ...bulletRuns
+                    ],
+                    spacing: { after: 120 },
+                    indent: { 
+                        left: 360,  // Consistent left indent for all bullet points
+                        hanging: 180  // Hanging indent for bullet alignment
+                    }
+                }));
+            } else {
+                // Regular paragraph - handle inline formatting
+                const textRuns = this.parseInlineFormatting(trimmedLine, 22);
+                
+                if (textRuns.length > 0) {
+                    // Check if this looks like contact info (contains email, phone, etc.)
+                    const isContactInfo = /[@|]|Phone:|Email:|New York|NY|\+1/.test(trimmedLine);
+                    
+                    // Check if this looks like company/location info (follows job title pattern)
+                    const isCompanyInfo = /\w+.*,\s+\w+.*\||\w+.*–|\w+.*\|\s*\d{4}/.test(trimmedLine) && !isContactInfo;
+                    
+                    // If it's company info, make it slightly smaller and italic for distinction
+                    if (isCompanyInfo) {
+                        const companyRuns = textRuns.map(run => ({
+                            ...run,
+                            size: 21,
+                            italics: true
+                        }));
+                        
+                        elements.push(new Paragraph({
+                            children: companyRuns,
+                            spacing: { after: 120 },
+                            alignment: AlignmentType.LEFT,
+                            indent: { left: 0 }
+                        }));
+                    } else {
+                        elements.push(new Paragraph({
+                            children: textRuns,
+                            spacing: { 
+                                after: isContactInfo ? 120 : 150 
+                            },
+                            alignment: AlignmentType.LEFT, // Everything left-aligned for ATS compatibility
+                            indent: { left: 0 } // Ensure consistent left alignment for all content
+                        }));
+                    }
+                }
+            }
+        }
+        
+        return elements;
+    }
+
+    parseInlineFormatting(text, fontSize = 22) {
+        const { TextRun } = window.docx;
+        const runs = [];
+        
+        // Split by bold markers while preserving them
+        const parts = text.split(/(\*\*[^*]+\*\*)/);
+        
+        for (const part of parts) {
+            if (!part) continue;
+            
+            if (part.startsWith('**') && part.endsWith('**')) {
+                // Bold text
+                const boldText = part.replace(/^\*\*/, '').replace(/\*\*$/, '');
+                if (boldText) {
+                    runs.push(new TextRun({
+                        text: boldText,
+                        bold: true,
+                        size: fontSize
+                    }));
+                }
+            } else {
+                // Regular text
+                if (part) {
+                    runs.push(new TextRun({
+                        text: part,
+                        size: fontSize
+                    }));
+                }
+            }
+        }
+        
+        return runs;
+    }
+
+    formatDocumentTitle(type, jobTitle) {
+        const typeMap = {
+            'cover-letter': 'Cover Letter',
+            'resume': 'Resume',
+            'both': 'Cover Letter and Resume'
+        };
+        
+        return `${typeMap[type] || type} - ${jobTitle}`;
     }
 
     async loadJobs() {
@@ -1331,8 +2586,46 @@ This will give you immediate access to job matching while we improve Word suppor
         }
     }
 
+    async loadStoredResumes() {
+        try {
+            const result = await chrome.storage.local.get(['storedResumes', 'activeResumeId']);
+            this.storedResumes = Array.isArray(result.storedResumes) ? result.storedResumes : [];
+            this.activeResumeId = result.activeResumeId || null;
+            console.log('Loaded stored resumes:', this.storedResumes.length);
+        } catch (error) {
+            console.error('Error loading stored resumes:', error);
+            this.storedResumes = [];
+        }
+    }
+
+    async saveStoredResumes() {
+        try {
+            await chrome.storage.local.set({ 
+                storedResumes: this.storedResumes,
+                activeResumeId: this.activeResumeId 
+            });
+        } catch (error) {
+            console.error('Error saving stored resumes:', error);
+        }
+    }
+
     async loadResume() {
         try {
+            // If we have an active resume from stored resumes, use that
+            if (this.activeResumeId && this.storedResumes.length > 0) {
+                const activeResume = this.storedResumes.find(r => r.id === this.activeResumeId);
+                if (activeResume) {
+                    // Note: We store extracted text content, so we should use text/plain type
+                    const blob = new Blob([activeResume.content], { type: 'text/plain' });
+                    this.resumeFile = new File([blob], activeResume.name, { 
+                        type: 'text/plain',
+                        lastModified: new Date(activeResume.uploadedAt).getTime()
+                    });
+                    return;
+                }
+            }
+
+            // Fallback to legacy resume storage
             const result = await chrome.storage.local.get(['resumeFile']);
             if (result.resumeFile) {
                 // Create a File object from stored data
@@ -1357,26 +2650,58 @@ This will give you immediate access to job matching while we improve Word suppor
                 throw new Error('Resume content is too short or empty after processing. Please check your file.');
             }
             
+            // Create new resume entry
+            const resumeId = Date.now().toString();
             const resumeData = {
+                id: resumeId,
                 name: this.resumeFile.name,
                 type: this.resumeFile.type,
                 content: content,
-                processedAt: new Date().toISOString(),
+                uploadedAt: new Date().toISOString(),
                 originalSize: this.resumeFile.size,
                 extractedLength: content.length
             };
+
+            // Extract structured data if API key is available
+            try {
+                const apiKey = await this.getApiKey();
+                if (apiKey) {
+                    console.log('🔍 Extracting structured data from resume...');
+                    const structuredData = await this.extractResumeData(content, apiKey);
+                    resumeData.structuredData = structuredData;
+                    console.log('✅ Structured data extracted and stored with resume');
+                } else {
+                    console.log('⚠️ No API key found, storing raw text only. Structured extraction will happen during generation.');
+                }
+            } catch (error) {
+                console.warn('Failed to extract structured data during upload:', error.message);
+                console.log('📝 Resume saved with raw text only. Structured extraction will happen during generation.');
+            }
             
+            // Check if a resume with the same name already exists
+            const existingIndex = this.storedResumes.findIndex(r => r.name === resumeData.name);
+            if (existingIndex !== -1) {
+                // Update existing resume
+                this.storedResumes[existingIndex] = resumeData;
+                this.activeResumeId = resumeData.id;
+            } else {
+                // Add new resume
+                this.storedResumes.push(resumeData);
+                this.activeResumeId = resumeData.id;
+            }
+
+            // Save to storage
+            await this.saveStoredResumes();
+            
+            // Also save to legacy storage for backward compatibility
             await chrome.storage.local.set({ resumeFile: resumeData });
             
             console.log('✅ Resume processed and saved successfully');
             console.log(`📊 Stats: Original ${this.resumeFile.size} bytes → ${content.length} characters extracted`);
             
-            // Show success feedback
-            const resumeStatus = document.getElementById('resume-status');
-            if (resumeStatus) {
-                resumeStatus.textContent = `✅ ${this.resumeFile.name} (${content.length} chars extracted)`;
-                resumeStatus.style.color = '#10b981';
-            }
+            // Update UI
+            this.renderStoredResumes();
+            this.updateResumeStatus();
             
         } catch (error) {
             console.error('Error processing/saving resume:', error);
@@ -1453,8 +2778,8 @@ This will give you immediate access to job matching while we improve Word suppor
             
             console.log('✅ Resume text successfully extracted and processed');
             console.log('Starting job match calculation for:', job.title);
-            console.log('Resume content length:', resumeText.length, 'characters');
-            console.log('Resume preview:', resumeText.substring(0, 200) + '...');
+            console.log('Resume content length:', resumeText?.length || 0, 'characters');
+            console.log('Resume preview:', resumeText ? resumeText.substring(0, 200) + '...' : 'No resume text');
             
             // Step 2: Proceed with job matching
             this.setStatus?.('capture-status', `🎯 Analyzing match for: ${job.title}...`, 'info');
@@ -1468,7 +2793,7 @@ This will give you immediate access to job matching while we improve Word suppor
             
             // Smart truncation that preserves key sections
             const maxResumeLength = 3000; // ~750 tokens - increased for better context
-            const maxJobDescLength = 4000; // ~1000 tokens - increased for better context
+            const maxJobDescLength = 12000; // ~3000 tokens - significantly increased for full job descriptions
             
             // For resume, try to preserve key sections
             let truncatedResume = resumeText;
@@ -1489,10 +2814,10 @@ This will give you immediate access to job matching while we improve Word suppor
             }
             
             // For job description, preserve requirements and responsibilities
-            let truncatedJobDesc = job.description;
-            if (job.description.length > maxJobDescLength) {
-                const reqMatch = job.description.match(/(requirements?|qualifications?|must have|essential)[^]*?(?=\n\n|\n[A-Z]|$)/i);
-                const respMatch = job.description.match(/(responsibilities?|duties|role|what you'll do)[^]*?(?=\n\n|\n[A-Z]|$)/i);
+            let truncatedJobDesc = job.description || '';
+            if (truncatedJobDesc.length > maxJobDescLength) {
+                const reqMatch = truncatedJobDesc.match(/(requirements?|qualifications?|must have|essential)[^]*?(?=\n\n|\n[A-Z]|$)/i);
+                const respMatch = truncatedJobDesc.match(/(responsibilities?|duties|role|what you'll do)[^]*?(?=\n\n|\n[A-Z]|$)/i);
                 
                 let keyContent = [reqMatch?.[0], respMatch?.[0]]
                     .filter(Boolean).join('\n\n');
@@ -1500,15 +2825,15 @@ This will give you immediate access to job matching while we improve Word suppor
                 if (keyContent.length > maxJobDescLength) {
                     truncatedJobDesc = keyContent.substring(0, maxJobDescLength) + '...';
                 } else {
-                    truncatedJobDesc = keyContent || job.description.substring(0, maxJobDescLength) + '...';
+                    truncatedJobDesc = keyContent || truncatedJobDesc.substring(0, maxJobDescLength) + '...';
                 }
             }
             
             // Log truncation info
-            if (resumeText.length > maxResumeLength) {
+            if (resumeText && resumeText.length > maxResumeLength) {
                 console.log(`Resume truncated: ${resumeText.length} → ${truncatedResume.length} chars`);
             }
-            if (job.description.length > maxJobDescLength) {
+            if (job.description && job.description.length > maxJobDescLength) {
                 console.log(`Job description truncated: ${job.description.length} → ${truncatedJobDesc.length} chars`);
             }
             
@@ -2056,53 +3381,53 @@ Format response as JSON with matrix structure:
     async scoreJob(jobId) {
         const job = this.jobs.find(j => j.id === jobId);
         if (!job) return;
-        
         if (!this.isResumeValid()) {
             this.setStatus('capture-status', 'Please upload a valid resume first (plain text .txt format recommended)', 'error');
             return;
         }
-        
         try {
             // Clear existing score if re-scoring
             if (job.matchAnalysis) {
                 delete job.matchAnalysis;
                 this.renderJobs(); // Update UI to show "scoring in progress"
             }
-            
+            // Set loading state
+            this.scoringJobId = job.id;
+            this.renderJobs();
             // Show progress to user
             this.setStatus('capture-status', `Analyzing match for: ${job.title}...`, 'info');
-            
             // Update UI to show scoring in progress
             const matchData = await this.calculateJobMatchWithRetry(job);
             if (matchData) {
                 job.matchAnalysis = matchData;
                 await this.saveJobs();
+                this.scoringJobId = null;
                 this.renderJobs();
                 this.setStatus('capture-status', `✅ Analysis complete for: ${job.title}`, 'success');
             } else {
+                this.scoringJobId = null;
+                this.renderJobs();
                 this.setStatus('capture-status', `❌ Failed to analyze: ${job.title}`, 'error');
             }
-        } catch (error) {
-            console.error('Score job error:', error);
-            if (error.message.includes('Rate limit')) {
-                this.setStatus('capture-status', `❌ Rate limit exceeded. Please wait a moment and try again.`, 'error');
-            } else if (error.message.includes('not supported') || error.message.includes('unreadable') || error.message.includes('Failed to extract')) {
-                this.setStatus('capture-status', `❌ Document processing error: ${error.message}`, 'error');
-            } else if (error.message.includes('API key not configured')) {
-                this.setStatus('capture-status', `❌ ${error.message}`, 'error');
-            } else {
-                this.setStatus('capture-status', `❌ Error: ${error.message}`, 'error');
-            }
+        } catch (e) {
+            this.scoringJobId = null;
+            this.renderJobs();
+            throw e;
         }
     }
 
     // API Key Management Methods
     async getApiKey() {
-        return new Promise((resolve) => {
-            chrome.storage.sync.get(['openaiApiKey'], (result) => {
-                resolve(result.openaiApiKey);
+        const configInfo = this.apiService.getConfigInfo();
+        if (configInfo.useCentralizedAPI) {
+            return 'centralized'; // Return a placeholder - actual key is handled by backend
+        } else {
+            return new Promise((resolve) => {
+                chrome.storage.sync.get(['openaiApiKey'], (result) => {
+                    resolve(result.openaiApiKey);
+                });
             });
-        });
+        }
     }
 
     async setApiKey(apiKey) {
@@ -2169,33 +3494,32 @@ Your API key will be stored securely in your browser and never shared.`);
     }
     
     async testApiConnection() {
-        const apiKey = await this.getApiKey();
-        
-        if (!apiKey) {
-            this.setStatus('api-status', 'No API key configured. Please save an API key first.', 'error');
-            return;
-        }
-        
-        this.setStatus('api-status', '🧪 Testing API connection...', 'info');
+        const btn = document.getElementById('test-api-btn');
+        const originalText = btn.innerHTML;
         
         try {
-            const response = await fetch('https://api.openai.com/v1/models', {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${apiKey}`
-                }
-            });
+            btn.disabled = true;
+            btn.innerHTML = `
+                <svg style="display: inline-block; width: 16px; height: 16px; margin-right: 6px; vertical-align: middle; animation: spin 1s linear infinite;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2v4M12 18v4M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h4M18 12h4M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+                </svg>
+                Testing Connection...
+            `;
+
+            const result = await this.apiService.testConnection();
             
-            if (response.ok) {
-                this.setStatus('api-status', '✅ API connection successful!', 'success');
+            if (result.success) {
+                this.setStatus('api-status', `✅ ${result.message} (Model: ${result.model})`, 'success');
                 this.updateApiStatus();
             } else {
-                const error = await response.json();
-                this.setStatus('api-status', `❌ API test failed: ${error.error?.message || 'Unknown error'}`, 'error');
+                this.setStatus('api-status', `❌ ${result.message}`, 'error');
             }
         } catch (error) {
-            console.error('API test error:', error);
-            this.setStatus('api-status', '❌ API test failed: Network error', 'error');
+            console.error('Test API connection error:', error);
+            this.setStatus('api-status', `❌ Connection failed: ${error.message}`, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
         }
     }
     
@@ -2253,11 +3577,771 @@ Your API key will be stored securely in your browser and never shared.`);
             this.updateUsageStats();
         });
     }
+
+    // Active Resume Management
+    async loadActiveResumeId() {
+        try {
+            const result = await chrome.storage.sync.get(['activeResumeId']);
+            this.activeResumeId = result.activeResumeId || null;
+            console.log('Loaded active resume ID:', this.activeResumeId);
+        } catch (error) {
+            console.error('Error loading active resume ID:', error);
+            this.activeResumeId = null;
+        }
+    }
+
+    async saveActiveResumeId() {
+        try {
+            await chrome.storage.sync.set({ activeResumeId: this.activeResumeId });
+            console.log('Saved active resume ID:', this.activeResumeId);
+        } catch (error) {
+            console.error('Error saving active resume ID:', error);
+        }
+    }
+
+    updateActiveResumeDisplay() {
+        const nameElement = document.getElementById('active-resume-name');
+        const metaElement = document.getElementById('active-resume-meta');
+        const changeBtn = document.getElementById('change-resume-btn');
+        
+        const activeResume = this.getActiveResume();
+        
+        if (activeResume) {
+            nameElement.textContent = activeResume.name;
+            metaElement.textContent = `Uploaded ${new Date(activeResume.uploadedAt).toLocaleDateString()}`;
+            changeBtn.disabled = false;
+        } else {
+            nameElement.textContent = 'No resume selected';
+            metaElement.textContent = 'Upload or select a resume to start scoring jobs';
+            changeBtn.disabled = true;
+        }
+        
+        // Update the dropdown content
+        this.updateResumeSelector();
+    }
+
+    getActiveResume() {
+        if (!this.activeResumeId || !this.storedResumes || !Array.isArray(this.storedResumes)) {
+            return null;
+        }
+        return this.storedResumes.find(resume => resume.id === this.activeResumeId) || null;
+    }
+
+    updateResumeSelector() {
+        const content = document.getElementById('resume-selector-content');
+        
+        if (!this.storedResumes || this.storedResumes.length === 0) {
+            content.innerHTML = '<div class="resume-option">No resumes available</div>';
+            return;
+        }
+        
+        content.innerHTML = this.storedResumes.map(resume => `
+            <div class="resume-option ${resume.id === this.activeResumeId ? 'active' : ''}" 
+                 data-resume-id="${resume.id}">
+                <div class="resume-option-info">
+                    <div class="resume-option-name">${this.escapeHtml(resume.name)}</div>
+                    <div class="resume-option-meta">Uploaded ${new Date(resume.uploadedAt).toLocaleDateString()}</div>
+                </div>
+            </div>
+        `).join('');
+        
+        // Add click listeners to resume options
+        content.querySelectorAll('.resume-option').forEach(option => {
+            const resumeId = option.dataset.resumeId;
+            if (resumeId && resumeId !== 'undefined') {
+                option.addEventListener('click', () => this.setActiveResume(resumeId));
+            }
+        });
+    }
+
+    toggleResumeSelector() {
+        const btn = document.getElementById('change-resume-btn');
+        const dropdown = document.getElementById('resume-selector-dropdown');
+        
+        if (btn.disabled) return;
+        
+        const isOpen = dropdown.style.display === 'block';
+        
+        if (isOpen) {
+            this.closeResumeSelector();
+        } else {
+            this.updateResumeSelector(); // Refresh content before showing
+            dropdown.style.display = 'block';
+            btn.classList.add('open');
+        }
+    }
+
+    closeResumeSelector() {
+        const btn = document.getElementById('change-resume-btn');
+        const dropdown = document.getElementById('resume-selector-dropdown');
+        
+        dropdown.style.display = 'none';
+        btn.classList.remove('open');
+    }
+
+    async setActiveResume(resumeId) {
+        const resume = this.storedResumes.find(r => r.id === resumeId);
+        if (!resume) {
+            console.error('Resume not found:', resumeId);
+            return;
+        }
+        
+        this.activeResumeId = resumeId;
+        
+        // Create a proper Blob object from the stored content
+        // Note: We store extracted text content, so we should use text/plain type
+        const blob = new Blob([resume.content], { type: 'text/plain' });
+        
+        // Update the main resume file reference for scoring
+        this.resumeFile = new File([blob], resume.name, {
+            type: 'text/plain',
+            lastModified: new Date(resume.uploadedAt).getTime()
+        });
+        this.resumeData = resume.content;
+        
+        await this.saveActiveResumeId();
+        this.updateActiveResumeDisplay();
+        this.updateResumeStatus();
+        this.closeResumeSelector();
+        
+        console.log('Active resume set to:', resume.name);
+    }
+
+    // Enhanced scoring methods with tab switching
+    async scoreJobAndShowResults(jobId) {
+        await this.scoreJob(jobId);
+        // Switch to jobs tab to show results
+        this.switchTab('jobs');
+    }
+
+    async scoreAllJobsAndShowResults() {
+        await this.scoreAllJobs();
+        // Switch to jobs tab to show results
+        this.switchTab('jobs');
+    }
+
+    // Scoring preference management
+    async saveScoringPreference() {
+        const autoRadio = document.getElementById('auto-scoring');
+        this.scoringMode = autoRadio.checked ? 'automatic' : 'manual';
+        
+        // Save to storage
+        await chrome.storage.sync.set({ 
+            scoringMode: this.scoringMode 
+        });
+        
+        // Update the score button text and note
+        this.updateScoreButtonText();
+        
+        console.log('Scoring mode saved:', this.scoringMode);
+    }
+
+    updateScoreButtonText() {
+        const scoreBtn = document.getElementById('score-all-btn');
+        
+        if (this.scoringMode === 'automatic') {
+            scoreBtn.textContent = '📊 Score All Jobs';
+        } else {
+            scoreBtn.textContent = '📊 Score All Jobs (Manual Mode)';
+        }
+    }
+
+    async loadScoringPreference() {
+        try {
+            const result = await chrome.storage.sync.get('scoringMode');
+            this.scoringMode = result.scoringMode || 'automatic';
+            
+            // Update UI
+            const autoRadio = document.getElementById('auto-scoring');
+            const manualRadio = document.getElementById('manual-scoring');
+            
+            if (autoRadio && manualRadio) {
+                if (this.scoringMode === 'automatic') {
+                    autoRadio.checked = true;
+                    manualRadio.checked = false;
+                } else {
+                    autoRadio.checked = false;
+                    manualRadio.checked = true;
+                }
+            }
+            
+            // Update the score button text
+            this.updateScoreButtonText();
+            
+            console.log('Scoring mode loaded:', this.scoringMode);
+        } catch (error) {
+            console.error('Error loading scoring preference:', error);
+            this.scoringMode = 'automatic'; // fallback
+            this.updateScoreButtonText();
+        }
+    }
+
+    toggleTemplateCustomization() {
+        const selectedType = document.querySelector('.type-option.selected');
+        const customizationPanel = document.getElementById('template-customization');
+        
+        if (selectedType && customizationPanel) {
+            const docType = selectedType.dataset.type;
+            if (docType === 'resume' || docType === 'both') {
+                customizationPanel.style.display = 'block';
+            } else {
+                customizationPanel.style.display = 'none';
+            }
+        }
+    }
+
+    getSelectedTemplateSections() {
+        return {
+            includeSummary: document.getElementById('include-summary').checked,
+            includeSkills: document.getElementById('include-skills').checked,
+            includeExperience: document.getElementById('include-experience').checked,
+            includeEducation: document.getElementById('include-education').checked,
+            includeLicenses: document.getElementById('include-licenses').checked,
+            includeTools: document.getElementById('include-tools').checked
+        };
+    }
+
+    getSelectedAmplificationMode() {
+        const selectedMode = document.querySelector('.mode-option.selected');
+        return selectedMode?.dataset.mode || 'precision';
+    }
+
+    async saveAmplificationMode(mode) {
+        try {
+            await chrome.storage.local.set({ amplificationMode: mode });
+        } catch (error) {
+            console.error('Error saving amplification mode:', error);
+        }
+    }
+
+    async loadAmplificationMode() {
+        try {
+            const result = await chrome.storage.local.get('amplificationMode');
+            const mode = result.amplificationMode || 'precision';
+            
+            this.selectAmplificationMode(mode);
+            this.updateModeDescription(mode);
+            
+            return mode;
+        } catch (error) {
+            console.error('Error loading amplification mode:', error);
+            return 'precision';
+        }
+    }
+
+    updateModeDescription(mode) {
+        const descriptions = {
+            precision: 'Uses only your structured resume data. Tailors language to match the job description, but does not infer or add experience.',
+            gap_filler: 'Uses your resume and job description, and infers adjacent, plausible responsibilities, tools, and metrics based on your stated roles.',
+            beast_mode: 'AGGRESSIVE mode: Transforms ordinary responsibilities into executive-level achievements with quantified metrics (30% increase, $500K savings, 15-person teams). Elevates impact while staying credible.'
+        };
+        
+        const descriptionElement = document.getElementById('mode-description');
+        if (descriptionElement) {
+            descriptionElement.innerHTML = `<p>${descriptions[mode] || descriptions.precision}</p>`;
+        }
+    }
+
+    selectAmplificationMode(mode) {
+        document.querySelectorAll('.mode-option').forEach(option => {
+            option.classList.remove('selected');
+        });
+        
+        const selectedOption = document.querySelector(`.mode-option[data-mode="${mode}"]`);
+        if (selectedOption) {
+            selectedOption.classList.add('selected');
+        }
+    }
+
+    setupAmplificationModeListener() {
+        document.querySelectorAll('.mode-option').forEach(option => {
+            option.addEventListener('click', (e) => {
+                const mode = e.currentTarget.dataset.mode;
+                this.selectAmplificationMode(mode);
+                this.updateModeDescription(mode);
+                this.saveAmplificationMode(mode);
+            });
+        });
+    }
+
+    setupDocumentTypeListener() {
+        // This function is now handled by setupDocumentTypeButtons()
+        // Keeping for backwards compatibility
+    }
+
+    toggleAmplificationModeSection(docType) {
+        const amplificationSection = document.getElementById('amplification-mode-section');
+        if (amplificationSection) {
+            if (docType === 'resume' || docType === 'both') {
+                amplificationSection.style.display = 'block';
+            } else {
+                amplificationSection.style.display = 'none';
+            }
+        }
+        
+        // Also update enhancement section visibility
+        this.updateEnhancementSectionVisibility();
+    }
+
+    initializeDocumentType() {
+        const selectedType = document.querySelector('.type-option.selected');
+        if (selectedType) {
+            const currentValue = selectedType.dataset.type;
+            this.toggleAmplificationModeSection(currentValue);
+            
+            // If resume is selected, make sure amplification mode is properly initialized
+            if (currentValue === 'resume') {
+                const selectedMode = this.getSelectedAmplificationMode();
+                this.selectAmplificationMode(selectedMode);
+                this.updateModeDescription(selectedMode);
+            }
+        }
+    }
+    
+    setupDocumentTypeButtons() {
+        const typeButtons = document.querySelectorAll('.type-option');
+        typeButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const docType = button.dataset.type;
+                this.selectDocumentType(docType);
+            });
+        });
+    }
+    
+    setupDocumentFormatButtons() {
+        const formatButtons = document.querySelectorAll('.format-option');
+        formatButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const format = button.dataset.format;
+                this.selectDocumentFormat(format);
+            });
+        });
+    }
+    
+    selectDocumentType(type) {
+        // Remove selection from all type buttons
+        document.querySelectorAll('.type-option').forEach(button => {
+            button.classList.remove('selected');
+        });
+        
+        // Add selection to clicked button
+        const selectedButton = document.querySelector(`[data-type="${type}"]`);
+        if (selectedButton) {
+            selectedButton.classList.add('selected');
+        }
+        
+        // Update amplification mode visibility
+        this.toggleAmplificationModeSection(type);
+    }
+    
+    selectDocumentFormat(format) {
+        // Remove selection from all format buttons
+        document.querySelectorAll('.format-option').forEach(button => {
+            button.classList.remove('selected');
+        });
+        
+        // Add selection to clicked button
+        const selectedButton = document.querySelector(`[data-format="${format}"]`);
+        if (selectedButton) {
+            selectedButton.classList.add('selected');
+        }
+    }
+    
+    getSelectedDocumentType() {
+        const selectedType = document.querySelector('.type-option.selected');
+        return selectedType ? selectedType.dataset.type : 'resume';
+    }
+    
+    getSelectedDocumentFormat() {
+        const selectedFormat = document.querySelector('.format-option.selected');
+        return selectedFormat ? selectedFormat.dataset.format : 'txt';
+    }
+
+    // === ENHANCEMENT SYSTEM METHODS ===
+
+    async analyzeResumeGaps() {
+        // Check prerequisites
+        const selectedJobs = Array.from(this.selectedJobs).map(jobId => 
+            this.jobs.find(job => job.id === jobId)
+        ).filter(job => job);
+
+        if (selectedJobs.length === 0) {
+            alert('Please select at least one job from the Jobs tab first.');
+            return;
+        }
+
+        const activeResume = this.getActiveResume();
+        if (!activeResume) {
+            alert('Please upload and select a resume first.');
+            return;
+        }
+
+        // Validate resume content
+        if (!activeResume.content || typeof activeResume.content !== 'string' || activeResume.content.trim().length === 0) {
+            alert('The selected resume appears to be empty or invalid. Please upload a valid resume file.');
+            return;
+        }
+
+        const apiKey = await this.getApiKey();
+        if (!apiKey) {
+            alert('Please configure your OpenAI API key in the Settings tab first.');
+            return;
+        }
+
+        // Show loading state
+        this.showEnhancementLoading(true);
+
+        try {
+            // Analyze gaps for all selected jobs
+            const enhancements = await this.generateEnhancementSuggestions(activeResume.content, selectedJobs, apiKey);
+            
+            // Store and display suggestions
+            this.currentEnhancements = enhancements;
+            this.renderEnhancementSuggestions(enhancements);
+            
+            // Show suggestions section
+            document.getElementById('enhancement-suggestions').style.display = 'block';
+            
+        } catch (error) {
+            console.error('Enhancement analysis error:', error);
+            alert(`Enhancement analysis failed: ${error.message}`);
+        } finally {
+            this.showEnhancementLoading(false);
+        }
+    }
+
+    async generateEnhancementSuggestions(resumeText, jobs, apiKey) {
+        // Validate inputs
+        if (!resumeText || typeof resumeText !== 'string') {
+            throw new Error('Resume text is required and must be a valid string');
+        }
+        
+        if (!jobs || !Array.isArray(jobs) || jobs.length === 0) {
+            throw new Error('At least one job is required for enhancement analysis');
+        }
+
+        const systemPrompt = `You are a resume enhancement expert. Analyze the user's resume against job requirements and suggest categorized, actionable enhancements that would make their application more competitive.
+
+CRITICAL RULES:
+- Focus on what's missing or could be strengthened
+- Organize suggestions into logical categories
+- Suggest specific skills, metrics, or experiences to highlight
+- Make suggestions realistic and achievable
+- Provide 2-3 suggestions per category
+- Return suggestions organized by category
+
+ENHANCEMENT CATEGORIES TO CONSIDER:
+- Technical Skills: Missing technical skills mentioned in job descriptions
+- Quantified Achievements: Lack of quantified achievements/metrics
+- Leadership & Collaboration: Missing leadership or collaboration examples
+- Industry Experience: Absent industry-specific certifications or experience
+- Soft Skills: Missing soft skills emphasized in jobs
+- Project Examples: Lack of relevant project examples
+- Client Relations: Missing client/stakeholder interaction examples
+- Process Improvement: Absent process improvement examples`;
+
+        // Combine all job descriptions with safety checks
+        const jobDescriptions = jobs.map(job => {
+            const title = job.title || 'Unknown Title';
+            const company = job.company || 'Unknown Company';
+            const description = job.description || 'No description available';
+            return `
+JOB: ${title} at ${company}
+DESCRIPTION: ${description}
+`;
+        }).join('\n---\n');
+
+        // Safely truncate strings
+        const truncatedResume = resumeText.length > 3000 ? resumeText.substring(0, 3000) : resumeText;
+        const truncatedJobs = jobDescriptions.length > 2000 ? jobDescriptions.substring(0, 2000) : jobDescriptions;
+
+        const userPrompt = `Analyze this resume against the job requirements and suggest categorized enhancements:
+
+RESUME:
+${truncatedResume}
+
+JOB REQUIREMENTS:
+${truncatedJobs}
+
+Return enhancement suggestions organized by category in this JSON format:
+{
+  "Technical Skills": [
+    {
+      "title": "Add Python Programming",
+      "description": "Highlight Python programming skills mentioned in job requirements",
+      "priority": "high"
+    },
+    {
+      "title": "Emphasize Cloud Platforms",
+      "description": "Showcase AWS/Azure experience for cloud-based roles",
+      "priority": "medium"
+    }
+  ],
+  "Quantified Achievements": [
+    {
+      "title": "Add Revenue Impact",
+      "description": "Include specific revenue or cost savings numbers",
+      "priority": "high"
+    }
+  ],
+  "Leadership & Collaboration": [
+    {
+      "title": "Team Leadership Metrics",
+      "description": "Quantify team size and leadership achievements",
+      "priority": "medium"
+    }
+  ],
+  "Industry Experience": [
+    {
+      "title": "Relevant Certifications",
+      "description": "Add industry-specific certifications mentioned in job",
+      "priority": "low"
+    }
+  ]
+}
+
+Requirements:
+- Only include categories that have relevant suggestions
+- Each "title" should be 2-5 words, actionable
+- Each "description" should explain the specific enhancement benefit
+- Set "priority" as "high", "medium", or "low" based on impact
+- Focus on high-impact improvements that address job requirements
+- Make suggestions realistic based on the resume content
+- Include 1-3 suggestions per category
+
+Return ONLY the JSON object.`;
+
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+                model: 'gpt-4o',
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user', content: userPrompt }
+                ],
+                max_tokens: 1000,
+                temperature: 0.3
+            })
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+            this.incrementApiCalls();
+            
+            try {
+                const content = result.choices[0].message.content;
+                let cleanContent = content.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+                cleanContent = cleanContent.replace(/^```\s*/, '').replace(/\s*```$/, '');
+                
+                const enhancements = JSON.parse(cleanContent);
+                console.log('🔍 Generated categorized enhancement suggestions:', enhancements);
+                return enhancements;
+            } catch (error) {
+                console.error('Error parsing enhancement suggestions:', error);
+                throw new Error('Failed to parse enhancement suggestions');
+            }
+        } else {
+            throw new Error(`Enhancement API Error: ${response.status}`);
+        }
+    }
+
+    renderEnhancementSuggestions(enhancements) {
+        const container = document.getElementById('enhancement-tags');
+        
+        // Convert categorized enhancements to HTML
+        let htmlContent = '';
+        
+        Object.keys(enhancements).forEach(category => {
+            const categoryEnhancements = enhancements[category];
+            if (categoryEnhancements && categoryEnhancements.length > 0) {
+                htmlContent += `
+                    <div class="enhancement-category">
+                        <h5 class="enhancement-category-title">${category}</h5>
+                        <div class="enhancement-category-items">
+                            ${categoryEnhancements.map(enhancement => `
+                                <div class="enhancement-item ${enhancement.priority}-priority" 
+                                     data-category="${category}"
+                                     data-title="${enhancement.title}" 
+                                     data-description="${enhancement.description}"
+                                     data-priority="${enhancement.priority}"
+                                     title="${enhancement.description}">
+                                    <span class="enhancement-title">${enhancement.title}</span>
+                                    <span class="enhancement-priority ${enhancement.priority}">${enhancement.priority}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+        });
+        
+        container.innerHTML = htmlContent;
+
+        // Add click event listeners
+        container.querySelectorAll('.enhancement-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                const enhancementData = {
+                    category: item.getAttribute('data-category'),
+                    title: item.getAttribute('data-title'),
+                    description: item.getAttribute('data-description'),
+                    priority: item.getAttribute('data-priority')
+                };
+                this.toggleEnhancementSelection(enhancementData);
+            });
+        });
+    }
+
+    toggleEnhancementSelection(enhancementData) {
+        const enhancementKey = `${enhancementData.category}:${enhancementData.title}`;
+        const itemElement = document.querySelector(`[data-category="${enhancementData.category}"][data-title="${enhancementData.title}"]`);
+        
+        if (this.selectedEnhancements.has(enhancementKey)) {
+            this.selectedEnhancements.delete(enhancementKey);
+            itemElement.classList.remove('selected');
+        } else {
+            this.selectedEnhancements.add(enhancementKey);
+            itemElement.classList.add('selected');
+        }
+
+        console.log('Selected enhancements:', Array.from(this.selectedEnhancements));
+    }
+
+    showEnhancementLoading(show) {
+        const loading = document.getElementById('enhancement-loading');
+        const suggestions = document.getElementById('enhancement-suggestions');
+        
+        if (show) {
+            loading.style.display = 'block';
+            suggestions.style.display = 'none';
+        } else {
+            loading.style.display = 'none';
+        }
+    }
+
+    updateEnhancementSectionVisibility() {
+        const enhancementSection = document.getElementById('enhancement-section');
+        const docType = this.getSelectedDocumentType();
+        const hasSelectedJobs = this.selectedJobs.size > 0;
+
+        // Show enhancement section for resume generation with selected jobs
+        if ((docType === 'resume' || docType === 'both') && hasSelectedJobs) {
+            enhancementSection.style.display = 'block';
+        } else {
+            enhancementSection.style.display = 'none';
+            // Reset enhancement state when hidden
+            this.selectedEnhancements.clear();
+            this.currentEnhancements = [];
+            document.getElementById('enhancement-suggestions').style.display = 'none';
+        }
+    }
+
+    getSelectedEnhancements() {
+        const selectedEnhancements = [];
+        
+        // Convert selected enhancement keys back to enhancement objects
+        for (const enhancementKey of this.selectedEnhancements) {
+            const [category, title] = enhancementKey.split(':');
+            
+            // Find the enhancement in currentEnhancements
+            if (this.currentEnhancements[category]) {
+                const enhancement = this.currentEnhancements[category].find(e => e.title === title);
+                if (enhancement) {
+                    selectedEnhancements.push({
+                        category,
+                        title: enhancement.title,
+                        description: enhancement.description,
+                        priority: enhancement.priority
+                    });
+                }
+            }
+        }
+        
+        return selectedEnhancements;
+    }
+
+    // === API CONFIGURATION METHODS ===
+
+    setupApiConfiguration() {
+        const configInfo = this.apiService.getConfigInfo();
+        const apiKeySection = document.querySelector('.api-key-section');
+        const apiStatus = document.getElementById('api-status');
+        
+        if (configInfo.useCentralizedAPI) {
+            // Hide API key input for centralized API
+            if (apiKeySection) {
+                apiKeySection.style.display = 'none';
+            }
+            
+            // Update status message
+            if (apiStatus) {
+                apiStatus.textContent = 'Using centralized AI service';
+                apiStatus.className = 'status success';
+            }
+
+            // Update settings header
+            const settingsHeader = document.querySelector('#settings-tab h3');
+            if (settingsHeader) {
+                settingsHeader.innerHTML = `
+                    <svg style="display: inline-block; width: 16px; height: 16px; margin-right: 6px; vertical-align: middle;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"/>
+                        <path d="M12 1v6M12 17v6M4.22 4.22l4.24 4.24M15.54 15.54l4.24 4.24M1 12h6M17 12h6M4.22 19.78l4.24-4.24M15.54 8.46l4.24-4.24"/>
+                    </svg>
+                    Service Configuration
+                `;
+            }
+
+            // Add service info
+            const serviceInfo = document.createElement('div');
+            serviceInfo.className = 'service-info';
+            serviceInfo.innerHTML = `
+                <div class="service-details">
+                    <p>
+                        <svg style="display: inline-block; width: 14px; height: 14px; margin-right: 4px; vertical-align: middle;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="l9 12l2 2 4-4"/>
+                        </svg>
+                        AI service is provided and managed centrally
+                    </p>
+                    <p>
+                        <svg style="display: inline-block; width: 14px; height: 14px; margin-right: 4px; vertical-align: middle;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 11a3 3 0 1 1 6 0c0 2-3 3-3 3"/>
+                            <path d="M12 17h.01"/>
+                            <circle cx="12" cy="12" r="10"/>
+                        </svg>
+                        No API key configuration required
+                    </p>
+                    ${configInfo.backendURL ? `<p><small>Service endpoint: ${configInfo.backendURL}</small></p>` : ''}
+                </div>
+            `;
+            
+            // Insert service info before test section
+            const testSection = document.querySelector('.test-section');
+            if (testSection && apiKeySection) {
+                apiKeySection.parentNode.insertBefore(serviceInfo, testSection);
+            }
+        } else {
+            // Show API key input for user-provided keys
+            if (apiKeySection) {
+                apiKeySection.style.display = 'block';
+            }
+            
+            // Load existing API key for settings display
+            this.loadApiKeyForSettings();
+        }
+    }
 }
 
 // Initialize when DOM loads
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM loaded, creating AutoApplyAI instance...');
     window.autoApplyAI = new AutoApplyAI();
+    console.log('AutoApplyAI instance created, calling init...');
+    window.autoApplyAI.init();
 });
 
 // Global debug function for testing resume reading

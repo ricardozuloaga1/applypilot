@@ -1,0 +1,856 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 84% 4.9%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222.2 84% 4.9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+    --radius: 0.75rem;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 84% 4.9%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 94.1%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Custom animations */
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes glow {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-glow {
+  animation: glow 2s ease-in-out infinite;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(243, 244, 246, 0.5);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(59, 130, 246, 0.5);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(59, 130, 246, 0.7);
+}
+
+/* Paper Plane Animations */
+.paper-plane {
+  position: absolute;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+.paper-plane-1 {
+  top: 10%;
+  left: -5%;
+  animation: flyAcross1 25s linear infinite;
+  transform: rotate(15deg);
+}
+
+.paper-plane-2 {
+  top: 25%;
+  right: -5%;
+  animation: flyAcross2 30s linear infinite;
+  transform: rotate(-25deg);
+}
+
+.paper-plane-3 {
+  top: 40%;
+  left: -5%;
+  animation: flyAcross3 35s linear infinite;
+  transform: rotate(10deg);
+}
+
+.paper-plane-4 {
+  top: 60%;
+  right: -5%;
+  animation: flyAcross4 28s linear infinite;
+  transform: rotate(-15deg);
+}
+
+.paper-plane-5 {
+  top: 75%;
+  left: -5%;
+  animation: flyAcross5 32s linear infinite;
+  transform: rotate(20deg);
+}
+
+.paper-plane-6 {
+  top: 85%;
+  right: -5%;
+  animation: flyAcross6 26s linear infinite;
+  transform: rotate(-30deg);
+}
+
+.paper-plane-7 {
+  top: 15%;
+  left: -5%;
+  animation: flyDiagonal1 40s linear infinite;
+  transform: rotate(45deg);
+}
+
+.paper-plane-8 {
+  top: 55%;
+  right: -5%;
+  animation: flyDiagonal2 38s linear infinite;
+  transform: rotate(-45deg);
+}
+
+@keyframes flyAcross1 {
+  0% {
+    left: -5%;
+    transform: rotate(15deg) translateY(0px);
+  }
+  25% {
+    transform: rotate(15deg) translateY(-20px);
+  }
+  50% {
+    transform: rotate(15deg) translateY(10px);
+  }
+  75% {
+    transform: rotate(15deg) translateY(-15px);
+  }
+  100% {
+    left: 105%;
+    transform: rotate(15deg) translateY(0px);
+  }
+}
+
+@keyframes flyAcross2 {
+  0% {
+    right: -5%;
+    transform: rotate(-25deg) translateY(0px);
+  }
+  30% {
+    transform: rotate(-25deg) translateY(15px);
+  }
+  60% {
+    transform: rotate(-25deg) translateY(-10px);
+  }
+  100% {
+    right: 105%;
+    transform: rotate(-25deg) translateY(0px);
+  }
+}
+
+@keyframes flyAcross3 {
+  0% {
+    left: -5%;
+    transform: rotate(10deg) translateY(0px);
+  }
+  20% {
+    transform: rotate(10deg) translateY(-25px);
+  }
+  40% {
+    transform: rotate(10deg) translateY(5px);
+  }
+  80% {
+    transform: rotate(10deg) translateY(-10px);
+  }
+  100% {
+    left: 105%;
+    transform: rotate(10deg) translateY(0px);
+  }
+}
+
+@keyframes flyAcross4 {
+  0% {
+    right: -5%;
+    transform: rotate(-15deg) translateY(0px);
+  }
+  35% {
+    transform: rotate(-15deg) translateY(20px);
+  }
+  70% {
+    transform: rotate(-15deg) translateY(-15px);
+  }
+  100% {
+    right: 105%;
+    transform: rotate(-15deg) translateY(0px);
+  }
+}
+
+@keyframes flyAcross5 {
+  0% {
+    left: -5%;
+    transform: rotate(20deg) translateY(0px);
+  }
+  25% {
+    transform: rotate(20deg) translateY(-30px);
+  }
+  50% {
+    transform: rotate(20deg) translateY(15px);
+  }
+  75% {
+    transform: rotate(20deg) translateY(-5px);
+  }
+  100% {
+    left: 105%;
+    transform: rotate(20deg) translateY(0px);
+  }
+}
+
+@keyframes flyAcross6 {
+  0% {
+    right: -5%;
+    transform: rotate(-30deg) translateY(0px);
+  }
+  40% {
+    transform: rotate(-30deg) translateY(25px);
+  }
+  80% {
+    transform: rotate(-30deg) translateY(-20px);
+  }
+  100% {
+    right: 105%;
+    transform: rotate(-30deg) translateY(0px);
+  }
+}
+
+@keyframes flyDiagonal1 {
+  0% {
+    left: -5%;
+    top: 15%;
+    transform: rotate(45deg);
+  }
+  25% {
+    left: 25%;
+    top: 25%;
+    transform: rotate(45deg) translateY(-10px);
+  }
+  50% {
+    left: 50%;
+    top: 35%;
+    transform: rotate(45deg) translateY(5px);
+  }
+  75% {
+    left: 75%;
+    top: 45%;
+    transform: rotate(45deg) translateY(-15px);
+  }
+  100% {
+    left: 105%;
+    top: 55%;
+    transform: rotate(45deg);
+  }
+}
+
+@keyframes flyDiagonal2 {
+  0% {
+    right: -5%;
+    top: 55%;
+    transform: rotate(-45deg);
+  }
+  25% {
+    right: 25%;
+    top: 45%;
+    transform: rotate(-45deg) translateY(15px);
+  }
+  50% {
+    right: 50%;
+    top: 35%;
+    transform: rotate(-45deg) translateY(-5px);
+  }
+  75% {
+    right: 75%;
+    top: 25%;
+    transform: rotate(-45deg) translateY(10px);
+  }
+  100% {
+    right: 105%;
+    top: 15%;
+    transform: rotate(-45deg);
+  }
+}
+
+/* 3D Transform Utilities */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.perspective-2000 {
+  perspective: 2000px;
+}
+
+.transform-3d {
+  transform-style: preserve-3d;
+}
+
+.translateZ-10 {
+  transform: translateZ(10px);
+}
+
+.translateZ-15 {
+  transform: translateZ(15px);
+}
+
+.translateZ-20 {
+  transform: translateZ(20px);
+}
+
+.translateZ-30 {
+  transform: translateZ(30px);
+}
+
+.rotateY-5 {
+  transform: rotateY(5deg);
+}
+
+.rotateY-8 {
+  transform: rotateY(8deg);
+}
+
+.rotateY-10 {
+  transform: rotateY(10deg);
+}
+
+.rotateY-180 {
+  transform: rotateY(180deg);
+}
+
+.rotateX-2 {
+  transform: rotateX(2deg);
+}
+
+.rotateX-4 {
+  transform: rotateX(4deg);
+}
+
+.rotateX-5 {
+  transform: rotateX(5deg);
+}
+
+/* Hover 3D Effects */
+.hover\:rotateY-5:hover {
+  transform: rotateY(5deg);
+}
+
+.hover\:rotateY-8:hover {
+  transform: rotateY(8deg);
+}
+
+.hover\:rotateY-10:hover {
+  transform: rotateY(10deg);
+}
+
+.hover\:rotateY-180:hover {
+  transform: rotateY(180deg);
+}
+
+.hover\:rotateX-2:hover {
+  transform: rotateX(2deg);
+}
+
+.hover\:rotateX-4:hover {
+  transform: rotateX(4deg);
+}
+
+.hover\:rotateX-5:hover {
+  transform: rotateX(5deg);
+}
+
+.hover\:translateZ-10:hover {
+  transform: translateZ(10px);
+}
+
+.hover\:translateZ-15:hover {
+  transform: translateZ(15px);
+}
+
+.hover\:translateZ-20:hover {
+  transform: translateZ(20px);
+}
+
+.hover\:translateZ-30:hover {
+  transform: translateZ(30px);
+}
+
+/* 3D Floating Cards Animations */
+.floating-card-1 {
+  animation: float3d-1 8s ease-in-out infinite;
+}
+
+.floating-card-2 {
+  animation: float3d-2 10s ease-in-out infinite;
+}
+
+.floating-card-3 {
+  animation: float3d-3 12s ease-in-out infinite;
+}
+
+.floating-card-4 {
+  animation: float3d-4 9s ease-in-out infinite;
+}
+
+@keyframes float3d-1 {
+  0%,
+  100% {
+    transform: translateY(0px) rotateY(0deg) rotateX(0deg);
+  }
+  25% {
+    transform: translateY(-20px) rotateY(5deg) rotateX(2deg);
+  }
+  50% {
+    transform: translateY(-10px) rotateY(-3deg) rotateX(-1deg);
+  }
+  75% {
+    transform: translateY(-25px) rotateY(8deg) rotateX(3deg);
+  }
+}
+
+@keyframes float3d-2 {
+  0%,
+  100% {
+    transform: translateY(0px) rotateY(0deg) rotateX(0deg);
+  }
+  33% {
+    transform: translateY(-15px) rotateY(-5deg) rotateX(2deg);
+  }
+  66% {
+    transform: translateY(-30px) rotateY(7deg) rotateX(-2deg);
+  }
+}
+
+@keyframes float3d-3 {
+  0%,
+  100% {
+    transform: translateY(0px) rotateY(0deg) rotateX(0deg);
+  }
+  20% {
+    transform: translateY(-18px) rotateY(4deg) rotateX(1deg);
+  }
+  40% {
+    transform: translateY(-8px) rotateY(-6deg) rotateX(-3deg);
+  }
+  60% {
+    transform: translateY(-22px) rotateY(2deg) rotateX(2deg);
+  }
+  80% {
+    transform: translateY(-12px) rotateY(-4deg) rotateX(-1deg);
+  }
+}
+
+@keyframes float3d-4 {
+  0%,
+  100% {
+    transform: translateY(0px) rotateY(0deg) rotateX(0deg);
+  }
+  30% {
+    transform: translateY(-25px) rotateY(-8deg) rotateX(3deg);
+  }
+  70% {
+    transform: translateY(-5px) rotateY(6deg) rotateX(-2deg);
+  }
+}
+
+/* 3D Geometric Shapes - Updated for light theme */
+.geometric-shape-1 {
+  background: linear-gradient(45deg, rgba(59, 130, 246, 0.1), rgba(99, 102, 241, 0.1));
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 8px;
+  animation: rotate3d-1 15s linear infinite;
+  backdrop-filter: blur(10px);
+}
+
+.geometric-shape-2 {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.1));
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 50%;
+  animation: rotate3d-2 20s linear infinite;
+  backdrop-filter: blur(10px);
+}
+
+.geometric-shape-3 {
+  background: linear-gradient(225deg, rgba(37, 99, 235, 0.1), rgba(59, 130, 246, 0.1));
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  border-radius: 12px;
+  animation: rotate3d-3 18s linear infinite;
+  backdrop-filter: blur(10px);
+}
+
+.geometric-shape-4 {
+  background: linear-gradient(315deg, rgba(59, 130, 246, 0.1), rgba(29, 78, 216, 0.1));
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 6px;
+  animation: rotate3d-4 12s linear infinite;
+  backdrop-filter: blur(10px);
+}
+
+@keyframes rotate3d-1 {
+  0% {
+    transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+  }
+  33% {
+    transform: rotateX(120deg) rotateY(120deg) rotateZ(0deg);
+  }
+  66% {
+    transform: rotateX(240deg) rotateY(240deg) rotateZ(120deg);
+  }
+  100% {
+    transform: rotateX(360deg) rotateY(360deg) rotateZ(360deg);
+  }
+}
+
+@keyframes rotate3d-2 {
+  0% {
+    transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+  }
+  25% {
+    transform: rotateX(90deg) rotateY(0deg) rotateZ(90deg);
+  }
+  50% {
+    transform: rotateX(180deg) rotateY(180deg) rotateZ(180deg);
+  }
+  75% {
+    transform: rotateX(270deg) rotateY(180deg) rotateZ(270deg);
+  }
+  100% {
+    transform: rotateX(360deg) rotateY(360deg) rotateZ(360deg);
+  }
+}
+
+@keyframes rotate3d-3 {
+  0% {
+    transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+  }
+  50% {
+    transform: rotateX(180deg) rotateY(360deg) rotateZ(180deg);
+  }
+  100% {
+    transform: rotateX(360deg) rotateY(720deg) rotateZ(360deg);
+  }
+}
+
+@keyframes rotate3d-4 {
+  0% {
+    transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+  }
+  40% {
+    transform: rotateX(144deg) rotateY(0deg) rotateZ(144deg);
+  }
+  80% {
+    transform: rotateX(288deg) rotateY(288deg) rotateZ(288deg);
+  }
+  100% {
+    transform: rotateX(360deg) rotateY(360deg) rotateZ(360deg);
+  }
+}
+
+/* Enhanced 3D Button Effects */
+.group:hover .group-hover\:rotateY-180 {
+  transform: rotateY(180deg);
+}
+
+/* 3D Layered Effects */
+.transform-3d-layer {
+  transform-style: preserve-3d;
+  position: relative;
+}
+
+.transform-3d-layer::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: inherit;
+  transform: translateZ(-10px);
+  opacity: 0.3;
+  border-radius: inherit;
+}
+
+/* Perspective containers for sections */
+.section-3d {
+  perspective: 2000px;
+  transform-style: preserve-3d;
+}
+
+/* Complex 3D hover combinations */
+.hover\:transform-complex:hover {
+  transform: rotateY(8deg) rotateX(4deg) translateZ(20px) scale(1.05);
+}
+
+/* 3D Text Effects */
+.text-3d {
+  text-shadow:
+    0 1px 0 rgba(59, 130, 246, 0.5),
+    0 2px 0 rgba(59, 130, 246, 0.4),
+    0 3px 0 rgba(59, 130, 246, 0.3),
+    0 4px 0 rgba(59, 130, 246, 0.2),
+    0 5px 0 rgba(59, 130, 246, 0.1),
+    0 6px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Mouse Trail Effects */
+@keyframes trail-fade {
+  0% {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+}
+
+/* Interactive Paper Planes - Mouse Following */
+.interactive-plane-1 {
+  position: fixed;
+  transition: none; /* Remove transition for instant response */
+  z-index: 1;
+  pointer-events: none;
+}
+
+.interactive-plane-2 {
+  position: fixed;
+  transition: none; /* Remove transition for instant response */
+  z-index: 1;
+  pointer-events: none;
+}
+
+.interactive-plane-3 {
+  position: fixed;
+  transition: none; /* Remove transition for instant response */
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Magnetic Field Particles */
+.magnetic-particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.8), rgba(59, 130, 246, 0.2));
+  border-radius: 50%;
+  animation: magneticFloat 3s ease-in-out infinite;
+}
+
+.magnetic-particle-1 {
+  top: 20%;
+  left: 15%;
+  animation-delay: 0s;
+  animation-duration: 4s;
+}
+
+.magnetic-particle-2 {
+  top: 60%;
+  left: 80%;
+  animation-delay: 0.5s;
+  animation-duration: 3.5s;
+}
+
+.magnetic-particle-3 {
+  top: 40%;
+  left: 25%;
+  animation-delay: 1s;
+  animation-duration: 4.5s;
+}
+
+.magnetic-particle-4 {
+  top: 80%;
+  left: 60%;
+  animation-delay: 1.5s;
+  animation-duration: 3s;
+}
+
+.magnetic-particle-5 {
+  top: 30%;
+  left: 70%;
+  animation-delay: 2s;
+  animation-duration: 4.2s;
+}
+
+.magnetic-particle-6 {
+  top: 70%;
+  left: 40%;
+  animation-delay: 2.5s;
+  animation-duration: 3.8s;
+}
+
+@keyframes magneticFloat {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.6;
+  }
+  25% {
+    transform: translate(20px, -15px) scale(1.2);
+    opacity: 0.8;
+  }
+  50% {
+    transform: translate(-10px, 25px) scale(0.8);
+    opacity: 0.4;
+  }
+  75% {
+    transform: translate(15px, 10px) scale(1.1);
+    opacity: 0.7;
+  }
+}
+
+/* Instant Mouse Response */
+.interactive-plane-1,
+.interactive-plane-2,
+.interactive-plane-3 {
+  will-change: transform;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+}
+
+/* Enhanced hover effects for cards */
+.group:hover .magnetic-particle {
+  animation-duration: 1s;
+  transform: scale(1.5);
+}
+
+/* Ripple effect on mouse movement */
+@keyframes ripple {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+.mouse-ripple {
+  position: fixed;
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(59, 130, 246, 0.3);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: ripple 0.6s ease-out;
+  z-index: 1;
+}
+
+/* Parallax mouse movement for geometric shapes */
+.geometric-shape-1:hover {
+  animation-play-state: paused;
+  transform: translate(var(--mouse-x, 0), var(--mouse-y, 0)) scale(1.2);
+}
+
+.geometric-shape-2:hover {
+  animation-play-state: paused;
+  transform: translate(calc(var(--mouse-x, 0) * -0.5), calc(var(--mouse-y, 0) * -0.5)) scale(1.1);
+}
+
+.geometric-shape-3:hover {
+  animation-play-state: paused;
+  transform: translate(calc(var(--mouse-x, 0) * 0.3), calc(var(--mouse-y, 0) * 0.3)) scale(1.3);
+}
+
+.geometric-shape-4:hover {
+  animation-play-state: paused;
+  transform: translate(calc(var(--mouse-x, 0) * -0.2), calc(var(--mouse-y, 0) * 0.4)) scale(1.15);
+}
+
+/* Smooth cursor following for floating cards */
+.floating-card-1,
+.floating-card-2,
+.floating-card-3,
+.floating-card-4 {
+  transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Mouse proximity effects */
+@keyframes proximityGlow {
+  0% {
+    box-shadow: 0 0 0 rgba(59, 130, 246, 0);
+  }
+  100% {
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.3);
+  }
+}
+
+.mouse-proximity:hover {
+  animation: proximityGlow 0.3s ease-out forwards;
+}

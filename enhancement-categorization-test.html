@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhancement Categorization Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #1f2937;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background: #f9fafb;
+        }
+
+        .test-section h2 {
+            margin-top: 0;
+            color: #374151;
+            font-size: 18px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 150px;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 12px;
+            resize: vertical;
+            margin-bottom: 15px;
+        }
+
+        .button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+
+        .button:hover {
+            background: #2563eb;
+        }
+
+        .button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .api-key-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+
+        .results {
+            margin-top: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .error {
+            background: #fef2f2;
+            color: #dc2626;
+            padding: 12px;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+
+        .success {
+            background: #f0fdf4;
+            color: #166534;
+            padding: 12px;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+
+        /* Enhancement styles */
+        .enhancement-category {
+            margin-bottom: 20px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 12px;
+            background: #f9fafb;
+        }
+
+        .enhancement-category-title {
+            margin: 0 0 8px 0;
+            font-size: 13px;
+            font-weight: 600;
+            color: #374151;
+            display: flex;
+            align-items: center;
+        }
+
+        .enhancement-category-title:before {
+            content: '📋';
+            margin-right: 6px;
+        }
+
+        .enhancement-category-items {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .enhancement-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 10px;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 12px;
+        }
+
+        .enhancement-item:hover {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .enhancement-item.selected {
+            background: #3b82f6;
+            border-color: #3b82f6;
+            color: white;
+        }
+
+        .enhancement-title {
+            font-weight: 500;
+            flex-grow: 1;
+        }
+
+        .enhancement-priority {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-left: 8px;
+        }
+
+        .enhancement-priority.high {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+
+        .enhancement-priority.medium {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .enhancement-priority.low {
+            background: #f0f9ff;
+            color: #0369a1;
+        }
+
+        .enhancement-item.selected .enhancement-priority {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .high-priority {
+            border-left: 3px solid #dc2626;
+        }
+
+        .medium-priority {
+            border-left: 3px solid #d97706;
+        }
+
+        .low-priority {
+            border-left: 3px solid #0369a1;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #6b7280;
+        }
+
+        .loading::after {
+            content: '...';
+            animation: loading 1s infinite;
+        }
+
+        @keyframes loading {
+            0% { content: '...'; }
+            33% { content: '...'; }
+            66% { content: '...'; }
+            100% { content: '...'; }
+        }
+
+        .json-display {
+            background: #f3f4f6;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 11px;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+            font-size: 12px;
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Enhancement Categorization Test</h1>
+        
+        <div class="test-section">
+            <h2>API Configuration</h2>
+            <input type="password" id="apiKey" class="api-key-input" placeholder="Enter your OpenAI API key">
+            <button class="button" id="testApiBtn">Test API Connection</button>
+            <div id="apiStatus"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>Sample Resume</h2>
+            <textarea id="resumeText" placeholder="Paste your resume here...">Ricardo E. Zuloaga
+New York, NY | United States & Venezuela
+Phone: +1 917-254-9676 | Email: ricardozuloaga@gmail.com
+
+PROFESSIONAL SUMMARY
+Experienced legal and commercial professional with over 10 years of expertise in contract negotiation, drafting, and management across diverse industries. Proven track record in developing and implementing contract lifecycle management systems, vendor negotiations, and cross-functional collaboration. Strong analytical skills with a background in international law and business development.
+
+CORE SKILLS
+• Contract Negotiation & Drafting
+• Legal Research & Analysis
+• Commercial Law & Compliance
+• Vendor Management & Procurement
+• Cross-functional Collaboration
+• Project Management
+• Risk Assessment & Mitigation
+
+PROFESSIONAL EXPERIENCE
+
+Contracts Manager / Senior Legal & Commercial Advisor
+Zumar Trading Corp., New York, NY | 2020 – Present
+• Manage comprehensive contract lifecycle for international trading operations
+• Negotiate and draft complex commercial agreements with global vendors and partners
+• Develop and implement contract templates and approval workflows
+• Collaborate with finance, operations, and legal teams to ensure compliance
+• Conduct legal research and provide commercial advice on regulatory matters
+
+Legal Associate
+International Law Firm, New York, NY | 2018 – 2020
+• Assisted with complex commercial litigation and contract disputes
+• Conducted legal research and drafted memoranda for senior partners
+• Reviewed and analyzed contracts for potential risks and compliance issues
+• Supported client relationship management and business development initiatives
+
+EDUCATION
+
+LL.M. in International Law
+Duke University School of Law, Durham, NC | 2013 – 2014
+
+J.D. (Juris Doctor)
+Universidad Católica Andrés Bello, Caracas, Venezuela | 2008 – 2012
+
+LICENSES & ADMISSIONS
+• Licensed Attorney in Venezuela
+• New York State Bar (pending admission)
+
+TOOLS & PLATFORMS
+• Microsoft Office Suite (Word, Excel, PowerPoint)
+• Contract Management Systems (Ironclad, DocuSign CLM)
+• Legal Research Platforms (Westlaw, LexisNexis)
+• Project Management Tools (Asana, Monday.com)</textarea>
+        </div>
+
+        <div class="test-section">
+            <h2>Sample Job Descriptions</h2>
+            <textarea id="jobDescriptions" placeholder="Paste job descriptions here...">JOB: Lead Capital Markets Document Negotiator - Commodities and Corporate at Wells Fargo
+DESCRIPTION: Wells Fargo is seeking a skilled Lead Capital Markets Document Negotiator to join our dynamic team. This role focuses on negotiating and structuring complex derivatives and commodities transactions, with emphasis on ISDA Master Agreements and commodity-specific documentation.
+
+Key Responsibilities:
+• Negotiate ISDA Master Agreements and related documentation for commodity derivatives
+• Structure complex commodity trading agreements and credit support annexes
+• Collaborate with legal, risk management, and trading teams
+• Ensure compliance with regulatory requirements (Dodd-Frank, EMIR, etc.)
+• Manage relationships with institutional clients and counterparties
+• Lead cross-functional teams in deal execution and documentation
+• Provide market insight and regulatory guidance to senior management
+
+Required Qualifications:
+• J.D. from accredited law school
+• 5+ years experience in derivatives documentation and negotiation
+• Strong knowledge of ISDA agreements and commodity markets
+• Experience with regulatory compliance (Dodd-Frank, MIFID II)
+• Excellent negotiation and communication skills
+• Ability to work in fast-paced, high-pressure environment
+• Strong analytical and problem-solving skills
+
+Preferred Qualifications:
+• Experience in financial services or commodities trading
+• Knowledge of clearing and collateral management
+• Understanding of risk management principles
+• Leadership experience in cross-functional teams
+• Advanced degree in finance or related field
+• Professional certifications (CFA, FRM, etc.)
+
+---
+
+JOB: Senior Commercial Contracts Attorney at Microsoft
+DESCRIPTION: Microsoft is looking for a Senior Commercial Contracts Attorney to support our enterprise sales and partnerships globally. This role involves complex commercial negotiations and strategic advisory work.
+
+Key Responsibilities:
+• Draft and negotiate complex commercial agreements including licensing, SaaS, and partnership agreements
+• Provide legal counsel on product commercialization and go-to-market strategies
+• Support M&A transactions and strategic partnerships
+• Collaborate with product, engineering, and business development teams
+• Ensure compliance with data privacy and security regulations
+• Manage contract lifecycle and vendor relationships
+• Provide training and guidance to business stakeholders
+
+Required Qualifications:
+• J.D. from top-tier law school
+• 7+ years of commercial law experience, preferably in technology
+• Strong background in software licensing and SaaS agreements
+• Experience with data privacy regulations (GDPR, CCPA)
+• Excellent drafting and negotiation skills
+• Ability to manage multiple high-priority projects
+• Strong business acumen and strategic thinking
+
+Preferred Qualifications:
+• Experience in big tech or enterprise software companies
+• Knowledge of cloud computing and AI/ML legal considerations
+• International commercial law experience
+• MBA or technical background
+• Experience with open source licensing
+• Fluency in additional languages</textarea>
+        </div>
+
+        <div class="test-section">
+            <h2>Test Enhancement Generation</h2>
+            <button class="button" id="generateBtn">Generate Categorized Enhancements</button>
+            <div id="loadingIndicator" class="loading" style="display: none;">Analyzing resume gaps and generating suggestions</div>
+            <div id="results" class="results" style="display: none;"></div>
+            <div id="rawJson" class="json-display" style="display: none;"></div>
+            <div id="stats" class="stats"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>Selected Enhancements</h2>
+            <div id="selectedEnhancements" class="results">
+                <p>Select enhancements above to see them here...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentEnhancements = {};
+        let selectedEnhancements = new Set();
+
+        // API Testing
+        document.getElementById('testApiBtn').addEventListener('click', async () => {
+            const apiKey = document.getElementById('apiKey').value;
+            const statusDiv = document.getElementById('apiStatus');
+            
+            if (!apiKey) {
+                statusDiv.innerHTML = '<div class="error">Please enter an API key</div>';
+                return;
+            }
+
+            try {
+                statusDiv.innerHTML = '<div class="loading">Testing API connection...</div>';
+                
+                const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify({
+                        model: 'gpt-4o',
+                        messages: [
+                            { role: 'user', content: 'Test connection. Respond with "Connection successful."' }
+                        ],
+                        max_tokens: 10
+                    })
+                });
+
+                if (response.ok) {
+                    statusDiv.innerHTML = '<div class="success">✅ API connection successful!</div>';
+                } else {
+                    const error = await response.json();
+                    statusDiv.innerHTML = `<div class="error">❌ API Error: ${error.error?.message || response.status}</div>`;
+                }
+            } catch (error) {
+                statusDiv.innerHTML = `<div class="error">❌ Connection failed: ${error.message}</div>`;
+            }
+        });
+
+        // Enhancement Generation
+        document.getElementById('generateBtn').addEventListener('click', async () => {
+            const apiKey = document.getElementById('apiKey').value;
+            const resumeText = document.getElementById('resumeText').value;
+            const jobDescriptions = document.getElementById('jobDescriptions').value;
+            
+            if (!apiKey || !resumeText || !jobDescriptions) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            // Show loading
+            document.getElementById('loadingIndicator').style.display = 'block';
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('rawJson').style.display = 'none';
+            document.getElementById('generateBtn').disabled = true;
+
+            try {
+                const startTime = Date.now();
+                
+                const systemPrompt = `You are a resume enhancement expert. Analyze the user's resume against job requirements and suggest categorized, actionable enhancements that would make their application more competitive.
+
+CRITICAL RULES:
+- Focus on what's missing or could be strengthened
+- Organize suggestions into logical categories
+- Suggest specific skills, metrics, or experiences to highlight
+- Make suggestions realistic and achievable
+- Provide 2-3 suggestions per category
+- Return suggestions organized by category
+
+ENHANCEMENT CATEGORIES TO CONSIDER:
+- Technical Skills: Missing technical skills mentioned in job descriptions
+- Quantified Achievements: Lack of quantified achievements/metrics
+- Leadership & Collaboration: Missing leadership or collaboration examples
+- Industry Experience: Absent industry-specific certifications or experience
+- Soft Skills: Missing soft skills emphasized in jobs
+- Project Examples: Lack of relevant project examples
+- Client Relations: Missing client/stakeholder interaction examples
+- Process Improvement: Absent process improvement examples`;
+
+                const userPrompt = `Analyze this resume against the job requirements and suggest categorized enhancements:
+
+RESUME:
+${resumeText}
+
+JOB REQUIREMENTS:
+${jobDescriptions}
+
+Return enhancement suggestions organized by category in this JSON format:
+{
+  "Technical Skills": [
+    {
+      "title": "Add Python Programming",
+      "description": "Highlight Python programming skills mentioned in job requirements",
+      "priority": "high"
+    },
+    {
+      "title": "Emphasize Cloud Platforms",
+      "description": "Showcase AWS/Azure experience for cloud-based roles",
+      "priority": "medium"
+    }
+  ],
+  "Quantified Achievements": [
+    {
+      "title": "Add Revenue Impact",
+      "description": "Include specific revenue or cost savings numbers",
+      "priority": "high"
+    }
+  ],
+  "Leadership & Collaboration": [
+    {
+      "title": "Team Leadership Metrics",
+      "description": "Quantify team size and leadership achievements",
+      "priority": "medium"
+    }
+  ],
+  "Industry Experience": [
+    {
+      "title": "Relevant Certifications",
+      "description": "Add industry-specific certifications mentioned in job",
+      "priority": "low"
+    }
+  ]
+}
+
+Requirements:
+- Only include categories that have relevant suggestions
+- Each "title" should be 2-5 words, actionable
+- Each "description" should explain the specific enhancement benefit
+- Set "priority" as "high", "medium", or "low" based on impact
+- Focus on high-impact improvements that address job requirements
+- Make suggestions realistic based on the resume content
+- Include 1-3 suggestions per category
+
+Return ONLY the JSON object.`;
+
+                const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify({
+                        model: 'gpt-4o',
+                        messages: [
+                            { role: 'system', content: systemPrompt },
+                            { role: 'user', content: userPrompt }
+                        ],
+                        max_tokens: 1000,
+                        temperature: 0.3
+                    })
+                });
+
+                const endTime = Date.now();
+                const responseTime = endTime - startTime;
+
+                if (response.ok) {
+                    const result = await response.json();
+                    const content = result.choices[0].message.content;
+                    
+                    // Clean and parse JSON
+                    let cleanContent = content.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+                    cleanContent = cleanContent.replace(/^```\s*/, '').replace(/\s*```$/, '');
+                    
+                    const enhancements = JSON.parse(cleanContent);
+                    currentEnhancements = enhancements;
+                    
+                    // Display results
+                    renderEnhancements(enhancements);
+                    
+                    // Show raw JSON
+                    document.getElementById('rawJson').textContent = JSON.stringify(enhancements, null, 2);
+                    document.getElementById('rawJson').style.display = 'block';
+                    
+                    // Show stats
+                    const totalSuggestions = Object.values(enhancements).reduce((sum, cat) => sum + cat.length, 0);
+                    const categoryCount = Object.keys(enhancements).length;
+                    
+                    document.getElementById('stats').innerHTML = `
+                        <span>📊 ${totalSuggestions} suggestions across ${categoryCount} categories</span>
+                        <span>⏱️ Response time: ${responseTime}ms</span>
+                        <span>🎯 Model: ${result.model}</span>
+                    `;
+                    
+                    document.getElementById('results').style.display = 'block';
+                } else {
+                    const error = await response.json();
+                    document.getElementById('results').innerHTML = `<div class="error">❌ API Error: ${error.error?.message || response.status}</div>`;
+                    document.getElementById('results').style.display = 'block';
+                }
+            } catch (error) {
+                document.getElementById('results').innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+                document.getElementById('results').style.display = 'block';
+            } finally {
+                document.getElementById('loadingIndicator').style.display = 'none';
+                document.getElementById('generateBtn').disabled = false;
+            }
+        });
+
+        function renderEnhancements(enhancements) {
+            const container = document.getElementById('results');
+            
+            let htmlContent = '';
+            
+            Object.keys(enhancements).forEach(category => {
+                const categoryEnhancements = enhancements[category];
+                if (categoryEnhancements && categoryEnhancements.length > 0) {
+                    htmlContent += `
+                        <div class="enhancement-category">
+                            <h5 class="enhancement-category-title">${category}</h5>
+                            <div class="enhancement-category-items">
+                                ${categoryEnhancements.map(enhancement => `
+                                    <div class="enhancement-item ${enhancement.priority}-priority" 
+                                         data-category="${category}"
+                                         data-title="${enhancement.title}" 
+                                         data-description="${enhancement.description}"
+                                         data-priority="${enhancement.priority}"
+                                         title="${enhancement.description}">
+                                        <span class="enhancement-title">${enhancement.title}</span>
+                                        <span class="enhancement-priority ${enhancement.priority}">${enhancement.priority}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+            
+            container.innerHTML = htmlContent;
+
+            // Add click event listeners
+            container.querySelectorAll('.enhancement-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const enhancementData = {
+                        category: item.getAttribute('data-category'),
+                        title: item.getAttribute('data-title'),
+                        description: item.getAttribute('data-description'),
+                        priority: item.getAttribute('data-priority')
+                    };
+                    toggleEnhancementSelection(enhancementData, item);
+                });
+            });
+        }
+
+        function toggleEnhancementSelection(enhancementData, itemElement) {
+            const enhancementKey = `${enhancementData.category}:${enhancementData.title}`;
+            
+            if (selectedEnhancements.has(enhancementKey)) {
+                selectedEnhancements.delete(enhancementKey);
+                itemElement.classList.remove('selected');
+            } else {
+                selectedEnhancements.add(enhancementKey);
+                itemElement.classList.add('selected');
+            }
+
+            updateSelectedEnhancements();
+        }
+
+        function updateSelectedEnhancements() {
+            const container = document.getElementById('selectedEnhancements');
+            
+            if (selectedEnhancements.size === 0) {
+                container.innerHTML = '<p>Select enhancements above to see them here...</p>';
+                return;
+            }
+
+            const selectedList = Array.from(selectedEnhancements).map(enhancementKey => {
+                const [category, title] = enhancementKey.split(':');
+                
+                // Find the enhancement in currentEnhancements
+                if (currentEnhancements[category]) {
+                    const enhancement = currentEnhancements[category].find(e => e.title === title);
+                    if (enhancement) {
+                        return {
+                            category,
+                            title: enhancement.title,
+                            description: enhancement.description,
+                            priority: enhancement.priority
+                        };
+                    }
+                }
+                return null;
+            }).filter(Boolean);
+
+            let html = '<h3>Selected Enhancements:</h3>';
+            selectedList.forEach(enhancement => {
+                html += `
+                    <div class="enhancement-item selected">
+                        <span class="enhancement-title">${enhancement.category} - ${enhancement.title}</span>
+                        <span class="enhancement-priority ${enhancement.priority}">${enhancement.priority}</span>
+                    </div>
+                    <p style="margin: 5px 0 15px 0; font-size: 12px; color: #6b7280;">${enhancement.description}</p>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+    </script>
+</body>
+</html> 
