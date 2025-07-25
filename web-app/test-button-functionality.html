@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Button Functionality Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ccc; border-radius: 8px; }
+        button { padding: 10px 20px; margin: 5px; border: none; border-radius: 4px; cursor: pointer; }
+        .primary { background: #2563eb; color: white; }
+        .secondary { background: #6b7280; color: white; }
+        .success { background: #10b981; color: white; }
+        .error { background: #ef4444; color: white; }
+        .log { background: #f3f4f6; padding: 10px; margin: 10px 0; border-radius: 4px; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <h1>Button Functionality Test</h1>
+    
+    <div class="test-section">
+        <h2>Basic Button Tests</h2>
+        <button class="primary" onclick="testClick('Primary Button')">Primary Button</button>
+        <button class="secondary" onclick="testClick('Secondary Button')">Secondary Button</button>
+        <button class="success" onclick="testClick('Success Button')">Success Button</button>
+        <button class="error" onclick="testClick('Error Button')">Error Button</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>Navigation Tests</h2>
+        <button class="primary" onclick="testNavigation('/dashboard')">Navigate to Dashboard</button>
+        <button class="secondary" onclick="testNavigation('/test')">Navigate to Test Page</button>
+        <button class="success" onclick="testExternalLink('https://google.com')">Open External Link</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>Modal Tests</h2>
+        <button class="primary" onclick="testModal('Sign In')">Open Sign In Modal</button>
+        <button class="secondary" onclick="testModal('Sign Up')">Open Sign Up Modal</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>Console Log</h2>
+        <div id="log" class="log">Click buttons above to see logs...</div>
+        <button onclick="clearLog()">Clear Log</button>
+    </div>
+
+    <script>
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `[${timestamp}] ${message}<br>`;
+            console.log(`[${timestamp}] ${message}`);
+        }
+        
+        function clearLog() {
+            document.getElementById('log').innerHTML = 'Log cleared...<br>';
+        }
+        
+        function testClick(buttonName) {
+            log(`✅ ${buttonName} clicked successfully`);
+        }
+        
+        function testNavigation(path) {
+            log(`🔄 Attempting to navigate to: ${path}`);
+            // Simulate navigation without actually changing page
+            setTimeout(() => {
+                log(`✅ Navigation to ${path} would work`);
+            }, 500);
+        }
+        
+        function testExternalLink(url) {
+            log(`🔗 Attempting to open external link: ${url}`);
+            // Simulate opening external link
+            setTimeout(() => {
+                log(`✅ External link to ${url} would work`);
+            }, 500);
+        }
+        
+        function testModal(modalType) {
+            log(`📋 Attempting to open ${modalType} modal`);
+            // Simulate modal opening
+            setTimeout(() => {
+                log(`✅ ${modalType} modal would open`);
+            }, 500);
+        }
+        
+        // Test if JavaScript is working
+        log('🚀 JavaScript is working!');
+        log('📝 Button functionality test initialized');
+        
+        // Test console.log functionality
+        console.log('✅ Console.log is working');
+        console.warn('⚠️ Console.warn is working');
+        console.error('❌ Console.error is working');
+    </script>
+</body>
+</html> 

@@ -1,6 +1,10 @@
 // Extension Mirror - Complete replication of Chrome extension functionality
 // This mirrors the exact structure and functions from the extension
 
+import { ExtensionMatchingSystem } from './matching-system'
+import mammoth from 'mammoth';
+import { database } from './supabase';
+
 interface JobData {
   id: number
   title: string
@@ -14,8 +18,6 @@ interface JobData {
   matchScore?: number
   matchGrade?: string
   matchAnalysis?: any
-  generationStatus?: 'pending' | 'generating' | 'completed' | 'error'
-  generatedDocs?: GeneratedDocument[]
   starred?: boolean
 }
 
@@ -23,21 +25,6 @@ interface JobData {
 export type Job = JobData & {
   captureDate: string // Alias for capturedAt
   id: number // Keep as number to match JobData
-}
-
-export interface GenerationOptions {
-  documentType: 'cover' | 'resume' | 'both'
-  format: 'pdf' | 'text' | 'docx'
-  mode: 'precision' | 'gap' | 'beast'
-  jobIds: number[]
-}
-
-interface GeneratedDocument {
-  type: string
-  format: string
-  mimeType: string
-  base64: string
-  timestamp: number
 }
 
 export interface Resume {
@@ -141,12 +128,49 @@ export class AutoApplyAI {
   // Load jobs from storage
   async loadJobs() {
     try {
-      // First check if we have cached extension data
+      console.log('🔍 Loading jobs from storage...')
+      
+      // First check localStorage (most reliable for persistent scores)
+      let localStorageJobs = null
+      try {
+        const stored = localStorage.getItem('autoapply_jobs')
+        if (stored) {
+          localStorageJobs = JSON.parse(stored)
+          console.log('🔍 Found jobs in localStorage:', localStorageJobs.length, 'jobs')
+          
+          // Log sample scored job to verify persistence
+          const scoredJob = localStorageJobs.find(job => job.matchScore && job.matchScore > 0)
+          if (scoredJob) {
+            console.log('🔍 Sample scored job in localStorage:', {
+              id: scoredJob.id,
+              title: scoredJob.title,
+              matchScore: scoredJob.matchScore,
+              matchGrade: scoredJob.matchGrade
+            })
+          }
+        }
+      } catch (error) {
+        console.error('Error parsing localStorage jobs:', error)
+      }
+      
+      // Check if we have cached extension data
       if (typeof window !== 'undefined' && (window as any).latestExtensionData) {
-        console.log('🔍 Using cached extension data')
+        console.log('🔍 Found cached extension data')
         const data = (window as any).latestExtensionData
         if (data.jobs && Array.isArray(data.jobs)) {
-          this.jobs = data.jobs.map(job => ({
+          // Use cached data, but prefer localStorage if it has more recent scores
+          let jobsToUse = data.jobs
+          
+          if (localStorageJobs && localStorageJobs.length > 0) {
+            // Merge: use localStorage jobs if they have scores, otherwise use cached data
+            jobsToUse = data.jobs.map(cachedJob => {
+              const localJob = localStorageJobs.find(local => local.id === cachedJob.id)
+              return localJob && localJob.matchScore ? localJob : cachedJob
+            })
+            console.log('🔍 Merged cached extension data with localStorage scores')
+          }
+          
+          this.jobs = jobsToUse.map(job => ({
             ...job,
             // Ensure required fields exist
             matchScore: job.matchScore || 0,
@@ -155,9 +179,24 @@ export class AutoApplyAI {
             generationStatus: job.generationStatus || 'pending',
             generatedDocs: job.generatedDocs || []
           }))
-          console.log('✅ Loaded jobs from cached extension data:', this.jobs.length, 'jobs')
+          console.log('✅ Loaded jobs from cached extension data (with localStorage scores):', this.jobs.length, 'jobs')
           return
         }
+      }
+      
+      // If we have localStorage data but no cached extension data, use localStorage
+      if (localStorageJobs && localStorageJobs.length > 0) {
+        this.jobs = localStorageJobs.map(job => ({
+          ...job,
+          // Ensure required fields exist
+          matchScore: job.matchScore || 0,
+          matchGrade: job.matchGrade || 'unscored',
+          starred: job.starred || false,
+          generationStatus: job.generationStatus || 'pending',
+          generatedDocs: job.generatedDocs || []
+        }))
+        console.log('✅ Loaded jobs from localStorage:', this.jobs.length, 'jobs')
+        return
       }
 
       // Try to load from Chrome extension via ExtensionBridge
@@ -287,6 +326,14 @@ export class AutoApplyAI {
   // Save jobs to storage
   async saveJobs() {
     try {
+      console.log('🔍 Saving jobs with latest data:', this.jobs.length, 'jobs')
+      
+      // Update cached extension data if it exists (to ensure consistency on reload)
+      if (typeof window !== 'undefined' && (window as any).latestExtensionData) {
+        (window as any).latestExtensionData.jobs = this.jobs
+        console.log('✅ Updated cached extension data with latest job scores')
+      }
+      
       // First try to save to Chrome extension storage if available
       if (typeof window !== 'undefined' && (window as any).chrome?.storage) {
         try {
@@ -305,10 +352,22 @@ export class AutoApplyAI {
         }
       }
       
-      // Also save to localStorage as backup
+      // Always save to localStorage as backup
       localStorage.setItem('autoapply_jobs', JSON.stringify(this.jobs))
+      console.log('✅ Saved jobs to localStorage')
+      
+      // Log a sample job to verify score persistence
+      const scoredJob = this.jobs.find(job => job.matchScore && job.matchScore > 0)
+      if (scoredJob) {
+        console.log('✅ Sample scored job saved:', {
+          id: scoredJob.id,
+          title: scoredJob.title,
+          matchScore: scoredJob.matchScore,
+          matchGrade: scoredJob.matchGrade
+        })
+      }
     } catch (error) {
-      console.error('Error saving jobs:', error)
+      console.error('❌ Error saving jobs:', error)
     }
   }
 
@@ -520,7 +579,106 @@ export class AutoApplyAI {
 
   // Get active resume
   getActiveResume(): Resume | null {
-    return this.storedResumes.find(r => r.isActive) || null
+    const activeResume = this.storedResumes.find(r => r.isActive) || null;
+    
+    console.log('🔍 GET ACTIVE RESUME DEBUG:', {
+      totalResumes: this.storedResumes.length,
+      hasActiveResume: !!activeResume,
+      activeResumeId: this.activeResumeId,
+      activeResume: activeResume ? {
+        id: activeResume.id,
+        name: activeResume.name,
+        isActive: activeResume.isActive,
+        hasContent: !!activeResume.content,
+        contentLength: activeResume.content?.length || 0,
+        contentPreview: activeResume.content?.substring(0, 200) || 'NO CONTENT'
+      } : null,
+      allResumeInfo: this.storedResumes.map(r => ({
+        id: r.id,
+        name: r.name,
+        isActive: r.isActive,
+        hasContent: !!r.content,
+        contentLength: r.content?.length || 0
+      }))
+    });
+    
+    return activeResume;
+  }
+
+    // Store resume with pre-extracted content (public method)
+  async storeExtractedResume(file: File, extractedContent: string): Promise<Resume> {
+    try {
+      console.log('🔍 Storing resume with pre-extracted content:', {
+        filename: file.name,
+        contentLength: extractedContent.length,
+        contentPreview: extractedContent.substring(0, 200)
+      });
+
+      console.log('🔍 BEFORE STORAGE - Current resumes:', {
+        totalResumes: this.storedResumes.length,
+        activeResumeId: this.activeResumeId,
+        resumeList: this.storedResumes.map(r => ({
+          id: r.id,
+          name: r.name,
+          isActive: r.isActive,
+          contentLength: r.content?.length || 0
+        }))
+      });
+
+      const resume: Resume = {
+        id: Date.now().toString(),
+        name: file.name,
+        content: extractedContent, // Use the pre-extracted content
+        type: file.type,
+        fileType: file.type,
+        size: file.size,
+        fileSize: file.size,
+        uploadDate: new Date().toISOString(),
+        uploadedAt: new Date().toISOString(),
+        isActive: true // Always make the new resume active
+      }
+
+      // COMPLETELY REPLACE any existing resume with the same name
+      console.log('🔍 Removing any existing resume with same name:', file.name);
+      this.storedResumes = this.storedResumes.filter(r => r.name !== file.name);
+      
+      // Clear ALL resumes as active and set this one as the only active resume
+      this.storedResumes.forEach(r => r.isActive = false);
+      
+      // Add the new resume
+      this.storedResumes.push(resume);
+      
+      // Set as active
+      this.activeResumeId = resume.id;
+      
+      // Save to localStorage
+      await this.saveStoredResumes();
+      await this.saveActiveResumeId();
+
+      console.log('🔍 AFTER STORAGE - Updated resumes:', {
+        totalResumes: this.storedResumes.length,
+        activeResumeId: this.activeResumeId,
+        resumeList: this.storedResumes.map(r => ({
+          id: r.id,
+          name: r.name,
+          isActive: r.isActive,
+          contentLength: r.content?.length || 0
+        }))
+      });
+
+      console.log('✅ Resume stored with real content:', {
+        id: resume.id,
+        name: resume.name,
+        contentLength: resume.content.length,
+        isActive: resume.isActive,
+        contentPreview: resume.content.substring(0, 100)
+      });
+
+      return resume
+    } catch (error) {
+      console.error('Error storing extracted resume:', error)
+      throw error
+    }
   }
 
   // Handle resume upload
@@ -557,14 +715,152 @@ export class AutoApplyAI {
     }
   }
 
-  // Extract text from file
+  // Extract text from file (client-side first)
   async extractTextFromFile(file: File): Promise<string> {
     if (file.type === 'text/plain') {
       return await file.text()
+    } else if (file.type === 'application/pdf') {
+      // Try client-side PDF parsing first
+      if (typeof window !== 'undefined') {
+        try {
+          const pdfjsLib = await import('pdfjs-dist/build/pdf');
+          const arrayBuffer = await file.arrayBuffer();
+          const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+          let text = '';
+          for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const content = await page.getTextContent();
+            text += content.items.map((item: any) => item.str).join(' ') + '\n';
+          }
+          if (text.trim().length > 20) {
+            console.log('✅ Client-side PDF extraction succeeded');
+            return text;
+          }
+        } catch (e) {
+          console.warn('⚠️ Client-side PDF extraction failed, falling back to server:', e);
+        }
+      }
+      // Fallback to server API
+      return await this.extractPDFText(file)
+    } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+      console.log('🔍 Processing DOCX file:', file.name, 'Size:', file.size, 'bytes');
+      
+      // Try client-side DOCX parsing first
+      try {
+        console.log('🔍 Attempting client-side DOCX extraction with mammoth...');
+        const arrayBuffer = await file.arrayBuffer();
+        console.log('🔍 File converted to ArrayBuffer, length:', arrayBuffer.byteLength);
+        
+        const result = await mammoth.extractRawText({ arrayBuffer });
+        console.log('🔍 Mammoth extraction result:', {
+          hasValue: !!result.value,
+          contentLength: result.value?.length || 0,
+          contentPreview: result.value?.substring(0, 300) + '...',
+          messages: result.messages,
+          messagesCount: result.messages?.length || 0
+        });
+        
+        if (result.value && result.value.trim().length > 20) {
+          console.log('✅ Client-side DOCX extraction succeeded');
+          const content = result.value.trim();
+          
+          // Log the actual extracted content for debugging
+          console.log('📄 ACTUAL EXTRACTED CONTENT:', content.substring(0, 500));
+          
+          return result.value;
+        } else {
+          console.warn('⚠️ Client-side DOCX extraction returned insufficient content, length:', result.value?.length || 0);
+        }
+      } catch (e) {
+        console.error('❌ Client-side DOCX extraction failed:', e);
+        console.warn('⚠️ Falling back to server API...');
+      }
+      
+      // Fallback to server API
+      console.log('🔍 Falling back to server-side Word extraction API...');
+      return await this.extractWordText(file)
+    } else if (file.type === 'application/msword') {
+      // No good client-side .doc parser, use server
+      return await this.extractWordText(file)
     } else {
-      // For now, return file name as placeholder
-      // In production, you'd use a proper document parser
-      return `Resume content from ${file.name}`
+      throw new Error(`Unsupported file type: ${file.type}`)
+    }
+  }
+
+  // Extract text from PDF using web app API
+  async extractPDFText(file: File): Promise<string> {
+    const formData = new FormData()
+    formData.append('file', file)
+    
+    try {
+      const response = await fetch('/api/parse-pdf', {
+        method: 'POST',
+        body: formData
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || `PDF parsing failed: ${response.status}`)
+      }
+      
+      const result = await response.json()
+      
+      // Validate extracted text
+      if (!result.text || result.text.trim().length < 10) {
+        throw new Error('PDF appears to be empty or contains no readable text. Please try uploading as a .txt file instead.')
+      }
+      
+      console.log(`✅ Successfully extracted ${result.extractedLength || result.text.length} characters from PDF: ${file.name}`)
+      return result.text
+    } catch (error: any) {
+      console.error('Error parsing PDF:', error)
+      throw new Error(error.message || 'Failed to extract text from PDF file. Please try uploading as a .txt file instead.')
+    }
+  }
+
+  // Extract text from Word document using web app API
+  async extractWordText(file: File): Promise<string> {
+    console.log('🔍 Server-side Word extraction starting for:', file.name);
+    const formData = new FormData()
+    formData.append('file', file)
+    
+    try {
+      const response = await fetch('/api/parse-word', {
+        method: 'POST',
+        body: formData
+      })
+      
+      console.log('🔍 Server API response status:', response.status);
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        console.error('❌ Server-side Word extraction failed:', errorData);
+        throw new Error(errorData.error || `Word parsing failed: ${response.status}`)
+      }
+      
+      const result = await response.json()
+      
+      console.log('🔍 Server-side Word extraction result:', {
+        hasText: !!result.text,
+        textLength: result.text?.length || 0,
+        textPreview: result.text?.substring(0, 300) + '...',
+        extractedLength: result.extractedLength,
+        filename: result.filename,
+        warnings: result.warnings?.length || 0
+      });
+      
+      // Validate extracted text
+      if (!result.text || result.text.trim().length < 10) {
+        throw new Error('Word document appears to be empty or contains no readable text. Please try uploading as a .txt file instead.')
+      }
+      
+      console.log(`✅ Successfully extracted ${result.extractedLength || result.text.length} characters from Word document: ${file.name}`)
+      console.log('📄 SERVER EXTRACTED CONTENT:', result.text.substring(0, 500));
+      
+      return result.text
+    } catch (error: any) {
+      console.error('❌ Error parsing Word document:', error)
+      throw new Error(error.message || 'Failed to extract text from Word document. Please try uploading as a .txt file instead.')
     }
   }
 
@@ -700,15 +996,153 @@ export class AutoApplyAI {
       throw new Error('OpenAI API key not configured')
     }
 
+    if (documentType === 'resume') {
+      // Step 1: Extract structured data from resume
+      const extractedData = await this.extractResumeData(resume.content, apiKey)
+      console.log('Extracted resume data:', extractedData)
+
+      // Step 2: Build strict template and section config (mirrors extension)
+      // (For simplicity, always include all sections)
+      const templateFormat = `# [Name]
+[Location] | [Citizenship if applicable]
+Phone: [Phone] | Email: [Email]
+
+## Professional Summary
+[2-3 sentences highlighting most relevant experience for this job]
+
+## Core Skills
+- [Most relevant skill 1]
+- [Most relevant skill 2]
+- [Most relevant skill 3]
+- [Additional relevant skills]
+
+## Professional Experience
+**[Job Title]**
+[Company Name], [Location] | [Start Date] – [End Date]
+- [Tailored responsibility emphasizing job-relevant skills]
+- [Achievement with quantifiable results if available]
+- [Additional relevant responsibility]
+
+## Education
+**[Degree Name]**
+[Institution Name], [Location] | [Year]
+
+## Licenses & Admissions
+- [License/Certification 1]
+- [License/Certification 2]
+
+## Tools & Platforms
+- [Relevant tools and technologies]`
+
+      // Get selected enhancements for integration
+      const selectedEnhancements = this.getSelectedEnhancementDetails ? this.getSelectedEnhancementDetails() : []
+      const enhancementInstructions = selectedEnhancements.length > 0 ? 
+        `\n\nSPECIAL ENHANCEMENT INSTRUCTIONS:
+${selectedEnhancements.map(e => `- ${e.category} - ${e.title}: ${e.description} (Priority: ${e.priority})`).join('\n')}
+
+These enhancements should be woven naturally into the resume content to address identified gaps. Focus on high-priority enhancements first.` : ''
+
+      const userPrompt = `Create a tailored resume using this data and job requirements:
+
+EXTRACTED RESUME DATA:
+${JSON.stringify(extractedData, null, 2)}
+
+JOB REQUIREMENTS:
+Title: ${job.title}
+Company: ${job.company}
+Description: ${job.description}${enhancementInstructions}
+
+TEMPLATE FORMAT TO FOLLOW:
+${templateFormat}
+
+SECTION CONFIGURATION:
+- Professional Summary: INCLUDE
+- Core Skills: INCLUDE
+- Professional Experience: INCLUDE
+- Education: INCLUDE
+- Licenses & Admissions: INCLUDE
+- Tools & Platforms: INCLUDE
+
+CRITICAL FORMATTING RULES:
+1. Start with exactly: # [Full Name] (with # and space)
+2. Use exactly: ## [Section Name] (with ## and space) for ALL section headers
+3. For job titles use exactly: **[Job Title]** (with ** on both sides)
+4. For company info use exactly: [Company Name], [Location] | [Start Date] – [End Date]
+5. Use exactly: - [bullet point] (with - and space) for all bullet points
+6. Use exactly: **[Degree Name]** (with ** on both sides) for education
+7. Separate each section with exactly one blank line
+8. Do NOT use any other formatting like bold company names or italic text
+
+EXAMPLE FORMAT:
+# Ricardo E. Zuloaga
+New York, NY | United States & Venezuela
+Phone: +1 917-254-9676 | Email: ricardozuloaga@gmail.com
+
+## Professional Summary
+[Content here]
+
+## Core Skills
+- [Skill 1]
+- [Skill 2]
+
+## Professional Experience
+**Contracts Manager / Senior Legal & Commercial Advisor**
+Zumar Trading Corp., New York, NY | 2020 – Present
+- [Responsibility 1]
+- [Responsibility 2]
+
+## Education
+**LL.M.**
+Duke University School of Law, Durham, NC | 2013 – 2014
+
+INSTRUCTIONS:
+1. Follow the exact formatting rules above
+2. Prioritize information most relevant to the job
+3. Rewrite responsibilities to include job keywords naturally
+4. Emphasize achievements that match job requirements
+5. Order experience by relevance to target role
+6. Only include sections marked as INCLUDE above
+7. Return ONLY the formatted resume content, no explanations`
+
+      const systemPrompt = this.getResumeSystemPrompt ? this.getResumeSystemPrompt(amplificationMode) : ''
+
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt }
+          ],
+          max_tokens: 1500,
+          temperature: 0.7
+        })
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error?.message || `Document generation failed: ${response.status}`)
+      }
+
+      const result = await response.json()
+      const generatedContent = result.choices[0].message.content
+
+      // Convert to base64 for storage (like Chrome extension)
+      const base64Content = btoa(unescape(encodeURIComponent(generatedContent)))
+      return base64Content
+    }
+
+    // (Unchanged for cover letter and other types)
     let systemPrompt = ''
     let userPrompt = ''
 
     if (documentType === 'cover') {
       systemPrompt = this.getCoverLetterSystemPrompt(amplificationMode)
       userPrompt = this.getCoverLetterUserPrompt(job, resume, format)
-    } else if (documentType === 'resume') {
-      systemPrompt = this.getResumeSystemPrompt(amplificationMode)
-      userPrompt = this.getResumeUserPrompt(job, resume, format)
     } else {
       throw new Error('Invalid document type')
     }
@@ -740,9 +1174,309 @@ export class AutoApplyAI {
 
     // Convert to base64 for storage (like Chrome extension)
     const base64Content = btoa(unescape(encodeURIComponent(generatedContent)))
-    
-    // If format is PDF or DOCX, we'd need to convert here
-    // For now, return the base64 encoded text content
+    return base64Content
+  }
+
+  // Add: Extract structured data from resume using LLM (mirrors extension)
+  async extractResumeData(resumeText: string, apiKey: string): Promise<any> {
+    const systemPrompt = `You are a resume data extraction expert. Extract structured information from resumes and return it in a standardized JSON format.
+
+CRITICAL RULES:
+- Extract ONLY information that exists in the resume
+- Do NOT invent or assume any information
+- Preserve exact dates, company names, and job titles
+- Extract skills exactly as written
+- Maintain all factual accuracy`;
+
+    const userPrompt = `Extract structured data from this resume and return it in the following JSON format:
+
+RESUME TEXT:
+${resumeText}
+
+REQUIRED JSON STRUCTURE:
+{
+  "personalInfo": {
+    "name": "Full Name",
+    "location": "City, State",
+    "phone": "Phone Number",
+    "email": "Email Address",
+    "citizenship": "Citizenship status if mentioned"
+  },
+  "professionalSummary": "2-3 sentence summary of experience",
+  "coreSkills": [
+    "Skill 1",
+    "Skill 2",
+    "Skill 3"
+  ],
+  "experience": [
+    {
+      "title": "Job Title",
+      "company": "Company Name",
+      "location": "City, State",
+      "startDate": "Start Date",
+      "endDate": "End Date or Present",
+      "responsibilities": [
+        "Responsibility 1",
+        "Responsibility 2"
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "Degree Name",
+      "institution": "School Name",
+      "location": "City, State",
+      "year": "Graduation Year or Date Range"
+    }
+  ],
+  "licenses": [
+    "License or certification"
+  ],
+  "additionalSections": {
+    "tools": ["Tool 1", "Tool 2"],
+    "languages": ["Language 1", "Language 2"],
+    "projects": [],
+    "certifications": []
+  }
+}
+
+Return ONLY the JSON object with extracted data.`;
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ],
+        max_tokens: 4000,
+        temperature: 0.1
+      })
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      let content = result.choices[0].message.content;
+      try {
+        // Clean and parse JSON
+        let cleanContent = content.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+        cleanContent = cleanContent.replace(/^```\s*/, '').replace(/\s*```$/, '');
+        const extractedData = JSON.parse(cleanContent);
+        // Log the extracted data to help debug
+        console.log('🔍 Extracted resume data:', extractedData);
+        console.log('📊 Experience entries:', extractedData.experience?.length || 0);
+        console.log('📚 Education entries:', extractedData.education?.length || 0);
+        console.log('🛠️ Skills count:', extractedData.coreSkills?.length || 0);
+        // Block generation if all key fields are empty
+        if ((extractedData.experience?.length || 0) === 0 && (extractedData.education?.length || 0) === 0 && (extractedData.coreSkills?.length || 0) === 0) {
+          throw new Error('Resume extraction failed. Please upload a plain text resume or check your formatting.');
+        }
+        return extractedData;
+      } catch (e) {
+        throw new Error('Failed to parse extracted resume data JSON');
+      }
+    } else {
+      const error = await response.json();
+      throw new Error(error.error?.message || `Resume data extraction failed: ${response.status}`);
+    }
+  }
+
+  // Patch: Use structured extraction and strict template for resume generation
+  async generateOptimizedDocument(
+    job: JobData,
+    resume: Resume,
+    documentType: string,
+    format: string,
+    amplificationMode: string
+  ): Promise<string> {
+    const apiKey = await this.getUserApiKey()
+    if (!apiKey) {
+      throw new Error('OpenAI API key not configured')
+    }
+
+    if (documentType === 'resume') {
+      // Step 1: Extract structured data from resume
+      const extractedData = await this.extractResumeData(resume.content, apiKey)
+      console.log('Extracted resume data:', extractedData)
+
+      // Step 2: Build strict template and section config (mirrors extension)
+      // (For simplicity, always include all sections)
+      const templateFormat = `# [Name]
+[Location] | [Citizenship if applicable]
+Phone: [Phone] | Email: [Email]
+
+## Professional Summary
+[2-3 sentences highlighting most relevant experience for this job]
+
+## Core Skills
+- [Most relevant skill 1]
+- [Most relevant skill 2]
+- [Most relevant skill 3]
+- [Additional relevant skills]
+
+## Professional Experience
+**[Job Title]**
+[Company Name], [Location] | [Start Date] – [End Date]
+- [Tailored responsibility emphasizing job-relevant skills]
+- [Achievement with quantifiable results if available]
+- [Additional relevant responsibility]
+
+## Education
+**[Degree Name]**
+[Institution Name], [Location] | [Year]
+
+## Licenses & Admissions
+- [License/Certification 1]
+- [License/Certification 2]
+
+## Tools & Platforms
+- [Relevant tools and technologies]`
+
+      // Get selected enhancements for integration
+      const selectedEnhancements = this.getSelectedEnhancementDetails ? this.getSelectedEnhancementDetails() : []
+      const enhancementInstructions = selectedEnhancements.length > 0 ? 
+        `\n\nSPECIAL ENHANCEMENT INSTRUCTIONS:
+${selectedEnhancements.map(e => `- ${e.category} - ${e.title}: ${e.description} (Priority: ${e.priority})`).join('\n')}
+
+These enhancements should be woven naturally into the resume content to address identified gaps. Focus on high-priority enhancements first.` : ''
+
+      const userPrompt = `Create a tailored resume using this data and job requirements:
+
+EXTRACTED RESUME DATA:
+${JSON.stringify(extractedData, null, 2)}
+
+JOB REQUIREMENTS:
+Title: ${job.title}
+Company: ${job.company}
+Description: ${job.description}${enhancementInstructions}
+
+TEMPLATE FORMAT TO FOLLOW:
+${templateFormat}
+
+SECTION CONFIGURATION:
+- Professional Summary: INCLUDE
+- Core Skills: INCLUDE
+- Professional Experience: INCLUDE
+- Education: INCLUDE
+- Licenses & Admissions: INCLUDE
+- Tools & Platforms: INCLUDE
+
+CRITICAL FORMATTING RULES:
+1. Start with exactly: # [Full Name] (with # and space)
+2. Use exactly: ## [Section Name] (with ## and space) for ALL section headers
+3. For job titles use exactly: **[Job Title]** (with ** on both sides)
+4. For company info use exactly: [Company Name], [Location] | [Start Date] – [End Date]
+5. Use exactly: - [bullet point] (with - and space) for all bullet points
+6. Use exactly: **[Degree Name]** (with ** on both sides) for education
+7. Separate each section with exactly one blank line
+8. Do NOT use any other formatting like bold company names or italic text
+
+EXAMPLE FORMAT:
+# Ricardo E. Zuloaga
+New York, NY | United States & Venezuela
+Phone: +1 917-254-9676 | Email: ricardozuloaga@gmail.com
+
+## Professional Summary
+[Content here]
+
+## Core Skills
+- [Skill 1]
+- [Skill 2]
+
+## Professional Experience
+**Contracts Manager / Senior Legal & Commercial Advisor**
+Zumar Trading Corp., New York, NY | 2020 – Present
+- [Responsibility 1]
+- [Responsibility 2]
+
+## Education
+**LL.M.**
+Duke University School of Law, Durham, NC | 2013 – 2014
+
+INSTRUCTIONS:
+1. Follow the exact formatting rules above
+2. Prioritize information most relevant to the job
+3. Rewrite responsibilities to include job keywords naturally
+4. Emphasize achievements that match job requirements
+5. Order experience by relevance to target role
+6. Only include sections marked as INCLUDE above
+7. Return ONLY the formatted resume content, no explanations`
+
+      const systemPrompt = this.getResumeSystemPrompt ? this.getResumeSystemPrompt(amplificationMode) : ''
+
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt }
+          ],
+          max_tokens: 1500,
+          temperature: 0.7
+        })
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error?.message || `Document generation failed: ${response.status}`)
+      }
+
+      const result = await response.json()
+      const generatedContent = result.choices[0].message.content
+
+      // Convert to base64 for storage (like Chrome extension)
+      const base64Content = btoa(unescape(encodeURIComponent(generatedContent)))
+      return base64Content
+    }
+
+    // (Unchanged for cover letter and other types)
+    let systemPrompt = ''
+    let userPrompt = ''
+
+    if (documentType === 'cover') {
+      systemPrompt = this.getCoverLetterSystemPrompt(amplificationMode)
+      userPrompt = this.getCoverLetterUserPrompt(job, resume, format)
+    } else {
+      throw new Error('Invalid document type')
+    }
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ],
+        max_tokens: 1500,
+        temperature: 0.7
+      })
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error?.message || `Document generation failed: ${response.status}`)
+    }
+
+    const result = await response.json()
+    const generatedContent = result.choices[0].message.content
+
+    // Convert to base64 for storage (like Chrome extension)
+    const base64Content = btoa(unescape(encodeURIComponent(generatedContent)))
     return base64Content
   }
 
@@ -951,9 +1685,34 @@ Generate a complete, tailored resume that maximizes the candidate's chances for 
 
     try {
       console.log('🔍 Starting job scoring for:', job.title)
+      console.log('🔍 Active resume found:', {
+        id: activeResume.id,
+        name: activeResume.name,
+        contentLength: activeResume.content?.length || 0,
+        contentPreview: activeResume.content?.substring(0, 100) + '...'
+      })
+      console.log('🔍 Job details:', {
+        title: job.title,
+        company: job.company,
+        descriptionLength: job.description?.length || 0
+      })
+      console.log('🔍 API key configured:', apiKey.substring(0, 10) + '...')
+      
+      // Validate resume content before proceeding
+      if (!activeResume.content || activeResume.content.trim().length < 50) {
+        console.error('❌ Resume content too short or empty:', activeResume.content?.length || 0, 'characters')
+        throw new Error('Resume content is too short or empty. Please upload a proper resume document.')
+      }
       
       // Call the real job matching function
       const matchResult = await this.calculateJobMatch(job, activeResume, apiKey)
+      
+      console.log('🔍 Match result received:', {
+        overallScore: matchResult.overallScore,
+        strengths: matchResult.strengths?.length || 0,
+        gaps: matchResult.gaps?.length || 0,
+        reasoning: matchResult.reasoning?.substring(0, 100) + '...'
+      })
       
       // Update job with match results
       job.matchScore = matchResult.overallScore
@@ -961,122 +1720,97 @@ Generate a complete, tailored resume that maximizes the candidate's chances for 
       job.matchAnalysis = matchResult
       
       await this.saveJobs()
+      // --- PERSIST TO SUPABASE ---
+      // NOTE: Skipping Supabase persistence for now due to RLS authentication requirements
+      // TODO: Implement proper user authentication to enable database persistence
+      console.log('ℹ️  Supabase persistence temporarily disabled - requires user authentication');
+      console.log('ℹ️  Job scoring data is saved locally and will sync when authentication is implemented');
+      
+      // Uncomment below when proper authentication is implemented:
+      /*
+      try {
+        // If job has a string id, use it; otherwise, convert number id to string
+        const jobIdStr = typeof job.id === 'string' ? job.id : String(job.id);
+        
+        // Map camelCase fields to snake_case for database - using current schema
+        const jobDataForDB = {
+          // DON'T send id - let PostgreSQL SERIAL PRIMARY KEY auto-generate it
+          user_id: currentUser.id, // TODO: Use real authenticated user ID
+          title: job.title || '',
+          company: job.company || '',
+          description: job.description || '',
+          location: job.location || '',
+          salary: job.salary || '',
+          job_url: job.url || '',
+          source_platform: job.source || '',
+          created_at: job.capturedAt || new Date().toISOString(),
+          match_score: job.matchScore || null,
+          match_analysis: job.matchAnalysis || null
+        };
+        
+        await database.saveJob(jobDataForDB);
+        console.log('✅ Job scoring persisted to Supabase');
+      } catch (persistErr) {
+        console.error('❌ Failed to persist job scoring to Supabase:', persistErr);
+        // Note: Supabase persistence failed, but job scoring still completed successfully in memory
+      }
+      */
+      // --- END PERSIST ---
       console.log('✅ Job scoring completed:', job.matchScore + '%')
       
       return matchResult
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Error scoring job:', error)
+      console.error('❌ Error details:', {
+        message: error.message,
+        name: error.name,
+        stack: error.stack?.substring(0, 200)
+      })
       throw error
     }
   }
 
-  // Calculate job match using OpenAI API (mirrors Chrome extension logic)
+  // Calculate job match using ExtensionMatchingSystem (mirrors Chrome extension logic exactly)
   async calculateJobMatch(job: JobData, resume: Resume, apiKey: string) {
-    console.log('🔍 Calculating job match with OpenAI...')
+    console.log('🔍 Calculating job match with ExtensionMatchingSystem...')
     
-    // Truncate content for API efficiency (like Chrome extension)
-    const truncatedResume = resume.content.length > 3000 ? 
-      resume.content.substring(0, 3000) + '...' : resume.content
-    const truncatedJobDesc = job.description.length > 12000 ? 
-      job.description.substring(0, 12000) + '...' : job.description
-
-    const systemPrompt = `You are a strict ATS system that provides brutally honest, discriminating job-resume match scores. Use the full 0-100 scale and be very analytical. Return only valid JSON.
-
-SCORING GUIDELINES:
-- 90-100: Perfect match, exceeds requirements
-- 70-89: Strong match, meets most requirements
-- 50-69: Moderate match, some gaps exist
-- 30-49: Weak match, major gaps
-- 0-29: Poor match, significant misalignment
-
-ANALYSIS CATEGORIES:
-1. Technical Skills & Tools
-2. Experience Level & Duration
-3. Education & Certifications
-4. Industry Knowledge
-5. Role Responsibilities`
-
-    const userPrompt = `Analyze this job-resume match:
-
-JOB DETAILS:
-Title: ${job.title}
-Company: ${job.company}
-Location: ${job.location}
-Salary: ${job.salary || 'Not specified'}
-Description: ${truncatedJobDesc}
-
-RESUME CONTENT:
-${truncatedResume}
-
-Provide a detailed analysis in this exact JSON format:
-{
-  "overallScore": <number 0-100>,
-  "strengths": ["<specific matching skills/experience found>"],
-  "gaps": ["<specific missing requirements>"],
-  "recommendations": ["<concrete actionable advice>"],
-  "reasoning": "<detailed explanation of score calculation>",
-  "matrix": [
-    {
-      "category": "<category name>",
-      "requirement": "<specific job requirement>",
-      "evidence": "<resume evidence or lack thereof>",
-      "matchLevel": "<strong|exceeds|partial|missing>",
-      "gapAction": "<specific action to address gap>"
+    // Debug the resume content being passed to matching system
+    console.log('🔍 RESUME BEING PASSED TO MATCHING SYSTEM:', {
+      id: resume.id,
+      name: resume.name,
+      hasContent: !!resume.content,
+      contentLength: resume.content?.length || 0,
+      contentPreview: resume.content?.substring(0, 300) || 'NO CONTENT',
+      contentType: typeof resume.content
+    });
+    
+    // Validate resume content before passing to matching system
+    if (!resume.content || resume.content.trim().length < 50) {
+      console.error('❌ Resume content validation failed for matching system:', {
+        hasContent: !!resume.content,
+        contentLength: resume.content?.length || 0,
+        contentTrimmed: resume.content?.trim().length || 0
+      });
+      throw new Error('Resume content is missing or too short for analysis. Please re-upload your resume.');
     }
-  ]
-}
-
-Be thorough and analytical. Focus on specific skills, experience levels, and requirements.`
-
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
-        ],
-        max_tokens: 1000,
-        temperature: 0.1
-      })
-    })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.error?.message || `OpenAI API error: ${response.status}`)
-    }
-
-    const result = await response.json()
-    const content = result.choices[0].message.content
-
-    try {
-      // Parse the JSON response
-      let cleanContent = content.replace(/^```json\s*/, '').replace(/\s*```$/, '')
-      cleanContent = cleanContent.replace(/^```\s*/, '').replace(/\s*```$/, '')
-      
-      const matchResult = JSON.parse(cleanContent)
-      
-      // Validate required fields
-      if (typeof matchResult.overallScore !== 'number' || 
-          !Array.isArray(matchResult.strengths) || 
-          !Array.isArray(matchResult.gaps) ||
-          !Array.isArray(matchResult.recommendations) ||
-          !Array.isArray(matchResult.matrix)) {
-        throw new Error('Invalid response format from OpenAI')
-      }
-
+    
+    // Create an instance of the ExtensionMatchingSystem
+    const matchingSystem = new ExtensionMatchingSystem(apiKey)
+    
+    // Use the extension's exact calculateJobMatch logic
+    const result = await matchingSystem.calculateJobMatch(job, resume)
+    
+    // Transform the result to maintain compatibility with existing UI
+    return {
+      overallScore: result.score,
+      strengths: result.strengths,
+      gaps: result.gaps,
+      recommendations: result.recommendations,
+      reasoning: result.reasoning,
+      matrix: result.matrix,
+      analyzedAt: result.analyzedAt,
       // Add requirements property for UI compatibility
-      matchResult.requirements = matchResult.matrix || []
-      
-      return matchResult
-    } catch (parseError) {
-      console.error('Error parsing OpenAI response:', parseError)
-      console.error('Raw content:', content)
-      throw new Error('Failed to parse job match analysis from OpenAI')
+      requirements: result.matrix || []
     }
   }
 
@@ -1628,11 +2362,11 @@ Return ONLY the JSON object.`
   }
 }
 
-// API Service class - mirrors extension APIService
+// API Service class - mirrors extension's APIService class
 export class APIService {
   // Implementation mirrors extension's APIService class
   // This would contain the actual API integration logic
 }
 
 // Export the main class and types
-export { type JobData, type GeneratedDocument, type MatchColors } 
+export { type JobData, type MatchColors } 

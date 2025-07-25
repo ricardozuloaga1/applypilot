@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Template Generation Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .name { font-size: 28px; font-weight: bold; margin-bottom: 10px; color: #1e293b; }
+        .contact { color: #666; margin-bottom: 20px; }
+        .section { margin-bottom: 25px; }
+        .section-title { font-size: 18px; font-weight: bold; border-bottom: 2px solid #2563eb; margin-bottom: 15px; padding-bottom: 5px; color: #1e293b; }
+        .skill-item { margin-bottom: 8px; }
+        .skill-item::before { content: "• "; color: #2563eb; }
+        .job { margin-bottom: 20px; }
+        .job-title { font-weight: bold; font-size: 16px; color: #1e293b; }
+        .job-company { color: #666; }
+        .job-dates { color: #666; font-style: italic; }
+        .responsibilities { margin-top: 10px; }
+        .responsibility { margin-bottom: 5px; }
+        .education-item { margin-bottom: 15px; }
+        .education-degree { font-weight: bold; color: #1e293b; }
+        .education-institution { color: #666; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="name">Ricardo E. Zuloaga</div>
+            <div class="contact">
+                rzuloagamachado@gmail.com<br>
+                +1 917-254-9076<br>
+                New York, NY
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-title">Professional Summary</div>
+            <p>Senior contracts and legal operations professional with over 10 years of experience in drafting, negotiating, and managing commercial agreements across high-growth, cross-border environments. Adept at supporting vendor, partner, and technology agreements from intake to execution. Proven ability in contract lifecycle management, risk assessment, and cross-functional collaboration with legal, procurement, and compliance teams.</p>
+        </div>
+        
+        <div class="section">
+            <div class="section-title">Core Skills</div>
+            <div class="skill-item">Drafting and negotiating commercial and technology contracts</div>
+            <div class="skill-item">Contract lifecycle management & operational compliance</div>
+            <div class="skill-item">Indemnity, liability, confidentiality & vendor agreement terms</div>
+            <div class="skill-item">Process improvement, policy development, and playbook creation</div>
+            <div class="skill-item">Cross-functional collaboration and stakeholder training</div>
+        </div>
+        
+        <div class="section">
+            <div class="section-title">Professional Experience</div>
+            <div class="job">
+                <div class="job-title">Contracts Manager / Senior Legal & Commercial Advisor</div>
+                <div class="job-company">Zumar Trading Corp., New York, NY</div>
+                <div class="job-dates">2020 - Present</div>
+                <div class="responsibilities">
+                    <div class="responsibility">• Draft and negotiate commercial contracts including vendor agreements, MoUs, SaaS arrangements, and service terms.</div>
+                    <div class="responsibility">• Lead contract lifecycle from intake through execution, amendments, and renewals using CLM tools such as Ironclad.</div>
+                    <div class="responsibility">• Collaborate with cross-functional teams to ensure alignment and compliance with company policies.</div>
+                </div>
+            </div>
+            <div class="job">
+                <div class="job-title">Consultant – Document Review Attorney</div>
+                <div class="job-company">Epiq, FTI Consulting, Consilio, RVM, New York, NY</div>
+                <div class="job-dates">2018 - 2024</div>
+                <div class="responsibilities">
+                    <div class="responsibility">• Conduct detailed contract review, redlining, and privilege analysis for regulatory and litigation matters.</div>
+                    <div class="responsibility">• Support compliance readiness and policy review during sensitive legal proceedings.</div>
+                </div>
+            </div>
+            <div class="job">
+                <div class="job-title">Legal & Compliance Consultant</div>
+                <div class="job-company">Stone Ridge Asset Management, New York, NY</div>
+                <div class="job-dates">2017 - 2018</div>
+                <div class="responsibilities">
+                    <div class="responsibility">• Review legal and marketing materials for regulatory compliance (SEC/FINRA).</div>
+                    <div class="responsibility">• Manage contract documentation and support risk reviews for internal controls.</div>
+                </div>
+            </div>
+            <div class="job">
+                <div class="job-title">Legal & Compliance Consultant</div>
+                <div class="job-company">Payfully, New York, NY</div>
+                <div class="job-dates">2016 - 2017</div>
+                <div class="responsibilities">
+                    <div class="responsibility">• Build internal compliance and legal documentation systems.</div>
+                    <div class="responsibility">• Draft commercial agreements and advise on startup risk practices for fintech lending.</div>
+                </div>
+            </div>
+            <div class="job">
+                <div class="job-title">Corporate Paralegal / Associate</div>
+                <div class="job-company">Paredes & Asociados, Caracas, Venezuela</div>
+                <div class="job-dates">2014 - 2016</div>
+                <div class="responsibilities">
+                    <div class="responsibility">• Draft and negotiate vendor and corporate contracts.</div>
+                    <div class="responsibility">• Support entity formation and document control for multinational clients.</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-title">Education</div>
+            <div class="education-item">
+                <div class="education-degree">LL.M.</div>
+                <div class="education-institution">Duke University School of Law, Durham, NC | 2013 - 2014</div>
+            </div>
+            <div class="education-item">
+                <div class="education-degree">J.D.</div>
+                <div class="education-institution">Monteávila University, Caracas, Venezuela | 2006 - 2011</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 

@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Template Debug Test</title>
+    <script>
+        // Test the data parsing function
+        function testDataParsing() {
+            const content = `# Ricardo E. Zuloaga
+New York, NY | United States & Venezuela  
+Phone: +1 917-254-9076 | Email: rzuloagamachado@gmail.com
+
+## Professional Summary
+Senior contracts and legal operations professional with over 10 years of experience in drafting, negotiating, and managing commercial agreements across high-growth, cross-border environments. Adept at supporting vendor, partner, and technology agreements from intake to execution. Proven ability in contract lifecycle management, risk assessment, and cross-functional collaboration with legal, procurement, and compliance teams.
+
+## Core Skills
+- Drafting and negotiating commercial and technology contracts
+- Contract lifecycle management & operational compliance
+- Indemnity, liability, confidentiality & vendor agreement terms
+- Process improvement, policy development, and playbook creation
+- Cross-functional collaboration and stakeholder training
+
+## Professional Experience
+**Contracts Manager / Senior Legal & Commercial Advisor**  
+Zumar Trading Corp., New York, NY | 2020 – Present  
+- Draft and negotiate commercial contracts including vendor agreements, MoUs, SaaS arrangements, and service terms.
+- Lead contract lifecycle from intake through execution, amendments, and renewals using CLM tools such as Ironclad.
+- Collaborate with cross-functional teams to ensure alignment and compliance with company policies.
+
+**Consultant – Document Review Attorney**  
+Epiq, FTI Consulting, Consilio, RVM, New York, NY | 2018 – 2024  
+- Conduct detailed contract review, redlining, and privilege analysis for regulatory and litigation matters.
+- Support compliance readiness and policy review during sensitive legal proceedings.
+
+## Education
+**LL.M.**  
+Duke University School of Law, Durham, NC | 2013 – 2014
+
+**J.D.**  
+Monteávila University, Caracas, Venezuela | 2006 – 2011`;
+
+            // Parse the content
+            const lines = content.split('\n').filter(line => line.trim());
+            
+            const personalInfo = {
+                name: 'Generated Resume',
+                email: 'email@example.com',
+                phone: '(555) 123-4567',
+                location: 'Location',
+                linkedin: '',
+                website: ''
+            };
+
+            // Extract name
+            if (lines.length > 0) {
+                const firstLine = lines[0].trim();
+                if (firstLine.startsWith('#')) {
+                    personalInfo.name = firstLine.replace(/^#\s*/, '').trim();
+                } else {
+                    personalInfo.name = firstLine;
+                }
+            }
+
+            // Extract email
+            const emailMatch = content.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/);
+            if (emailMatch) {
+                personalInfo.email = emailMatch[1];
+            }
+
+            // Extract phone
+            const phoneMatch = content.match(/(\+?1?\s*\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4})/);
+            if (phoneMatch) {
+                personalInfo.phone = phoneMatch[1];
+            }
+
+            // Extract location
+            const locationLine = lines.find(line => 
+                line.includes('New York, NY') || 
+                line.includes('NY') || 
+                line.includes('Durham') || 
+                line.includes('Caracas') ||
+                line.includes('Venezuela')
+            );
+            if (locationLine) {
+                personalInfo.location = locationLine.trim();
+            }
+
+            console.log('Parsed Personal Info:', personalInfo);
+            
+            // Parse sections
+            const sections = content.split(/(?=^#{1,2}\s)/gm);
+            console.log('Sections found:', sections.length);
+            sections.forEach((section, index) => {
+                console.log(`Section ${index}:`, section.substring(0, 100) + '...');
+            });
+
+            // Extract Professional Summary
+            let professionalSummary = 'Experienced professional with expertise in multiple domains.';
+            const summarySection = sections.find(s => 
+                s.includes('Professional Summary') || 
+                s.includes('Summary') || 
+                s.includes('PROFESSIONAL SUMMARY')
+            );
+            if (summarySection) {
+                const summaryContent = summarySection
+                    .replace(/^#{1,2}\s*Professional Summary\s*\n?/i, '')
+                    .replace(/^#{1,2}\s*Summary\s*\n?/i, '')
+                    .replace(/^#{1,2}\s*PROFESSIONAL SUMMARY\s*\n?/i, '')
+                    .trim();
+                
+                const firstParagraph = summaryContent.split('\n\n')[0];
+                if (firstParagraph && firstParagraph.length > 10) {
+                    professionalSummary = firstParagraph.trim();
+                }
+            }
+
+            console.log('Professional Summary:', professionalSummary);
+
+            return { personalInfo, professionalSummary };
+        }
+
+        // Test the template generation
+        function testTemplateGeneration(templateId, data) {
+            console.log('Testing template:', templateId);
+            console.log('Data:', data);
+            
+            if (templateId === 'modern_professional') {
+                return `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>${data.personalInfo.name} - Resume</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+                        .container { max-width: 800px; margin: 0 auto; }
+                        .header { text-align: center; margin-bottom: 30px; }
+                        .name { font-size: 28px; font-weight: bold; margin-bottom: 10px; color: #1e293b; }
+                        .contact { color: #666; margin-bottom: 20px; }
+                        .section { margin-bottom: 25px; }
+                        .section-title { font-size: 18px; font-weight: bold; border-bottom: 2px solid #2563eb; margin-bottom: 15px; padding-bottom: 5px; color: #1e293b; }
+                        .skill-item { margin-bottom: 8px; }
+                        .skill-item::before { content: "• "; color: #2563eb; }
+                        .job { margin-bottom: 20px; }
+                        .job-title { font-weight: bold; font-size: 16px; color: #1e293b; }
+                        .job-company { color: #666; }
+                        .job-dates { color: #666; font-style: italic; }
+                        .responsibilities { margin-top: 10px; }
+                        .responsibility { margin-bottom: 5px; }
+                        .education-item { margin-bottom: 15px; }
+                        .education-degree { font-weight: bold; color: #1e293b; }
+                        .education-institution { color: #666; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="header">
+                            <div class="name">${data.personalInfo.name}</div>
+                            <div class="contact">
+                                ${data.personalInfo.email}<br>
+                                ${data.personalInfo.phone}<br>
+                                ${data.personalInfo.location}
+                            </div>
+                        </div>
+                        
+                        <div class="section">
+                            <div class="section-title">Professional Summary</div>
+                            <p>${data.professionalSummary}</p>
+                        </div>
+                    </div>
+                </body>
+                </html>
+                `;
+            }
+            
+            return 'Template not found';
+        }
+
+        // Run the test
+        window.onload = function() {
+            console.log('=== TEMPLATE DEBUG TEST ===');
+            const data = testDataParsing();
+            const html = testTemplateGeneration('modern_professional', data);
+            console.log('Generated HTML:', html);
+            
+            // Display the result
+            document.getElementById('result').innerHTML = html;
+        };
+    </script>
+</head>
+<body>
+    <h1>Template Debug Test</h1>
+    <p>Check the console for debug output</p>
+    <div id="result"></div>
+</body>
+</html> 

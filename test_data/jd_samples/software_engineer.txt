@@ -1,0 +1,30 @@
+Senior Software Engineer - Full Stack Development
+
+Company: TechCorp Inc.
+Location: San Francisco, CA
+
+Job Description:
+We are seeking a skilled Senior Software Engineer to join our dynamic team. The ideal candidate will have extensive experience in full-stack development and will be responsible for designing, developing, and maintaining web applications.
+
+Requirements:
+• 5+ years of software development experience required
+• Bachelor's degree in Computer Science or related field required
+• Proficiency in JavaScript, React, Node.js, and Python required
+• Experience with cloud platforms (AWS, Azure) strongly preferred
+• Strong communication and leadership skills
+• Experience in fintech or financial services industry preferred
+• Ability to work independently and as part of a team
+• Security clearance required
+• 25% travel expected
+
+Responsibilities:
+• Design and develop scalable web applications
+• Lead development team and mentor junior developers
+• Collaborate with product managers and designers
+• Implement best practices for code quality and security
+• Participate in code reviews and technical discussions
+
+Nice to Have:
+• AWS certification preferred
+• Experience with Docker and Kubernetes
+• Knowledge of microservices architecture 

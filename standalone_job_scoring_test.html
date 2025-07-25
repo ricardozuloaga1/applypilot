@@ -1,0 +1,1413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoApply AI - Job Scoring Test Script</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            background: #f9fafb;
+        }
+        
+        .section h2 {
+            color: #374151;
+            margin-bottom: 15px;
+            font-size: 1.4rem;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #374151;
+        }
+        
+        input[type="text"], input[type="password"], input[type="file"], textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+        
+        input[type="text"]:focus, input[type="password"]:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+        
+        .file-input-group {
+            margin-bottom: 15px;
+        }
+        
+        .file-input-group input[type="file"] {
+            margin-bottom: 10px;
+        }
+        
+        .file-preview {
+            background: white;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            padding: 10px;
+            font-size: 12px;
+            color: #6b7280;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin-right: 10px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-secondary {
+            background: #6b7280;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6b7280;
+        }
+        
+        .loading .spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f4f6;
+            border-radius: 50%;
+            border-top-color: #667eea;
+            animation: spin 1s ease-in-out infinite;
+            margin-bottom: 15px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .results {
+            margin-top: 30px;
+        }
+        
+        .result-card {
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        
+        .result-header {
+            background: #f9fafb;
+            padding: 15px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .result-header h3 {
+            color: #374151;
+            margin-bottom: 5px;
+        }
+        
+        .result-header p {
+            color: #6b7280;
+            font-size: 14px;
+        }
+        
+        .result-body {
+            padding: 15px;
+        }
+        
+        .score-display {
+            font-size: 2rem;
+            font-weight: bold;
+            text-align: center;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .score-excellent { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+        .score-good { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+        .score-moderate { background: rgba(251, 191, 36, 0.2); color: #fbbf24; }
+        .score-weak { background: rgba(249, 115, 22, 0.2); color: #f97316; }
+        .score-poor { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+        
+        .details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .detail-section {
+            background: #f9fafb;
+            padding: 15px;
+            border-radius: 6px;
+        }
+        
+        .detail-section h4 {
+            color: #374151;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+        
+        .detail-section ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .detail-section li {
+            background: white;
+            padding: 8px 12px;
+            margin-bottom: 6px;
+            border-radius: 4px;
+            font-size: 14px;
+            border-left: 3px solid #667eea;
+        }
+        
+        .matrix-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        
+        .matrix-table th,
+        .matrix-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 14px;
+        }
+        
+        .matrix-table th {
+            background: #f9fafb;
+            font-weight: 600;
+            color: #374151;
+        }
+        
+        .match-exceeds { color: #22c55e; font-weight: 600; }
+        .match-meets { color: #3b82f6; font-weight: 600; }
+        .match-partial { color: #fbbf24; font-weight: 600; }
+        .match-missing { color: #ef4444; font-weight: 600; }
+        
+        .export-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f9fafb;
+            border-radius: 8px;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+        }
+        
+        @media (max-width: 768px) {
+            .details-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 AutoApply AI Job Scoring Test</h1>
+            <p>Standalone test script that replicates the exact scoring logic from the main application</p>
+        </div>
+
+        <!-- CORS Warning Banner (shown when CORS error detected) -->
+        <div id="corsWarning" style="display: none; margin: 20px 0; padding: 20px; background: #fef3c7; border: 2px solid #f59e0b; border-radius: 8px; border-left: 6px solid #f59e0b;">
+            <div style="display: flex; align-items: center; margin-bottom: 15px;">
+                <span style="font-size: 24px; margin-right: 10px;">⚠️</span>
+                <h3 style="margin: 0; color: #92400e; font-size: 18px;">CORS Error Detected - Server Required</h3>
+            </div>
+            <div style="background: #fff; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                <p style="margin: 0 0 10px 0; color: #374151; font-weight: 500;">
+                    🚫 This file cannot make API requests when opened directly (file:// protocol)
+                </p>
+                <p style="margin: 0; color: #6b7280;">
+                    You need to run it on a local server to enable OpenAI API calls.
+                </p>
+            </div>
+            <div style="background: #10b981; color: white; padding: 15px; border-radius: 6px;">
+                <p style="margin: 0 0 10px 0; font-weight: 600;">✅ Quick Fix:</p>
+                <ol style="margin: 0; padding-left: 20px;">
+                    <li>Open Terminal/Command Prompt</li>
+                    <li>Navigate to this file's folder</li>
+                    <li>Run: <code style="background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 3px;">python -m http.server 8000</code></li>
+                    <li>Visit: <code style="background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 3px;">http://localhost:8000/standalone_job_scoring_test.html</code></li>
+                </ol>
+            </div>
+        </div>
+        
+        <div class="content">
+            <!-- API Configuration -->
+            <div class="section">
+                <h2>🔑 API Configuration</h2>
+                <div class="form-group">
+                    <label for="apiKey">OpenAI API Key:</label>
+                    <input type="password" id="apiKey" placeholder="sk-..." required>
+                    <small style="color: #6b7280; font-size: 12px; margin-top: 5px; display: block;">
+                        Your API key is stored locally and never sent anywhere except OpenAI
+                    </small>
+                </div>
+            </div>
+            
+            <!-- Resume Upload -->
+            <div class="section">
+                <h2>📄 Add Resumes</h2>
+                <p style="color: #6b7280; margin-bottom: 15px;">Add resumes one by one for testing</p>
+                
+                <div class="form-group">
+                    <label for="resumeFiles">Upload Resume File (PDF, DOCX, TXT):</label>
+                    <input type="file" id="resumeFiles" accept=".pdf,.docx,.doc,.txt">
+                </div>
+                
+                <div class="form-group">
+                    <label for="manualResume">Or Paste Resume Text:</label>
+                    <textarea id="manualResume" placeholder="Paste resume content here..."></textarea>
+                    <input type="text" id="manualResumeName" placeholder="Resume name (e.g., 'John_Doe_Resume')" style="margin-top: 10px;">
+                    <button class="btn" onclick="addManualResume()" style="margin-top: 10px;">
+                        ➕ Add This Resume
+                    </button>
+                </div>
+                
+                <div id="resumePreview"></div>
+                
+                <div style="margin-top: 15px; padding: 15px; background: #f0f9ff; border-radius: 6px; border-left: 4px solid #3b82f6;">
+                    <p style="margin: 0; color: #1e40af; font-weight: 500;">
+                        💡 Tip: Add one resume at a time, then click "Add This Resume" or upload a file. You can add as many as you need for comprehensive testing.
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Job Description Upload -->
+            <div class="section">
+                <h2>💼 Add Job Descriptions</h2>
+                <p style="color: #6b7280; margin-bottom: 15px;">Add job descriptions one by one for testing</p>
+                
+                <div class="form-group">
+                    <label for="jobFiles">Upload Job Description File (TXT):</label>
+                    <input type="file" id="jobFiles" accept=".txt">
+                </div>
+                
+                <div class="form-group">
+                    <label for="manualJob">Or Paste Job Description:</label>
+                    <textarea id="manualJob" placeholder="Paste job description here..."></textarea>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 10px;">
+                        <input type="text" id="manualJobTitle" placeholder="Job Title">
+                        <input type="text" id="manualJobCompany" placeholder="Company Name">
+                        <input type="text" id="manualJobLocation" placeholder="Location">
+                    </div>
+                    <button class="btn" onclick="addManualJob()" style="margin-top: 10px;">
+                        ➕ Add This Job
+                    </button>
+                </div>
+                
+                <div id="jobPreview"></div>
+                
+                <div style="margin-top: 15px; padding: 15px; background: #fef3c7; border-radius: 6px; border-left: 4px solid #f59e0b;">
+                    <p style="margin: 0; color: #92400e; font-weight: 500;">
+                        💼 Tip: Add one job description at a time with complete details (title, company, location), then click "Add This Job" or upload a file.
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Test Controls -->
+            <div class="section">
+                <h2>🧪 Run Tests</h2>
+                <div style="margin-bottom: 20px; padding: 15px; background: #f3f4f6; border-radius: 6px;">
+                    <p style="margin: 0; color: #374151; font-weight: 500;">
+                        📊 Current Status: <span id="statusText">No data loaded</span>
+                    </p>
+                </div>
+                
+                <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;">
+                    <button class="btn" onclick="runAllTests()" id="runTestsBtn">
+                        🚀 Run All Combinations
+                    </button>
+                    <button class="btn btn-secondary" onclick="clearResults()">
+                        🗑️ Clear Results Only
+                    </button>
+                    <button class="btn btn-secondary" onclick="clearAllData()" style="background: #dc2626;">
+                        🗑️ Clear All Data
+                    </button>
+                </div>
+                
+                <div id="testProgress" style="margin-top: 20px; display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <p id="progressText">Preparing tests...</p>
+                </div>
+            </div>
+            
+            <!-- Results -->
+            <div id="results" class="results"></div>
+            
+            <!-- Export -->
+            <div id="exportSection" class="export-section" style="display: none;">
+                <h3>📊 Export Results</h3>
+                <button class="btn" onclick="exportResults('json')">Export as JSON</button>
+                <button class="btn" onclick="exportResults('csv')">Export as CSV</button>
+                <button class="btn" onclick="exportResults('html')">Export as HTML Report</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Exact replication of the scoring system from the main application
+        class JobScoringTestSystem {
+            constructor(apiKey) {
+                this.apiKey = apiKey;
+                this.apiCalls = 0;
+            }
+            
+            // EXACT COPY of calculateJobMatch from matching-system.ts
+            async calculateJobMatch(job, resume) {
+                console.log('🔍 Calculating job match with GPT-4o (extension logic)...');
+                console.log('Starting job match calculation for:', job.title);
+                console.log('Resume content length:', resume.content?.length || 0, 'characters');
+                console.log('Resume content preview:', resume.content?.substring(0, 200) + '...');
+                
+                // Validate resume content (like extension)
+                if (!resume.content || resume.content.trim().length === 0) {
+                    console.error('❌ Resume content is empty or unreadable');
+                    throw new Error('Resume content is empty or unreadable after processing.');
+                }
+                
+                if (resume.content.length < 50) {
+                    console.error('❌ Resume content too short:', resume.content.length, 'characters');
+                    throw new Error('Resume content is too short - please check that your file contains readable text.');
+                }
+
+                console.log('✅ Resume content validation passed');
+
+                // Smart truncation that preserves key sections (optimized for speed)
+                const maxResumeLength = 3000; // ~750 tokens - increased for better context
+                const maxJobDescLength = 8000; // ~2000 tokens - reduced for faster processing
+                
+                // For resume, try to preserve key sections
+                let truncatedResume = resume.content;
+                let skillsMatch, experienceMatch, educationMatch, licenseMatch, toolsMatch;
+                
+                if (resume.content.length > maxResumeLength) {
+                    // Try to keep skills, experience, education, licensing, and tools sections
+                    skillsMatch = resume.content.match(/(core\s+skills?|skills?|technologies?|expertise)[^]*?(?=\n\n|\n[A-Z]|$)/i);
+                    experienceMatch = resume.content.match(/(professional\s+experience|experience|employment|work)[^]*?(?=\n\n|\n[A-Z]|$)/i);
+                    educationMatch = resume.content.match(/(education|degree|university)[^]*?(?=\n\n|\n[A-Z]|$)/i);
+                    licenseMatch = resume.content.match(/(licenses?|admissions?|bar|certifications?)[^]*?(?=\n\n|\n[A-Z]|$)/i);
+                    toolsMatch = resume.content.match(/(tools?|platforms?|software|technical\s+skills?)[^]*?(?=\n\n|\n[A-Z]|$)/i);
+                    
+                    let keyContent = [skillsMatch?.[0], experienceMatch?.[0], educationMatch?.[0], licenseMatch?.[0], toolsMatch?.[0]]
+                        .filter(Boolean).join('\n\n');
+                    
+                    if (keyContent.length > maxResumeLength) {
+                        truncatedResume = keyContent.substring(0, maxResumeLength) + '...';
+                    } else {
+                        truncatedResume = keyContent || resume.content.substring(0, maxResumeLength) + '...';
+                    }
+                }
+                
+                // For job description, preserve requirements and responsibilities
+                let truncatedJobDesc = job.description || '';
+                if (truncatedJobDesc.length > maxJobDescLength) {
+                    const reqMatch = truncatedJobDesc.match(/(requirements?|qualifications?|must have|essential)[^]*?(?=\n\n|\n[A-Z]|$)/i);
+                    const respMatch = truncatedJobDesc.match(/(responsibilities?|duties|role|what you'll do)[^]*?(?=\n\n|\n[A-Z]|$)/i);
+                    
+                    let keyContent = [reqMatch?.[0], respMatch?.[0]]
+                        .filter(Boolean).join('\n\n');
+                    
+                    if (keyContent.length > maxJobDescLength) {
+                        truncatedJobDesc = keyContent.substring(0, maxJobDescLength) + '...';
+                    } else {
+                        truncatedJobDesc = keyContent || truncatedJobDesc.substring(0, maxJobDescLength) + '...';
+                    }
+                }
+                
+                // Log truncation info
+                if (resume.content && resume.content.length > maxResumeLength) {
+                    console.log(`Resume truncated: ${resume.content.length} → ${truncatedResume.length} chars`);
+                    console.log(`Resume sections found: Skills=${!!skillsMatch}, Experience=${!!experienceMatch}, Education=${!!educationMatch}, Licenses=${!!licenseMatch}, Tools=${!!toolsMatch}`);
+                }
+                if (job.description && job.description.length > maxJobDescLength) {
+                    console.log(`Job description truncated: ${job.description.length} → ${truncatedJobDesc.length} chars`);
+                }
+                
+                // Log analysis details
+                console.log(`Analyzing job: ${job.title} at ${job.company}`);
+                console.log(`Estimated tokens: ~${Math.ceil((truncatedResume.length + truncatedJobDesc.length) / 4)}`);
+                console.log(`Using improved scoring system with smart truncation`);
+                
+                // EXACT GPT-4o prompt from extension - FIXED TO PREVENT HALLUCINATION
+                const matchPrompt = `
+You are a strict ATS system that provides brutally honest job-resume matching scores. Be very discriminating and use the full 0-100 scale.
+
+CRITICAL RULE: You MUST ONLY cite information that is found in the resume text. Do not infer, interpret, or assume information beyond what is written. However, you must be thorough in analyzing the resume content before marking something as missing. If something is not mentioned in the resume, state "Not mentioned in resume" in the evidence field.
+
+SCORING CRITERIA:
+- 90-100: Perfect match - candidate exceeds ALL requirements
+- 80-89: Excellent match - meets ALL requirements with some extras
+- 70-79: Good match - meets MOST requirements with minor gaps
+- 60-69: Moderate match - meets SOME requirements with notable gaps
+- 50-59: Weak match - few requirements met, significant gaps
+- 0-49: Poor match - fundamental misalignment, major gaps
+
+JOB POSTING:
+Title: ${job.title}
+Company: ${job.company}
+Description: ${truncatedJobDesc}
+Location: ${job.location}
+${job.salary ? `Salary: ${job.salary}` : ''}
+
+RESUME:
+${truncatedResume}
+
+ANALYSIS INSTRUCTIONS:
+1. Count specific technical skills mentioned in job vs resume
+2. Evaluate years of experience required vs actual
+3. Check education and certification requirements
+4. Look for industry/domain experience alignment
+5. Assess seniority level and leadership scope
+6. Verify location or work-authorization fit
+7. Identify language proficiency requirements
+8. Note soft-skill keywords or cultural values the job stresses
+
+CATEGORIES TO EVALUATE  
+(use **exactly** these names in "matrix[].category"):
+1. Technical Skills
+2. Experience
+3. Education
+4. Certifications & Licenses
+5. Industry / Domain Experience
+6. Seniority Level / Leadership
+7. Soft Skills & Competencies
+8. Location / Work Authorization
+9. Language Proficiency
+10. Culture / Value Alignment
+
+For **every** category above, create ONE matrix entry.  
+If the job posting does **not** mention that category set  
+"requirement": "Not specified in job posting" and "matchLevel": "N/A".
+
+KNOCK-OUTS (optional)  
+Add a "knockOuts" array in the JSON you return.  
+Populate it with any MUST-HAVE phrases you detect in the job text
+(e.g., "US Work Authorization", "PMP certification").  
+If any knock-out item is **missing** in the resume, cap the overallScore at **49** even after weighting.
+
+EVIDENCE REQUIREMENTS:
+- Carefully analyze the resume text to find relevant information
+- Use direct quotes or accurate paraphrases from the resume text
+- Do NOT infer skills, experience, or qualifications not explicitly stated
+- If information is missing, write "Not mentioned in resume"
+- If years of experience aren't specified, write "Experience duration not specified"
+- Look for related information that may satisfy requirements (e.g., bar admissions, degrees, software tools)
+- Be thorough in your analysis before marking something as "Not mentioned"
+
+Be harsh but fair. Don't give sympathy scores. If there are major gaps, reflect this in a low score. Most candidates should score below 70 unless they're truly exceptional matches. Use the full range from 0-100.
+
+CRITICAL: You MUST respond with ONLY valid JSON. Do not include any text before or after the JSON. Do not use markdown formatting like \`\`\`json.
+
+Format response as JSON with matrix structure:
+{
+  "overallScore": 45,
+  "strengths": ["Specific matching skills/experience found"],
+  "gaps": ["Specific missing requirements"],
+  "recommendations": ["Concrete actionable advice"],
+  "reasoning": "Detailed explanation of score calculation",
+  "matrix": [
+    { "category": "Technical Skills",           "requirement": "Python, 5+ yrs",                 "evidence": "Resume mentions Python but duration not specified",                 "matchLevel": "partial", "gapAction": "Add total years of Python experience" },
+    { "category": "Experience",                 "requirement": "Senior developer role",          "evidence": "Not mentioned in resume",                                       "matchLevel": "missing", "gapAction": "Highlight any leadership or senior duties" },
+    { "category": "Education",                  "requirement": "BS in CS",                       "evidence": "MS in CS from State Univ.",                                     "matchLevel": "exceeds", "gapAction": "Emphasize advanced degree coursework" },
+    { "category": "Certifications & Licenses",  "requirement": "AWS Solutions Architect",        "evidence": "Not mentioned in resume",                                       "matchLevel": "missing", "gapAction": "List cloud certifications or training" },
+    { "category": "Industry / Domain Experience","requirement": "FinTech background",            "evidence": "Not mentioned in resume",                                       "matchLevel": "missing", "gapAction": "Add finance-related project examples" },
+    { "category": "Seniority Level / Leadership","requirement": "Lead / Manager experience",     "evidence": "Experience duration not specified",                              "matchLevel": "partial", "gapAction": "Quantify team size led" },
+    { "category": "Soft Skills & Competencies",  "requirement": "Strong communication",          "evidence": "Resume states 'excellent written communication'",                "matchLevel": "meets",   "gapAction": "Provide impact examples" },
+    { "category": "Location / Work Authorization","requirement": "US work authorization",       "evidence": "US citizen (stated)",                                           "matchLevel": "meets",   "gapAction": "None" },
+    { "category": "Language Proficiency",        "requirement": "Spanish fluency",               "evidence": "Resume lists Spanish (professional)",                           "matchLevel": "meets",   "gapAction": "Add certification if available" },
+    { "category": "Culture / Value Alignment",   "requirement": "Agile, collaborative mindset",  "evidence": "Not mentioned in resume",                                       "matchLevel": "missing", "gapAction": "Mention Agile team experience" }
+  ]
+}
+`;
+
+                // Create AbortController for timeout (increased for complex jobs)
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
+                
+                try {
+                    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${this.apiKey}`,
+                            'Accept': 'application/json'
+                        },
+                        mode: 'cors',
+                        credentials: 'omit',
+                        body: JSON.stringify({
+                            model: 'gpt-4o',
+                            messages: [
+                                {
+                                    role: 'system',
+                                    content: 'You are a strict ATS system that provides brutally honest, discriminating job-resume match scores. Use the full 0-100 scale and be very analytical. Return only valid JSON.'
+                                },
+                                {
+                                    role: 'user',
+                                    content: matchPrompt
+                                }
+                            ],
+                            max_tokens: 1000,
+                            temperature: 0.1
+                        }),
+                        signal: controller.signal
+                    });
+                    
+                    clearTimeout(timeoutId);
+
+                    if (response.ok) {
+                        const result = await response.json();
+                        const content = result.choices[0].message.content;
+                        
+                        // Track API call
+                        this.apiCalls++;
+                        
+                        // Parse the JSON response (exact logic from extension)
+                        try {
+                            // Clean up the response - remove markdown formatting if present
+                            let cleanContent = content.trim();
+                            if (cleanContent.startsWith('```json')) {
+                                cleanContent = cleanContent.replace(/```json\s*/, '').replace(/\s*```$/, '');
+                            }
+                            
+                            const matchData = JSON.parse(cleanContent);
+                            
+                            return {
+                                score: Math.max(0, Math.min(100, matchData.overallScore || 0)),
+                                strengths: matchData.strengths || [],
+                                gaps: matchData.gaps || [],
+                                recommendations: matchData.recommendations || [],
+                                reasoning: matchData.reasoning || '',
+                                matrix: matchData.matrix || [],
+                                analyzedAt: new Date().toISOString()
+                            };
+                        } catch (parseError) {
+                            console.error('Failed to parse match analysis:', parseError);
+                            // Fallback: extract score from text (like extension)
+                            const scoreMatch = content.match(/(\d+)/);
+                            const score = scoreMatch ? parseInt(scoreMatch[1]) : 50;
+                            
+                            return {
+                                score: Math.max(0, Math.min(100, score)),
+                                strengths: [],
+                                gaps: [],
+                                recommendations: [],
+                                reasoning: content,
+                                matrix: [],
+                                analyzedAt: new Date().toISOString()
+                            };
+                        }
+                    } else {
+                        const error = await response.json();
+                        console.error('Job Match API Error Details:', error);
+                        
+                        // Handle specific API errors with clear messaging
+                        if (error.error?.message?.includes('tokens per min') || 
+                            error.error?.message?.includes('Rate limit') || 
+                            response.status === 429) {
+                            throw new Error('Rate limit exceeded. Please wait a moment and try again.');
+                        } else if (error.error?.message?.includes('Request too large') || 
+                                   error.error?.message?.includes('maximum context length')) {
+                            throw new Error('Job description too large for analysis. Try scoring this job individually.');
+                        } else if (response.status === 503) {
+                            throw new Error('OpenAI service temporarily unavailable. Please try again in a moment.');
+                        } else if (response.status >= 500) {
+                            throw new Error('Server error occurred. Please try again.');
+                        }
+                        
+                        throw new Error(error.error?.message || `API Error: ${response.status} - ${response.statusText}`);
+                    }
+                } catch (error) {
+                    console.error('Job match calculation error:', error);
+                    
+                    // Handle CORS errors specifically
+                    if (error.message.includes('Failed to fetch') || 
+                        error.message.includes('CORS') || 
+                        error.message.includes('Access to fetch') ||
+                        error.name === 'TypeError' && error.message.includes('fetch')) {
+                        
+                        // Show visual warning banner
+                        const corsWarning = document.getElementById('corsWarning');
+                        if (corsWarning) {
+                            corsWarning.style.display = 'block';
+                            corsWarning.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                        
+                        console.error('🚨 CORS ERROR DETECTED! 🚨');
+                        console.log('');
+                        console.log('❌ The file is being opened directly (file:// protocol) which blocks API requests.');
+                        console.log('');
+                        console.log('✅ SOLUTION: Run on a local server instead:');
+                        console.log('1. Open Terminal/Command Prompt');
+                        console.log('2. Navigate to the folder containing this HTML file');
+                        console.log('3. Run one of these commands:');
+                        console.log('   • Python 3: python -m http.server 8000');
+                        console.log('   • Python 2: python -m SimpleHTTPServer 8000');
+                        console.log('   • Node.js: npx http-server');
+                        console.log('   • PHP: php -S localhost:8000');
+                        console.log('4. Open http://localhost:8000/standalone_job_scoring_test.html');
+                        console.log('');
+                        throw new Error('CORS Error: File must be served from a local server. Check the warning banner above for instructions.');
+                    }
+                    
+                    // Handle different error types (like extension)
+                    if (error.name === 'AbortError') {
+                        console.warn('Job match calculation timed out after 60 seconds');
+                        throw new Error('Analysis timed out. This job may have a very long description. Please try again or try scoring it individually.');
+                    }
+                    
+                    // Re-throw other errors
+                    throw error;
+                }
+            }
+            
+            getMatchGrade(score) {
+                if (score >= 90) return 'excellent';
+                if (score >= 80) return 'good';
+                if (score >= 70) return 'moderate';
+                if (score >= 60) return 'weak';
+                return 'poor';
+            }
+        }
+
+        // Application state
+        let resumes = [];
+        let jobs = [];
+        let testResults = [];
+        let scoringSystem = null;
+
+        // File handling functions
+        async function readFileContent(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = reject;
+                reader.readAsText(file);
+            });
+        }
+
+        // Event listeners for single file uploads
+        document.getElementById('resumeFiles').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            try {
+                const content = await readFileContent(file);
+                resumes.push({
+                    id: Date.now() + Math.random(),
+                    name: file.name.replace(/\.[^/.]+$/, ""),
+                    content: content,
+                    source: 'file'
+                });
+                
+                // Clear the file input for next upload
+                e.target.value = '';
+                updateResumePreview();
+                showNotification(`✅ Resume "${file.name}" added successfully!`, 'success');
+            } catch (error) {
+                console.error('Error reading file:', file.name, error);
+                showNotification(`❌ Error reading file: ${file.name}`, 'error');
+            }
+        });
+
+        document.getElementById('jobFiles').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            try {
+                const content = await readFileContent(file);
+                jobs.push({
+                    id: Date.now() + Math.random(),
+                    title: file.name.replace(/\.[^/.]+$/, ""),
+                    company: 'Company from File',
+                    location: 'Location from File',
+                    description: content,
+                    source: 'file'
+                });
+                
+                // Clear the file input for next upload
+                e.target.value = '';
+                updateJobPreview();
+                showNotification(`✅ Job description "${file.name}" added successfully!`, 'success');
+            } catch (error) {
+                console.error('Error reading file:', file.name, error);
+                showNotification(`❌ Error reading file: ${file.name}`, 'error');
+            }
+        });
+
+        // Notification system
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 10000;
+                padding: 15px 20px;
+                border-radius: 6px;
+                color: white;
+                font-weight: 500;
+                max-width: 400px;
+                opacity: 0;
+                transform: translateX(100%);
+                transition: all 0.3s ease;
+            `;
+            
+            if (type === 'success') {
+                notification.style.background = '#10b981';
+            } else if (type === 'error') {
+                notification.style.background = '#ef4444';
+            } else {
+                notification.style.background = '#3b82f6';
+            }
+            
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            // Animate in
+            setTimeout(() => {
+                notification.style.opacity = '1';
+                notification.style.transform = 'translateX(0)';
+            }, 100);
+            
+            // Remove after 4 seconds
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => document.body.removeChild(notification), 300);
+            }, 4000);
+        }
+
+        function addManualResume() {
+            const content = document.getElementById('manualResume').value.trim();
+            const name = document.getElementById('manualResumeName').value.trim() || `Manual Resume ${resumes.length + 1}`;
+            
+            if (!content) {
+                showNotification('Please paste resume content first', 'error');
+                return;
+            }
+            
+            if (content.length < 50) {
+                showNotification('Resume content is too short (minimum 50 characters)', 'error');
+                return;
+            }
+            
+            resumes.push({
+                id: Date.now() + Math.random(),
+                name: name,
+                content: content,
+                source: 'manual',
+                addedAt: new Date().toISOString()
+            });
+            
+            document.getElementById('manualResume').value = '';
+            document.getElementById('manualResumeName').value = '';
+            updateResumePreview();
+            showNotification(`✅ Resume "${name}" added successfully!`, 'success');
+        }
+
+        function addManualJob() {
+            const description = document.getElementById('manualJob').value.trim();
+            const title = document.getElementById('manualJobTitle').value.trim() || `Manual Job ${jobs.length + 1}`;
+            const company = document.getElementById('manualJobCompany').value.trim() || 'Company Name Required';
+            const location = document.getElementById('manualJobLocation').value.trim() || 'Location Required';
+            
+            if (!description) {
+                showNotification('Please paste job description first', 'error');
+                return;
+            }
+            
+            if (description.length < 100) {
+                showNotification('Job description is too short (minimum 100 characters)', 'error');
+                return;
+            }
+            
+            jobs.push({
+                id: Date.now() + Math.random(),
+                title: title,
+                company: company,
+                location: location,
+                description: description,
+                source: 'manual',
+                addedAt: new Date().toISOString()
+            });
+            
+            document.getElementById('manualJob').value = '';
+            document.getElementById('manualJobTitle').value = '';
+            document.getElementById('manualJobCompany').value = '';
+            document.getElementById('manualJobLocation').value = '';
+            updateJobPreview();
+            showNotification(`✅ Job "${title}" at ${company} added successfully!`, 'success');
+        }
+
+        function updateResumePreview() {
+            const preview = document.getElementById('resumePreview');
+            if (resumes.length === 0) {
+                preview.innerHTML = '';
+                updateStatus();
+                return;
+            }
+            
+            preview.innerHTML = `
+                <h4 style="color: #374151; margin-bottom: 15px;">📄 Loaded Resumes (${resumes.length}):</h4>
+                ${resumes.map((resume, index) => `
+                    <div class="file-preview" style="margin-bottom: 10px; position: relative;">
+                        <strong style="color: #1f2937;">${resume.name}</strong> 
+                        <span style="background: #e5e7eb; padding: 2px 6px; border-radius: 3px; font-size: 11px; margin-left: 8px;">${resume.source}</span>
+                        <br><small style="color: #6b7280;">Length: ${resume.content.length} characters</small>
+                        <br><small style="color: #6b7280;">Preview: ${resume.content.substring(0, 100)}...</small>
+                        <button onclick="removeResume(${index})" style="position: absolute; top: 10px; right: 10px; background: #ef4444; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 12px;">✕ Remove</button>
+                    </div>
+                `).join('')}
+            `;
+            updateStatus();
+        }
+
+        function updateJobPreview() {
+            const preview = document.getElementById('jobPreview');
+            if (jobs.length === 0) {
+                preview.innerHTML = '';
+                updateStatus();
+                return;
+            }
+            
+            preview.innerHTML = `
+                <h4 style="color: #374151; margin-bottom: 15px;">💼 Loaded Jobs (${jobs.length}):</h4>
+                ${jobs.map((job, index) => `
+                    <div class="file-preview" style="margin-bottom: 10px; position: relative;">
+                        <strong style="color: #1f2937;">${job.title}</strong> at <strong>${job.company}</strong> 
+                        <span style="background: #e5e7eb; padding: 2px 6px; border-radius: 3px; font-size: 11px; margin-left: 8px;">${job.source}</span>
+                        <br><small style="color: #6b7280;">Location: ${job.location}</small>
+                        <br><small style="color: #6b7280;">Description Length: ${job.description.length} characters</small>
+                        <br><small style="color: #6b7280;">Preview: ${job.description.substring(0, 100)}...</small>
+                        <button onclick="removeJob(${index})" style="position: absolute; top: 10px; right: 10px; background: #ef4444; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 12px;">✕ Remove</button>
+                    </div>
+                `).join('')}
+            `;
+            updateStatus();
+        }
+
+        function removeResume(index) {
+            const removedResume = resumes.splice(index, 1)[0];
+            updateResumePreview();
+            showNotification(`❌ Resume "${removedResume.name}" removed`, 'info');
+        }
+
+        function removeJob(index) {
+            const removedJob = jobs.splice(index, 1)[0];
+            updateJobPreview();
+            showNotification(`❌ Job "${removedJob.title}" removed`, 'info');
+        }
+
+        async function runAllTests() {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            if (!apiKey) {
+                alert('Please enter your OpenAI API key');
+                return;
+            }
+            
+            if (resumes.length === 0) {
+                alert('Please upload at least one resume');
+                return;
+            }
+            
+            if (jobs.length === 0) {
+                alert('Please upload at least one job description');
+                return;
+            }
+            
+            scoringSystem = new JobScoringTestSystem(apiKey);
+            testResults = [];
+            
+            const totalTests = resumes.length * jobs.length;
+            let completedTests = 0;
+            
+            // Show progress
+            document.getElementById('testProgress').style.display = 'block';
+            document.getElementById('runTestsBtn').disabled = true;
+            
+            for (const resume of resumes) {
+                for (const job of jobs) {
+                    try {
+                        updateProgress(completedTests, totalTests, `Testing: ${resume.name} vs ${job.title}`);
+                        
+                        const result = await scoringSystem.calculateJobMatch(job, resume);
+                        
+                        testResults.push({
+                            resumeName: resume.name,
+                            jobTitle: job.title,
+                            jobCompany: job.company,
+                            jobLocation: job.location,
+                            score: result.score,
+                            grade: scoringSystem.getMatchGrade(result.score),
+                            strengths: result.strengths,
+                            gaps: result.gaps,
+                            recommendations: result.recommendations,
+                            reasoning: result.reasoning,
+                            matrix: result.matrix,
+                            analyzedAt: result.analyzedAt,
+                            resumeContent: resume.content,
+                            jobDescription: job.description
+                        });
+                        
+                        completedTests++;
+                        updateProgress(completedTests, totalTests, `Completed: ${resume.name} vs ${job.title}`);
+                        
+                        // Add delay to avoid rate limiting
+                        if (completedTests < totalTests) {
+                            await new Promise(resolve => setTimeout(resolve, 3000));
+                        }
+                        
+                    } catch (error) {
+                        console.error(`Error testing ${resume.name} vs ${job.title}:`, error);
+                        testResults.push({
+                            resumeName: resume.name,
+                            jobTitle: job.title,
+                            jobCompany: job.company,
+                            jobLocation: job.location,
+                            error: error.message,
+                            analyzedAt: new Date().toISOString()
+                        });
+                        completedTests++;
+                    }
+                }
+            }
+            
+            document.getElementById('testProgress').style.display = 'none';
+            document.getElementById('runTestsBtn').disabled = false;
+            displayResults();
+        }
+
+        function updateProgress(completed, total, text) {
+            const percentage = (completed / total) * 100;
+            document.getElementById('progressFill').style.width = percentage + '%';
+            document.getElementById('progressText').textContent = `${text} (${completed}/${total})`;
+        }
+
+        function displayResults() {
+            const resultsDiv = document.getElementById('results');
+            
+            if (testResults.length === 0) {
+                resultsDiv.innerHTML = '<p>No results to display</p>';
+                return;
+            }
+            
+            // Sort results by score (highest first)
+            const sortedResults = testResults.filter(r => !r.error).sort((a, b) => b.score - a.score);
+            const errorResults = testResults.filter(r => r.error);
+            
+            resultsDiv.innerHTML = `
+                <h2>📊 Test Results</h2>
+                <div style="margin-bottom: 20px; padding: 15px; background: #f9fafb; border-radius: 8px;">
+                    <strong>Summary:</strong> ${testResults.length} total tests | ${sortedResults.length} successful | ${errorResults.length} errors | ${scoringSystem?.apiCalls || 0} API calls made
+                </div>
+                
+                ${sortedResults.map(result => `
+                    <div class="result-card">
+                        <div class="result-header">
+                            <h3>${result.resumeName} → ${result.jobTitle}</h3>
+                            <p>${result.jobCompany} • ${result.jobLocation} • ${new Date(result.analyzedAt).toLocaleString()}</p>
+                        </div>
+                        <div class="result-body">
+                            <div class="score-display score-${result.grade}">
+                                ${result.score}% - ${result.grade.toUpperCase()} MATCH
+                            </div>
+                            
+                            <div class="details-grid">
+                                <div class="detail-section">
+                                    <h4>✅ Strengths</h4>
+                                    <ul>
+                                        ${result.strengths.map(s => `<li>${s}</li>`).join('')}
+                                    </ul>
+                                </div>
+                                
+                                <div class="detail-section">
+                                    <h4>❌ Gaps</h4>
+                                    <ul>
+                                        ${result.gaps.map(g => `<li>${g}</li>`).join('')}
+                                    </ul>
+                                </div>
+                                
+                                <div class="detail-section">
+                                    <h4>💡 Recommendations</h4>
+                                    <ul>
+                                        ${result.recommendations.map(r => `<li>${r}</li>`).join('')}
+                                    </ul>
+                                </div>
+                                
+                                <div class="detail-section">
+                                    <h4>🧠 AI Reasoning</h4>
+                                    <p style="font-size: 14px; line-height: 1.4;">${result.reasoning}</p>
+                                </div>
+                            </div>
+                            
+                            ${result.matrix && result.matrix.length > 0 ? `
+                                <h4 style="margin-top: 20px;">📋 Detailed Analysis Matrix</h4>
+                                <table class="matrix-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Category</th>
+                                            <th>Requirement</th>
+                                            <th>Evidence</th>
+                                            <th>Match Level</th>
+                                            <th>Gap Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${result.matrix.map(item => `
+                                            <tr>
+                                                <td><strong>${item.category}</strong></td>
+                                                <td>${item.requirement}</td>
+                                                <td>${item.evidence}</td>
+                                                <td><span class="match-${item.matchLevel}">${item.matchLevel}</span></td>
+                                                <td>${item.gapAction}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            ` : ''}
+                        </div>
+                    </div>
+                `).join('')}
+                
+                ${errorResults.length > 0 ? `
+                    <h3 style="color: #ef4444; margin-top: 30px;">❌ Errors</h3>
+                    ${errorResults.map(result => `
+                        <div class="result-card" style="border-color: #ef4444;">
+                            <div class="result-header">
+                                <h3>${result.resumeName} → ${result.jobTitle}</h3>
+                                <p style="color: #ef4444;">${result.error}</p>
+                            </div>
+                        </div>
+                    `).join('')}
+                ` : ''}
+            `;
+            
+            document.getElementById('exportSection').style.display = 'block';
+        }
+
+        function clearResults() {
+            testResults = [];
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('exportSection').style.display = 'none';
+            showNotification('✅ Test results cleared', 'success');
+            updateStatus();
+        }
+
+        function clearAllData() {
+            if (resumes.length === 0 && jobs.length === 0 && testResults.length === 0) {
+                showNotification('No data to clear', 'info');
+                return;
+            }
+            
+            if (confirm('Are you sure you want to clear ALL data including resumes, jobs, and test results? This cannot be undone.')) {
+                resumes = [];
+                jobs = [];
+                testResults = [];
+                scoringSystem = null;
+                
+                // Clear all form inputs
+                document.getElementById('manualResume').value = '';
+                document.getElementById('manualResumeName').value = '';
+                document.getElementById('manualJob').value = '';
+                document.getElementById('manualJobTitle').value = '';
+                document.getElementById('manualJobCompany').value = '';
+                document.getElementById('manualJobLocation').value = '';
+                document.getElementById('resumeFiles').value = '';
+                document.getElementById('jobFiles').value = '';
+                
+                // Clear all previews and results
+                updateResumePreview();
+                updateJobPreview();
+                document.getElementById('results').innerHTML = '';
+                document.getElementById('exportSection').style.display = 'none';
+                
+                showNotification('🗑️ All data cleared successfully', 'success');
+                updateStatus();
+            }
+        }
+
+        function updateStatus() {
+            const statusElement = document.getElementById('statusText');
+            if (!statusElement) return;
+            
+            if (resumes.length === 0 && jobs.length === 0) {
+                statusElement.textContent = 'No data loaded';
+                statusElement.style.color = '#6b7280';
+            } else if (resumes.length === 0) {
+                statusElement.textContent = `${jobs.length} job(s) loaded, no resumes`;
+                statusElement.style.color = '#f59e0b';
+            } else if (jobs.length === 0) {
+                statusElement.textContent = `${resumes.length} resume(s) loaded, no jobs`;
+                statusElement.style.color = '#f59e0b';
+            } else {
+                const totalCombinations = resumes.length * jobs.length;
+                statusElement.textContent = `${resumes.length} resume(s) × ${jobs.length} job(s) = ${totalCombinations} test combinations ready`;
+                statusElement.style.color = '#10b981';
+            }
+        }
+
+        function exportResults(format) {
+            if (testResults.length === 0) {
+                showNotification('No results to export', 'error');
+                return;
+            }
+            
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
+            const timeString = new Date().toISOString().replace(/[:.]/g, '-').split('T')[1].split('.')[0];
+            
+            if (format === 'json') {
+                // Create comprehensive JSON export with metadata
+                const exportData = {
+                    metadata: {
+                        exportDate: new Date().toISOString(),
+                        testingSession: `${timestamp}_${timeString}`,
+                        totalTests: testResults.length,
+                        successfulTests: testResults.filter(r => !r.error).length,
+                        failedTests: testResults.filter(r => r.error).length,
+                        apiCallsMade: scoringSystem?.apiCalls || 0,
+                        resumesUsed: resumes.length,
+                        jobsUsed: jobs.length,
+                        averageScore: testResults.filter(r => !r.error).reduce((sum, r) => sum + r.score, 0) / testResults.filter(r => !r.error).length || 0
+                    },
+                    resumes: resumes.map(r => ({
+                        id: r.id,
+                        name: r.name,
+                        source: r.source,
+                        addedAt: r.addedAt,
+                        contentLength: r.content.length,
+                        contentPreview: r.content.substring(0, 200) + '...'
+                    })),
+                    jobs: jobs.map(j => ({
+                        id: j.id,
+                        title: j.title,
+                        company: j.company,
+                        location: j.location,
+                        source: j.source,
+                        addedAt: j.addedAt,
+                        descriptionLength: j.description.length,
+                        descriptionPreview: j.description.substring(0, 200) + '...'
+                    })),
+                    testResults: testResults.map(result => ({
+                        ...result,
+                        // Add full content for detailed analysis
+                        fullResumeContent: result.resumeContent,
+                        fullJobDescription: result.jobDescription,
+                        // Add scoring metadata
+                        scoringMetadata: {
+                            modelUsed: 'gpt-4o',
+                            maxTokens: 1000,
+                            temperature: 0.1,
+                            processingTime: 'variable'
+                        }
+                    }))
+                };
+                
+                const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+                downloadFile(blob, `job_scoring_comprehensive_${timestamp}_${timeString}.json`);
+                showNotification(`✅ Comprehensive JSON export downloaded (${exportData.totalTests} results)`, 'success');
+            } else if (format === 'csv') {
+                const csvData = testResults.filter(r => !r.error).map(r => ({
+                    Resume: r.resumeName,
+                    Job: r.jobTitle,
+                    Company: r.jobCompany,
+                    Location: r.jobLocation,
+                    Score: r.score,
+                    Grade: r.grade,
+                    Strengths: r.strengths.join('; '),
+                    Gaps: r.gaps.join('; '),
+                    Recommendations: r.recommendations.join('; '),
+                    AnalyzedAt: r.analyzedAt
+                }));
+                
+                const csv = Object.keys(csvData[0]).join(',') + '\n' +
+                    csvData.map(row => Object.values(row).map(value => `"${value}"`).join(',')).join('\n');
+                
+                const blob = new Blob([csv], { type: 'text/csv' });
+                downloadFile(blob, `job_scoring_results_${timestamp}_${timeString}.csv`);
+                showNotification(`✅ CSV export downloaded (${csvData.length} results)`, 'success');
+            } else if (format === 'html') {
+                const html = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Job Scoring Test Results - ${timestamp}</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; margin: 20px; }
+                            .result { border: 1px solid #ddd; margin: 20px 0; padding: 15px; border-radius: 8px; }
+                            .score { font-size: 24px; font-weight: bold; text-align: center; padding: 15px; border-radius: 6px; margin: 10px 0; }
+                            .score-excellent { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+                            .score-good { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+                            .score-moderate { background: rgba(251, 191, 36, 0.2); color: #fbbf24; }
+                            .score-weak { background: rgba(249, 115, 22, 0.2); color: #f97316; }
+                            .score-poor { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+                            .section { margin: 15px 0; }
+                            .section h4 { color: #374151; border-bottom: 1px solid #e5e7eb; padding-bottom: 5px; }
+                            ul { list-style-type: disc; margin-left: 20px; }
+                        </style>
+                    </head>
+                    <body>
+                        <h1>Job Scoring Test Results</h1>
+                        <p>Generated on: ${new Date().toLocaleString()}</p>
+                        <p>Total Tests: ${testResults.length} | API Calls: ${scoringSystem?.apiCalls || 0}</p>
+                        
+                        ${testResults.filter(r => !r.error).map(result => `
+                            <div class="result">
+                                <h2>${result.resumeName} → ${result.jobTitle}</h2>
+                                <p><strong>Company:</strong> ${result.jobCompany} | <strong>Location:</strong> ${result.jobLocation}</p>
+                                
+                                <div class="score score-${result.grade}">
+                                    ${result.score}% - ${result.grade.toUpperCase()} MATCH
+                                </div>
+                                
+                                <div class="section">
+                                    <h4>✅ Strengths</h4>
+                                    <ul>${result.strengths.map(s => `<li>${s}</li>`).join('')}</ul>
+                                </div>
+                                
+                                <div class="section">
+                                    <h4>❌ Gaps</h4>
+                                    <ul>${result.gaps.map(g => `<li>${g}</li>`).join('')}</ul>
+                                </div>
+                                
+                                <div class="section">
+                                    <h4>💡 Recommendations</h4>
+                                    <ul>${result.recommendations.map(r => `<li>${r}</li>`).join('')}</ul>
+                                </div>
+                                
+                                <div class="section">
+                                    <h4>🧠 AI Reasoning</h4>
+                                    <p>${result.reasoning}</p>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </body>
+                    </html>
+                `;
+                
+                const blob = new Blob([html], { type: 'text/html' });
+                downloadFile(blob, `job_scoring_report_${timestamp}_${timeString}.html`);
+                showNotification(`✅ HTML report downloaded (${testResults.filter(r => !r.error).length} results)`, 'success');
+            }
+        }
+
+        function downloadFile(blob, filename) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Save API key to localStorage
+        document.getElementById('apiKey').addEventListener('input', (e) => {
+            localStorage.setItem('job_scoring_test_api_key', e.target.value);
+        });
+
+        // Load API key from localStorage and initialize status
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedApiKey = localStorage.getItem('job_scoring_test_api_key');
+            if (savedApiKey) {
+                document.getElementById('apiKey').value = savedApiKey;
+            }
+            updateStatus();
+        });
+    </script>
+</body>
+</html> 

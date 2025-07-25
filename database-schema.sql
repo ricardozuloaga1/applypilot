@@ -8,7 +8,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- 1. Resumes table
 CREATE TABLE IF NOT EXISTS resumes (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL, -- REMOVED DEFAULT uuid_generate_v4()
     name TEXT NOT NULL,
     file_url TEXT,
     content TEXT,
@@ -37,10 +37,7 @@ CREATE TABLE IF NOT EXISTS jobs (
     recruiter_name TEXT,
     recruiter_linkedin TEXT,
     captured_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    starred BOOLEAN DEFAULT FALSE,
-    
-    -- Add reference to user's resume table
-    FOREIGN KEY (user_id) REFERENCES resumes(user_id) ON DELETE CASCADE
+    starred BOOLEAN DEFAULT FALSE
 );
 
 -- 3. Job matches table
@@ -90,47 +87,45 @@ ALTER TABLE resumes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE jobs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE job_matches ENABLE ROW LEVEL SECURITY;
 
--- Create policies for anonymous users (each user gets their own UUID)
--- For now, we'll use a simple approach where each browser session gets its own user_id
-
+-- Create policies for authenticated users
 -- Resumes policies
 CREATE POLICY "Users can view their own resumes" 
     ON resumes FOR SELECT 
-    USING (true); -- Allow all for now, we'll implement proper user identification later
+    USING (auth.uid()::text = user_id::text);
 
 CREATE POLICY "Users can insert their own resumes" 
     ON resumes FOR INSERT 
-    WITH CHECK (true);
+    WITH CHECK (auth.uid()::text = user_id::text);
 
 CREATE POLICY "Users can update their own resumes" 
     ON resumes FOR UPDATE 
-    USING (true);
+    USING (auth.uid()::text = user_id::text);
 
 CREATE POLICY "Users can delete their own resumes" 
     ON resumes FOR DELETE 
-    USING (true);
+    USING (auth.uid()::text = user_id::text);
 
 -- Jobs policies
 CREATE POLICY "Users can view their own jobs" 
     ON jobs FOR SELECT 
-    USING (true);
+    USING (auth.uid()::text = user_id::text);
 
 CREATE POLICY "Users can insert their own jobs" 
     ON jobs FOR INSERT 
-    WITH CHECK (true);
+    WITH CHECK (auth.uid()::text = user_id::text);
 
 CREATE POLICY "Users can update their own jobs" 
     ON jobs FOR UPDATE 
-    USING (true);
+    USING (auth.uid()::text = user_id::text);
 
 CREATE POLICY "Users can delete their own jobs" 
     ON jobs FOR DELETE 
-    USING (true);
+    USING (auth.uid()::text = user_id::text);
 
 -- Job matches policies
 CREATE POLICY "Users can view their own job matches" 
     ON job_matches FOR SELECT 
-    USING (true);
+    USING (true); -- Allow viewing matches for jobs/resumes they own
 
 CREATE POLICY "Users can insert their own job matches" 
     ON job_matches FOR INSERT 

@@ -1,10 +1,10 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import { AuthProvider } from '@/lib/auth'
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
-  generator: 'v0.dev',
+  title: 'Apply Pilot AI - Smart Job Application Assistant',
+  description: 'Transform your job search with AI-powered resume optimization and application tracking',
 }
 
 export default function RootLayout({
@@ -17,7 +17,11 @@ export default function RootLayout({
       <head>
         <script src="/extension-bridge.js" />
       </head>
-      <body>{children}</body>
+      <body>
+        <AuthProvider>
+          {children}
+        </AuthProvider>
+      </body>
     </html>
   )
 }

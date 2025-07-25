@@ -477,3 +477,669 @@ Transform AutoApply AI from local Chrome storage to cloud-based system with enha
 ---
 
 **Ready to begin with Task 1: Setup Supabase Project?** 
+
+---
+
+# 🚀 **NEW COMPREHENSIVE TASK BREAKDOWN - JANUARY 2025**
+
+## 📋 **Current System Analysis**
+
+### **Project Structure**
+- **Web App**: Next.js 15 application in `/web-app` directory
+  - Uses Supabase for database (PostgreSQL) and authentication
+  - Currently using anonymous authentication mode
+  - Has dashboard with multiple tabs (Resume, Jobs, Generate, Settings)
+  - Implements extension-mirror.ts for Chrome extension synchronization
+
+- **Chrome Extension**: Root directory files
+  - `popup.html/popup.js`: Main extension UI with 4 tabs
+  - `content.js`: Job site integration and data extraction
+  - `background.js`: Service worker for cross-tab coordination
+  - `manifest.json`: Extension configuration
+
+- **8-Variable System**: Located in `hybrid-dynamic-matching-system.js` and `hybrid-dynamic-test.html`
+  - Streamlined matching system with 8 core variables
+  - Needs migration to web app for better integration
+
+### **Current Issues Identified**
+
+#### **Web App Issues**
+1. **8-Variable System Migration**: System exists in standalone HTML file, needs integration into web app
+2. **Location/Salary Extraction**: Having trouble extracting these fields from job descriptions
+3. **Authentication**: Using anonymous mode, need proper user authentication
+4. **Feature Comparison**: Using text instead of actual application logos
+5. **Documentation**: Need to document all fixes and improvements
+
+#### **Chrome Extension Issues**
+1. **Resume Upload Not Working**: File upload functionality broken
+2. **Tab Switching Not Working**: Cannot switch between tabs in popup
+3. **Job Capture Enhancement**: Need better location/salary extraction
+
+#### **Storage/Database**
+- **Current System**: Supabase with PostgreSQL
+- **Authentication**: Anonymous mode (needs proper user auth)
+- **Storage**: Supabase Storage for file uploads
+
+---
+
+## 🎯 **PHASE-BY-PHASE TASK BREAKDOWN**
+
+### **PHASE 1: SYSTEM ARCHITECTURE ANALYSIS**
+
+#### **Task 1.1: Complete System Architecture Analysis**
+**Status**: ✅ **COMPLETED**  
+**Priority**: High  
+**Estimated Time**: 2-3 hours  
+
+**Objectives**:
+- Differentiate web app vs Chrome extension components
+- Identify shared functionality and integration points
+- Document current data flow and synchronization
+- Analyze current authentication and storage systems
+
+**✅ COMPLETED ANALYSIS**:
+
+### **🏗️ System Architecture Overview**
+
+**Architecture Diagram**: See comprehensive system architecture diagram above showing the relationship between all components.
+
+#### **1. Chrome Extension Architecture**
+
+**Core Components**:
+- **`popup.html/popup.js`** (4456 lines): Main UI with 4 tabs and `AutoApplyAI` class
+- **`background.js`** (130 lines): Service worker for message passing and storage coordination
+- **`content.js`** (952 lines): Job site integration and data extraction
+- **`manifest.json`**: Extension configuration with permissions and content scripts
+
+**Key Features**:
+- ✅ 4-tab interface: Resume Upload, Jobs, Generate, Settings
+- ✅ Floating job capture button on supported sites
+- ✅ Chrome Storage API for local data persistence
+- ✅ OpenAI API integration for document generation
+- ❌ **BROKEN**: Resume upload functionality not working
+- ❌ **BROKEN**: Tab switching not working
+
+**Storage System**:
+- **Chrome Local Storage**: Jobs, resumes, generated documents
+- **Chrome Sync Storage**: API keys, user preferences, active resume ID
+
+#### **2. Web App Architecture**
+
+**Core Components**:
+- **`web-app/app/dashboard/page.tsx`** (1500+ lines): Main dashboard with 4 tabs
+- **`web-app/lib/extension-mirror.ts`** (1447 lines): Mirrors Chrome extension functionality
+- **`web-app/lib/supabase.ts`** (221 lines): Database client and helper functions
+- **`web-app/app/page.tsx`**: Landing page with animations and marketing content
+
+**Key Features**:
+- ✅ Next.js 15 with React 19 and TypeScript
+- ✅ Supabase integration for database and storage
+- ✅ Anonymous authentication (needs proper user auth)
+- ✅ Dashboard mirrors Chrome extension UI
+- ⚠️ **MISSING**: 8-variable matching system (needs migration)
+- ⚠️ **INCOMPLETE**: Location and salary extraction
+
+**Storage System**:
+- **Supabase PostgreSQL**: User data, jobs, resumes, job matches
+- **Supabase Storage**: Resume file uploads
+- **localStorage**: Fallback and cached data
+
+#### **3. Communication & Integration Layer**
+
+**Bridge Components**:
+- **`web-content-bridge.js`** (101 lines): Injects into localhost for extension communication
+- **`web-app/lib/extension-bridge.js`** (72 lines): Web app side communication
+- **`web-app/public/extension-bridge.js`**: Public script for Chrome API access
+
+**Data Flow**:
+1. **Extension → Web App**: `ExtensionBridge.syncData()` → `background.js` → `chrome.storage`
+2. **Web App → Extension**: Direct Chrome API calls via injected scripts
+3. **Fallback**: localStorage synchronization when extension not available
+
+**Integration Points**:
+- ✅ **Message Passing**: Extension background script handles web app requests
+- ✅ **Data Synchronization**: Bidirectional sync of jobs and resumes
+- ✅ **Authentication Awareness**: Extension can detect web app login state
+- ⚠️ **NEEDS IMPROVEMENT**: Error handling and timeout management
+
+#### **4. Shared Functionality**
+
+**Common Components**:
+- **AutoApplyAI Class**: Mirrored in both extension (`popup.js`) and web app (`extension-mirror.ts`)
+- **Job Data Structure**: Consistent schema across both platforms
+- **OpenAI Integration**: Same API calls and prompt structures
+- **File Processing**: Text extraction from resume files
+
+**Divergent Features**:
+- **Chrome Extension**: Floating capture button, content script injection
+- **Web App**: Supabase integration, enhanced UI components, authentication
+
+#### **5. Storage & Database Systems**
+
+**Chrome Extension Storage**:
+```javascript
+// Chrome Storage API usage
+chrome.storage.local.get(['jobs', 'storedResumes'], (result) => {
+    // Job and resume data
+});
+chrome.storage.sync.get(['activeResumeId', 'apiKey'], (result) => {
+    // User preferences and settings
+});
+```
+
+**Web App Storage**:
+```typescript
+// Supabase PostgreSQL schema
+interface Resume {
+  id: string, user_id: string, name: string, 
+  file_url: string, content: string, is_active: boolean
+}
+interface Job {
+  id: string, user_id: string, title: string, 
+  company: string, location: string, salary: string
+}
+```
+
+#### **6. Authentication Systems**
+
+**Current State**:
+- **Chrome Extension**: No authentication, anonymous usage
+- **Web App**: Anonymous Supabase authentication (fallback mode)
+- **Integration**: No authentication synchronization
+
+**Identified Issues**:
+- ❌ No proper user authentication in either system
+- ❌ No user session management
+- ❌ No authentication state synchronization
+- ❌ Using demo client fallback in web app
+
+#### **7. Current Integration Issues**
+
+**Data Synchronization Problems**:
+- ❌ **Timeout Issues**: 5-second timeout may be too short
+- ❌ **Error Handling**: Limited retry mechanisms
+- ❌ **Conflict Resolution**: No strategy for data conflicts
+- ❌ **Real-time Updates**: No live synchronization
+
+**Chrome Extension Issues**:
+- ❌ **Resume Upload**: File processing broken
+- ❌ **Tab Switching**: Event listeners not working
+- ❌ **Job Capture**: Limited location/salary extraction
+
+**Web App Issues**:
+- ❌ **8-Variable System**: Not integrated (exists in standalone HTML)
+- ❌ **Authentication**: Using anonymous/demo mode
+- ❌ **Feature Logos**: Text instead of actual application logos
+
+### **🎯 Architecture Recommendations**
+
+#### **1. Immediate Fixes**
+1. **Fix Chrome Extension Core Issues**: Resume upload and tab switching
+2. **Improve Error Handling**: Better timeout and retry logic
+3. **Enhance Data Sync**: More robust bidirectional synchronization
+
+#### **2. Authentication Strategy**
+1. **Implement Supabase Auth**: Replace anonymous mode with proper authentication
+2. **Sync Auth State**: Share authentication between extension and web app
+3. **User Session Management**: Persistent login across platforms
+
+#### **3. Data Architecture Improvements**
+1. **Unified Data Schema**: Consistent structure across platforms
+2. **Conflict Resolution**: Strategy for handling data conflicts
+3. **Real-time Sync**: Live updates between extension and web app
+
+#### **4. Feature Migration**
+1. **8-Variable System**: Migrate from standalone HTML to web app
+2. **Enhanced Job Capture**: Improve location/salary extraction
+3. **UI Consistency**: Ensure consistent experience across platforms
+
+### **📊 System Metrics**
+
+**Code Analysis**:
+- **Total Lines**: ~15,000+ lines across both platforms
+- **Chrome Extension**: ~6,000 lines (popup.js: 4456, content.js: 952, background.js: 130)
+- **Web App**: ~9,000+ lines (dashboard: 1500+, extension-mirror: 1447, supabase: 221)
+- **Shared Logic**: ~60% overlap in core functionality
+
+**Integration Complexity**:
+- **Communication Points**: 4 main bridge files
+- **Storage Systems**: 3 different storage mechanisms
+- **API Integrations**: 2 (OpenAI, Supabase)
+- **Authentication Systems**: 2 (Chrome, Supabase)
+
+**Dependencies**:
+- **Chrome Extension**: Chrome APIs, OpenAI API
+- **Web App**: Next.js 15, Supabase, OpenAI API
+- **Shared**: OpenAI API, similar job data structures
+
+**Deliverables**:
+✅ Architecture diagram showing web app ↔ Chrome extension relationship  
+✅ Data flow documentation with communication patterns  
+✅ Integration point analysis with identified issues  
+✅ Recommendations for improvements and fixes  
+✅ Comprehensive system metrics and complexity analysis  
+
+---
+
+### **PHASE 2: WEB APP 8-VARIABLE SYSTEM MIGRATION**
+
+#### **Task 2.1: Migrate 8-Variable Matching System to Web App**
+**Status**: Pending  
+**Priority**: High  
+**Estimated Time**: 4-6 hours  
+
+**Objectives**:
+- Port `HybridDynamicMatchingSystem` class to TypeScript
+- Integrate into web app dashboard
+- Implement visualizations and charts
+- Add interactive elements and user controls
+
+**Source Files**:
+- `hybrid-dynamic-matching-system.js` (818 lines)
+- `hybrid-dynamic-test.html` (1328 lines)
+
+**Target Integration**:
+- `web-app/app/dashboard/page.tsx`
+- `web-app/lib/matching-system.ts` (new file)
+- `web-app/components/matching-visualization.tsx` (new file)
+
+**Deliverables**:
+- TypeScript implementation of 8-variable system
+- Integration with dashboard UI
+- Chart visualizations for match results
+- Interactive controls for job analysis
+
+#### **Task 2.2: Enhance Location and Salary Extraction**
+**Status**: Pending  
+**Priority**: Medium  
+**Estimated Time**: 3-4 hours  
+
+**Objectives**:
+- Implement AI-powered parsing for location extraction
+- Add salary range detection and normalization
+- Create fallback mechanisms for missing data
+- Improve job capture button functionality
+
+**Implementation Areas**:
+- Job description parsing algorithms
+- Location normalization (city, state, country)
+- Salary range extraction and formatting
+- Enhanced job capture in Chrome extension
+
+---
+
+### **PHASE 3: AUTHENTICATION AND DATABASE OPTIMIZATION**
+
+#### **Task 3.1: Implement Supabase Authentication**
+**Status**: Pending  
+**Priority**: High  
+**Estimated Time**: 4-5 hours  
+
+**Objectives**:
+- Replace anonymous mode with proper user authentication
+- Implement email/password authentication
+- Add user registration and login flows
+- Integrate with existing database schema
+
+**Current System**:
+- Anonymous authentication in `web-app/lib/supabase.ts`
+- Demo client fallback for missing credentials
+
+**Target Implementation**:
+- Email/password authentication
+- User session management
+- Protected routes and data access
+- Authentication state synchronization
+
+#### **Task 3.2: Optimize Database Schema for Authenticated Users**
+**Status**: Pending  
+**Priority**: Medium  
+**Estimated Time**: 3-4 hours  
+
+**Objectives**:
+- Add proper user relationships to database tables
+- Implement Row Level Security (RLS) policies
+- Create data migration scripts
+- Optimize storage bucket permissions
+
+**Database Tables to Update**:
+- `resumes` table: Add user_id relationships
+- `jobs` table: Add user_id relationships
+- `job_matches` table: Add user_id relationships
+- Storage policies for resume files
+
+#### **Task 3.3: Add Application Logos to Feature Comparison**
+**Status**: Pending  
+**Priority**: Low  
+**Estimated Time**: 1-2 hours  
+
+**Objectives**:
+- Replace text with actual application logos
+- Add LinkedIn, Indeed, Glassdoor, and other job site logos
+- Implement responsive logo display
+- Update feature comparison section
+
+**Files to Update**:
+- `web-app/app/page.tsx` (landing page)
+- `web-app/public/` (logo assets)
+- Feature comparison component
+
+---
+
+### **PHASE 4: CHROME EXTENSION FIXES**
+
+#### **Task 4.1: Fix Resume Upload Functionality**
+**Status**: Pending  
+**Priority**: High  
+**Estimated Time**: 3-4 hours  
+
+**Current Issue Analysis**:
+- Resume upload button not responding to file selection
+- File processing may be failing
+- UI feedback not working properly
+
+**Files to Investigate**:
+- `popup.js` lines 695-739 (handleResumeUpload function)
+- `popup.html` lines 2786-2804 (file upload section)
+- Event listeners in setupEventListeners function
+
+**Root Cause Investigation**:
+- File input event listener attachment
+- File processing and text extraction
+- Error handling and user feedback
+- Storage saving functionality
+
+#### **Task 4.2: Fix Tab Switching Functionality**
+**Status**: Pending  
+**Priority**: High  
+**Estimated Time**: 2-3 hours  
+
+**Current Issue Analysis**:
+- Tab buttons not responding to clicks
+- Active state not updating properly
+- Content areas not switching correctly
+
+**Files to Investigate**:
+- `popup.js` lines 183-240 (setupTabs and switchTab functions)
+- `popup.html` lines 2734-2764 (tab structure)
+- CSS for tab styling and active states
+
+**Root Cause Investigation**:
+- Event listener attachment for tab buttons
+- DOM manipulation for active states
+- Content area visibility switching
+- CSS class management
+
+#### **Task 4.3: Enhance Job Capture Functionality**
+**Status**: Pending  
+**Priority**: Medium  
+**Estimated Time**: 4-5 hours  
+
+**Objectives**:
+- Improve location extraction from job postings
+- Add salary range detection
+- Enhance job data extraction across different sites
+- Optimize content script performance
+
+**Files to Update**:
+- `content.js` (job site integration)
+- `background.js` (data processing)
+- Job extraction algorithms
+
+---
+
+### **PHASE 5: DATA SYNCHRONIZATION AND INTEGRATION**
+
+#### **Task 5.1: Implement Robust Web App ↔ Chrome Extension Sync**
+**Status**: Pending  
+**Priority**: High  
+**Estimated Time**: 4-6 hours  
+
+**Objectives**:
+- Optimize ExtensionBridge communication
+- Implement real-time data synchronization
+- Add conflict resolution for data updates
+- Improve error handling and fallbacks
+
+**Current Implementation**:
+- `web-app/lib/extension-bridge.js` (72 lines)
+- `web-app/lib/extension-mirror.ts` (1447 lines)
+- `web-content-bridge.js` (70 lines)
+
+**Enhancements Needed**:
+- Better error handling and timeouts
+- Bidirectional data synchronization
+- Conflict resolution strategies
+- Real-time updates and notifications
+
+#### **Task 5.2: Implement Authentication Synchronization**
+**Status**: Pending  
+**Priority**: Medium  
+**Estimated Time**: 3-4 hours  
+
+**Objectives**:
+- Sync authentication state between web app and extension
+- Implement automatic login/logout synchronization
+- Add secure token sharing mechanisms
+- Ensure data privacy and security
+
+---
+
+### **PHASE 6: DOCUMENTATION AND TESTING**
+
+#### **Task 6.1: Update Documentation Files**
+**Status**: Pending  
+**Priority**: Medium  
+**Estimated Time**: 2-3 hours  
+
+**Files to Update**:
+- `Tasks.md`: Document all completed fixes and improvements
+- `PRD.md`: Update with new features and authentication system
+- `README.md`: Update setup instructions and requirements
+- `SETUP-GUIDE.md`: Update for new authentication system
+
+#### **Task 6.2: Comprehensive Testing and Validation**
+**Status**: Pending  
+**Priority**: High  
+**Estimated Time**: 4-6 hours  
+
+**Testing Areas**:
+- Chrome extension functionality (resume upload, tab switching, job capture)
+- Web app functionality (8-variable system, authentication, database operations)
+- Data synchronization between web app and extension
+- Authentication flows and security
+- Performance and user experience
+
+---
+
+### **PHASE 7: PERFORMANCE OPTIMIZATION AND DEPLOYMENT**
+
+#### **Task 7.1: Performance Optimization**
+**Status**: Pending  
+**Priority**: Medium  
+**Estimated Time**: 3-4 hours  
+
+**Optimization Areas**:
+- API call optimization and caching
+- Bundle size reduction
+- Loading time improvements
+- User experience enhancements
+
+#### **Task 7.2: Deployment Preparation**
+**Status**: Pending  
+**Priority**: Low  
+**Estimated Time**: 2-3 hours  
+
+**Deployment Tasks**:
+- Environment configuration
+- Security hardening
+- Production optimizations
+- Deployment documentation
+
+---
+
+## 🎯 **NEXT STEPS**
+
+### **Immediate Priorities**
+1. **Start with PHASE 1**: Complete system architecture analysis
+2. **Focus on Chrome Extension Fixes**: Resume upload and tab switching (PHASE 4)
+3. **Migrate 8-Variable System**: Port to web app (PHASE 2)
+4. **Implement Authentication**: Replace anonymous mode (PHASE 3)
+
+### **Success Metrics**
+- Chrome extension fully functional (resume upload, tab switching, job capture)
+- 8-variable matching system integrated into web app
+- Proper user authentication implemented
+- Robust data synchronization between web app and extension
+- Complete documentation of all changes and improvements
+
+### **Estimated Timeline**
+- **PHASE 1-2**: 1-2 weeks
+- **PHASE 3-4**: 2-3 weeks  
+- **PHASE 5-6**: 1-2 weeks
+- **PHASE 7**: 1 week
+- **Total**: 5-8 weeks
+
+---
+
+## 🔮 **FUTURE ENHANCEMENTS - PHASE 8: JOB BOARD INTEGRATION**
+
+### **Task 8.1: Investigate Job Board Data Integration**
+**Status**: ⏳ Research Phase  
+**Priority**: Medium  
+**Estimated Time**: 6-8 hours (Research + Implementation)  
+
+**Objectives**:
+- Research automated job scraping from major job boards
+- Investigate feeding scraped job data directly into the scoring system
+- Explore bulk job analysis capabilities
+- Design API integration for real-time job data feeds
+
+**Background Context**:
+During development of the standalone job scoring test system (`standalone_job_scoring_test.html`), we created a comprehensive testing framework that replicates the exact scoring logic from the main application. This system demonstrates the capability to process multiple job descriptions against multiple resumes in bulk, providing detailed analysis and export functionality.
+
+**Current Capabilities**:
+- ✅ **Exact Logic Replication**: Test system uses identical GPT-4o prompts and scoring algorithms
+- ✅ **Bulk Processing**: Can handle multiple job-resume combinations with progress tracking
+- ✅ **Comprehensive Analysis**: 10-category scoring matrix with detailed breakdown
+- ✅ **Export Functionality**: JSON, CSV, and HTML export formats with full metadata
+- ✅ **Smart Text Processing**: Truncation and preprocessing for optimal API usage
+
+**Research Areas**:
+
+#### **8.1.1: Job Board Scraping Investigation**
+- **Target Platforms**: LinkedIn, Indeed, Glassdoor, AngelList, RemoteOK, etc.
+- **Scraping Methods**: 
+  - Browser automation (Puppeteer, Playwright)
+  - API integrations where available
+  - RSS feeds and public data sources
+  - Chrome extension enhancement for automated capture
+- **Data Extraction**: Job title, company, location, salary, description, requirements
+- **Rate Limiting**: Respectful scraping practices and compliance with ToS
+- **Data Quality**: Deduplication, formatting, and standardization
+
+#### **8.1.2: Bulk Scoring Integration**
+- **API Optimization**: Batch processing for cost efficiency
+- **Progress Tracking**: Real-time progress indicators for large datasets
+- **Results Storage**: Database schema for bulk job analysis results
+- **Performance**: Parallel processing and caching strategies
+- **Cost Management**: Token usage optimization and budget controls
+
+#### **8.1.3: Real-time Job Feed Implementation**
+- **Automated Ingestion**: Scheduled job scraping and processing
+- **Smart Filtering**: Pre-filtering based on user preferences and resume
+- **Notification System**: Alerts for high-scoring job matches
+- **Dashboard Integration**: Job feed display in main application
+- **User Controls**: Filtering, sorting, and preference management
+
+**Technical Implementation Considerations**:
+
+#### **Architecture Design**:
+```typescript
+interface JobBoardIntegration {
+  // Scraping service
+  scrapeJobs(platform: string, filters: JobFilters): Promise<RawJobData[]>
+  
+  // Processing pipeline
+  processJobData(rawJobs: RawJobData[]): Promise<ProcessedJob[]>
+  
+  // Bulk scoring
+  scoreBulkJobs(jobs: ProcessedJob[], resume: Resume): Promise<JobScore[]>
+  
+  // Storage and retrieval
+  storeJobResults(results: JobScore[]): Promise<void>
+  getJobFeed(userId: string, filters: FeedFilters): Promise<JobScore[]>
+}
+```
+
+#### **Data Pipeline**:
+1. **Scraping Layer**: Automated collection from job boards
+2. **Processing Layer**: Data cleaning, standardization, deduplication
+3. **Scoring Layer**: AI analysis using existing scoring system
+4. **Storage Layer**: Database storage with indexing and search
+5. **API Layer**: RESTful endpoints for web app and extension
+6. **UI Layer**: Dashboard components for job feed display
+
+#### **Integration Points**:
+- **Chrome Extension**: Enhanced job capture with automated scraping
+- **Web App Dashboard**: New "Job Feed" tab with bulk scoring results
+- **Database Schema**: New tables for scraped jobs and bulk results
+- **API Endpoints**: New routes for job feed management
+- **Notification System**: Email/push alerts for high-scoring matches
+
+**Research Deliverables**:
+- [ ] **Feasibility Study**: Analysis of job board scraping legality and technical feasibility
+- [ ] **Technical Architecture**: Detailed system design for job board integration
+- [ ] **Prototype Implementation**: Working proof-of-concept with one job board
+- [ ] **Cost Analysis**: API usage costs and resource requirements
+- [ ] **Performance Benchmarks**: Speed and accuracy metrics for bulk processing
+- [ ] **User Experience Design**: UI/UX mockups for job feed features
+- [ ] **Compliance Framework**: Legal and ethical guidelines for data scraping
+
+**Success Metrics**:
+- Successfully scrape and process jobs from at least 2 major job boards
+- Achieve bulk scoring of 100+ jobs within reasonable time/cost limits
+- Integrate job feed seamlessly into existing application architecture
+- Maintain scoring accuracy and consistency with current system
+- Provide intuitive user interface for job feed management
+
+**Risk Assessment**:
+- **Legal Risks**: Job board Terms of Service violations
+- **Technical Risks**: Rate limiting and anti-scraping measures
+- **Cost Risks**: High API usage costs for bulk processing
+- **Performance Risks**: Scalability issues with large datasets
+- **Data Quality Risks**: Inconsistent or poor quality scraped data
+
+**Mitigation Strategies**:
+- Partner with job boards through official APIs where possible
+- Implement respectful scraping practices with appropriate delays
+- Use efficient caching and deduplication to minimize API calls
+- Design scalable architecture with horizontal scaling capabilities
+- Implement data validation and quality scoring mechanisms
+
+**Dependencies**:
+- Completion of authentication system (Phase 3)
+- Stable web app and extension integration (Phase 5)
+- Performance optimization foundation (Phase 7)
+- Legal review and compliance approval
+
+**Timeline Estimate**:
+- **Research Phase**: 2-3 weeks
+- **Prototype Development**: 3-4 weeks
+- **Integration Phase**: 2-3 weeks
+- **Testing and Optimization**: 1-2 weeks
+- **Total**: 8-12 weeks
+
+**Expected Impact**:
+- **User Value**: Proactive job discovery and matching
+- **Engagement**: Increased user retention through valuable job alerts
+- **Differentiation**: Unique competitive advantage in job search market
+- **Scalability**: Platform for expansion into job recommendation engine
+- **Revenue**: Potential for premium features and job board partnerships
+
+**Notes**:
+This task builds directly on the successful implementation of the standalone job scoring test system, which proved that our scoring logic can effectively handle bulk job analysis. The test system serves as a foundation for understanding the technical requirements and user experience patterns needed for full job board integration.
+
+---
+
+**Ready to begin with PHASE 1: System Architecture Analysis?** 

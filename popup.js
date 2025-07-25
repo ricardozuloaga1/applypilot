@@ -26,7 +26,6 @@ class AutoApplyAI {
         this.expandedJobs = new Set(); // Track expanded jobs
         this.selectedEnhancements = new Set(); // Track selected enhancement hashtags
         this.currentEnhancements = []; // Store current enhancement suggestions
-        this.init();
     }
 
     async init() {
@@ -86,11 +85,34 @@ class AutoApplyAI {
     }
 
     setupEventListeners() {
-        // Resume Upload tab
-        document.getElementById('resume-upload').addEventListener('change', (e) => this.handleResumeUpload(e));
-        document.getElementById('score-all-btn').addEventListener('click', () => this.scoreAllJobsAndShowResults());
-        document.getElementById('pause-scoring-btn').addEventListener('click', () => this.toggleScoringPause());
-        document.getElementById('clear-resumes-btn').addEventListener('click', () => this.clearAllResumes());
+        console.log('🔧 Setting up event listeners...');
+        
+        // Resume Upload tab - with debugging
+        const resumeUploadElement = document.getElementById('resume-upload');
+        if (resumeUploadElement) {
+            console.log('✅ Resume upload element found, attaching event listener');
+            resumeUploadElement.addEventListener('change', (e) => {
+                console.log('📄 Resume upload change event triggered', e);
+                this.handleResumeUpload(e);
+            });
+        } else {
+            console.error('❌ Resume upload element NOT found!');
+        }
+        
+        // Other buttons with debugging
+        const scoreAllBtn = document.getElementById('score-all-btn');
+        const pauseScoringBtn = document.getElementById('pause-scoring-btn');
+        const clearResumesBtn = document.getElementById('clear-resumes-btn');
+        
+        if (scoreAllBtn) {
+            scoreAllBtn.addEventListener('click', () => this.scoreAllJobsAndShowResults());
+        }
+        if (pauseScoringBtn) {
+            pauseScoringBtn.addEventListener('click', () => this.toggleScoringPause());
+        }
+        if (clearResumesBtn) {
+            clearResumesBtn.addEventListener('click', () => this.clearAllResumes());
+        }
         
         // Active resume selector
         document.getElementById('change-resume-btn').addEventListener('click', () => this.toggleResumeSelector());
@@ -186,56 +208,85 @@ class AutoApplyAI {
         
         tabs.forEach((tab, index) => {
             const targetTab = tab.getAttribute('data-tab');
+            console.log(`Setting up tab ${index}: ${targetTab}`);
             
-            // Add click event listener
+            // Validate that the corresponding content exists
+            const contentId = `${targetTab}-tab`;
+            const contentElement = document.getElementById(contentId);
+            if (!contentElement) {
+                console.error(`Tab content not found for ${targetTab}: ${contentId}`);
+                return;
+            }
+            
+            // Add click event listener with debugging
             tab.addEventListener('click', (e) => {
+                console.log(`Tab clicked: ${targetTab}`);
                 e.preventDefault();
                 e.stopPropagation();
                 this.switchTab(targetTab);
             });
+            
+            console.log(`✅ Tab ${targetTab} event listener attached successfully`);
         });
+        
+        console.log('✅ All tabs setup completed');
     }
 
     switchTab(tabName) {
         console.log('Switching to tab:', tabName);
         
-        // Update active tab
-        document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-        
-        // Find and activate the tab button
-        const tabButton = document.querySelector(`[data-tab="${tabName}"]`);
-        if (tabButton) {
-            tabButton.classList.add('active');
-        } else {
-            console.error('Tab button not found for:', tabName);
-        }
-        
-        // Find and activate the tab content
-        const tabContent = document.getElementById(`${tabName}-tab`);
-        if (tabContent) {
-            tabContent.classList.add('active');
-        } else {
-            console.error('Tab content not found for:', `${tabName}-tab`);
-        }
-        
-        this.currentTab = tabName;
-        
-        // Update content based on tab
-        if (tabName === 'jobs') {
-            this.renderJobs();
-            this.updateJobsCount();
-            this.updateProceedToGenerateButtons();
-            // Ensure sort dropdown works when switching to jobs tab
-            setTimeout(() => {
-                this.reattachSortEventListeners();
-            }, 100);
-        } else if (tabName === 'generate') {
-            this.updateGenerateButton();
-            this.toggleTemplateCustomization(); // Initialize template customization
-            this.initializeDocumentType(); // Initialize document type selection
-        } else if (tabName === 'settings') {
-            this.loadApiKeyForSettings();
+        try {
+            // Update active tab - remove active class from all tabs
+            const allTabs = document.querySelectorAll('.tab');
+            const allTabContents = document.querySelectorAll('.tab-content');
+            
+            console.log(`Found ${allTabs.length} tab buttons and ${allTabContents.length} tab contents`);
+            
+            allTabs.forEach(tab => tab.classList.remove('active'));
+            allTabContents.forEach(content => content.classList.remove('active'));
+            
+            // Find and activate the tab button
+            const tabButton = document.querySelector(`[data-tab="${tabName}"]`);
+            if (tabButton) {
+                tabButton.classList.add('active');
+                console.log(`✅ Tab button activated: ${tabName}`);
+            } else {
+                console.error(`❌ Tab button not found for: ${tabName}`);
+                return;
+            }
+            
+            // Find and activate the tab content
+            const contentId = `${tabName}-tab`;
+            const tabContent = document.getElementById(contentId);
+            if (tabContent) {
+                tabContent.classList.add('active');
+                console.log(`✅ Tab content activated: ${contentId}`);
+            } else {
+                console.error(`❌ Tab content not found for: ${contentId}`);
+                return;
+            }
+            
+            this.currentTab = tabName;
+            console.log(`✅ Successfully switched to tab: ${tabName}`);
+            
+            // Update content based on tab
+            if (tabName === 'jobs') {
+                this.renderJobs();
+                this.updateJobsCount();
+                this.updateProceedToGenerateButtons();
+                // Ensure sort dropdown works when switching to jobs tab
+                setTimeout(() => {
+                    this.reattachSortEventListeners();
+                }, 100);
+            } else if (tabName === 'generate') {
+                this.updateGenerateButton();
+                this.toggleTemplateCustomization(); // Initialize template customization
+                this.initializeDocumentType(); // Initialize document type selection
+            } else if (tabName === 'settings') {
+                this.loadApiKeyForSettings();
+            }
+        } catch (error) {
+            console.error(`❌ Error switching to tab ${tabName}:`, error);
         }
     }
 
@@ -2907,11 +2958,6 @@ Format response as JSON with matrix structure:
 }
 `;
 
-            // Use the API key from the ML scoring section
-            if (!apiKey) {
-                throw new Error('OpenAI API key not configured. Please set your API key in the extension settings.');
-            }
-
             // Create AbortController for timeout
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
@@ -3022,6 +3068,14 @@ Format response as JSON with matrix structure:
             // Re-throw other errors
             throw error;
         }
+    }
+
+    // Helper method to get score status classification
+    getScoreStatus(score) {
+        if (score >= 80) return 'excellent';
+        if (score >= 60) return 'good';
+        if (score >= 40) return 'moderate';
+        return 'needs-improvement';
     }
 
     getMatchLevel(score) {
@@ -4338,10 +4392,19 @@ Return ONLY the JSON object.`;
 
 // Initialize when DOM loads
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM loaded, creating AutoApplyAI instance...');
-    window.autoApplyAI = new AutoApplyAI();
-    console.log('AutoApplyAI instance created, calling init...');
-    window.autoApplyAI.init();
+    console.log('🚀 DOM loaded, creating AutoApplyAI instance...');
+    
+    // Add a small delay to ensure all DOM elements are ready
+    setTimeout(async () => {
+        try {
+            window.autoApplyAI = new AutoApplyAI();
+            console.log('✅ AutoApplyAI instance created successfully');
+            await window.autoApplyAI.init();
+            console.log('✅ AutoApplyAI initialized successfully');
+        } catch (error) {
+            console.error('❌ Failed to create AutoApplyAI instance:', error);
+        }
+    }, 100); // 100ms delay to ensure DOM is fully ready
 });
 
 // Global debug function for testing resume reading

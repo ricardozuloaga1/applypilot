@@ -2110,6 +2110,614 @@
         .job-doc-download:active {
             transform: translateY(0);
         }
+
+        /* 8-Variable Visualization Styles */
+        .eight-variable-analysis {
+            margin: 15px 0;
+        }
+
+        .eight-variable-placeholder {
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            margin: 15px 0;
+        }
+
+        .eight-variable-placeholder h4 {
+            color: #1976d2;
+            margin: 0 0 10px 0;
+        }
+
+        .eight-variable-placeholder p {
+            color: #666;
+            margin: 0 0 15px 0;
+        }
+
+        .placeholder-variables {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .placeholder-variable {
+            background: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: 1px solid #e0e0e0;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .score-visualization {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            gap: 15px;
+            margin: 15px 0;
+        }
+
+        .overall-score-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .score-circle {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: conic-gradient(#1976d2 0% var(--score-percent, 0%), #e5e7eb var(--score-percent, 0%) 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 12px;
+            position: relative;
+        }
+
+        .score-circle::before {
+            content: '';
+            position: absolute;
+            width: 75px;
+            height: 75px;
+            background: white;
+            border-radius: 50%;
+            top: 12.5px;
+            left: 12.5px;
+        }
+
+        .score-number {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #1976d2;
+            z-index: 1;
+        }
+
+        .score-label {
+            font-size: 0.8em;
+            color: #666;
+            z-index: 1;
+        }
+
+        .score-status {
+            font-weight: bold;
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 0.8em;
+        }
+
+        .score-status.high {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .score-status.medium {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .score-status.low {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .score-status.very-low {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .variables-chart {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .variables-chart h4 {
+            color: #1976d2;
+            margin: 0 0 12px 0;
+            font-size: 1.1em;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .chart-tabs {
+            display: flex;
+            gap: 4px;
+        }
+
+        .chart-tab {
+            padding: 6px 10px;
+            border: 1px solid #e0e0e0;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8em;
+            transition: all 0.3s ease;
+        }
+
+        .chart-tab:hover {
+            background: #f5f5f5;
+            border-color: #1976d2;
+        }
+
+        .chart-tab.active {
+            background: #1976d2;
+            color: white;
+            border-color: #1976d2;
+        }
+
+        .chart-content {
+            position: relative;
+        }
+
+        .chart-view {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .chart-view.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .chart-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .bar-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            opacity: 0;
+            animation: slideInUp 0.5s ease-out forwards;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .bar-item:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+
+        @keyframes slideInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .bar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .bar-name-section {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .bar-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 0.85em;
+        }
+
+        .bar-contribution {
+            font-size: 0.75em;
+            color: #666;
+            font-style: italic;
+        }
+
+        .bar-score {
+            font-weight: bold;
+            color: #1976d2;
+            font-size: 0.85em;
+        }
+
+        .bar-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .bar-background {
+            flex: 1;
+            height: 16px;
+            background: #e5e7eb;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .bar-fill {
+            height: 100%;
+            border-radius: 8px;
+            transition: width 0.8s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bar-fill::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .bar-fill.high {
+            background: linear-gradient(90deg, #22c55e, #16a34a);
+        }
+
+        .bar-fill.medium {
+            background: linear-gradient(90deg, #eab308, #ca8a04);
+        }
+
+        .bar-fill.low {
+            background: linear-gradient(90deg, #f97316, #ea580c);
+        }
+
+        .bar-fill.very-low {
+            background: linear-gradient(90deg, #ef4444, #dc2626);
+        }
+
+        .bar-fill.na {
+            background: linear-gradient(90deg, #9ca3af, #6b7280);
+        }
+
+        .bar-weight {
+            font-size: 0.75em;
+            color: #666;
+            white-space: nowrap;
+            min-width: 60px;
+        }
+
+        .bar-details {
+            display: none;
+            background: #f8f9fa;
+            border-radius: 4px;
+            padding: 8px;
+            margin-top: 6px;
+            font-size: 0.8em;
+        }
+
+        .bar-item:hover .bar-details {
+            display: block;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .bar-requirement {
+            margin-bottom: 6px;
+            color: #333;
+        }
+
+        .bar-evidence {
+            color: #333;
+        }
+
+        .bar-requirement strong,
+        .bar-evidence strong {
+            color: #1976d2;
+        }
+
+        .bar-item.not-applicable {
+            opacity: 0.7;
+            background: #f9fafb;
+            border-color: #d1d5db;
+        }
+
+        .bar-item.not-applicable .bar-name {
+            color: #6b7280;
+        }
+
+        .bar-item.not-applicable .bar-contribution {
+            color: #9ca3af;
+        }
+
+        .vertical-chart-container {
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-end;
+            height: 250px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            padding: 15px;
+            gap: 8px;
+        }
+
+        .vertical-bar-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            opacity: 0;
+            animation: slideInUp 0.5s ease-out forwards;
+        }
+
+        .vertical-bar-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 150px;
+            position: relative;
+        }
+
+        .vertical-bar-background {
+            width: 30px;
+            height: 135px;
+            background: #e5e7eb;
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: flex-end;
+        }
+
+        .vertical-bar-fill {
+            width: 100%;
+            border-radius: 15px;
+            transition: height 0.8s ease-out;
+            position: relative;
+        }
+
+        .vertical-bar-fill.high {
+            background: linear-gradient(180deg, #22c55e, #16a34a);
+        }
+
+        .vertical-bar-fill.medium {
+            background: linear-gradient(180deg, #eab308, #ca8a04);
+        }
+
+        .vertical-bar-fill.low {
+            background: linear-gradient(180deg, #f97316, #ea580c);
+        }
+
+        .vertical-bar-fill.very-low {
+            background: linear-gradient(180deg, #ef4444, #dc2626);
+        }
+
+        .vertical-bar-fill.na {
+            background: linear-gradient(180deg, #9ca3af, #6b7280);
+        }
+
+        .vertical-bar-item.not-applicable {
+            opacity: 0.7;
+        }
+
+        .vertical-bar-item.not-applicable .vertical-bar-name {
+            color: #6b7280;
+        }
+
+        .vertical-bar-item.not-applicable .vertical-bar-weight {
+            color: #9ca3af;
+        }
+
+        .vertical-bar-score {
+            font-size: 0.8em;
+            font-weight: bold;
+            color: #1976d2;
+            margin-top: 8px;
+        }
+
+        .vertical-bar-label {
+            text-align: center;
+            margin-top: 8px;
+            max-width: 60px;
+        }
+
+        .vertical-bar-name {
+            font-size: 0.7em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+            line-height: 1.2;
+        }
+
+        .vertical-bar-weight {
+            font-size: 0.65em;
+            color: #666;
+        }
+
+        .comparison-chart-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .comparison-item {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 12px;
+            opacity: 0;
+            animation: slideInUp 0.5s ease-out forwards;
+            transition: all 0.3s ease;
+        }
+
+        .comparison-item:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+
+        .comparison-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .comparison-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 0.85em;
+        }
+
+        .comparison-status {
+            font-size: 1.1em;
+            font-weight: bold;
+            padding: 3px 6px;
+            border-radius: 3px;
+        }
+
+        .comparison-status.meets {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .comparison-status.below {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .comparison-status.na {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+
+        .comparison-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+
+        .comparison-bar-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .comparison-label {
+            font-size: 0.75em;
+            color: #666;
+            min-width: 60px;
+        }
+
+        .comparison-bar-bg {
+            flex: 1;
+            height: 14px;
+            background: #e5e7eb;
+            border-radius: 7px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .comparison-bar-fill {
+            height: 100%;
+            border-radius: 7px;
+            transition: width 0.8s ease-out;
+        }
+
+        .comparison-bar-fill.high {
+            background: linear-gradient(90deg, #22c55e, #16a34a);
+        }
+
+        .comparison-bar-fill.medium {
+            background: linear-gradient(90deg, #eab308, #ca8a04);
+        }
+
+        .comparison-bar-fill.low {
+            background: linear-gradient(90deg, #f97316, #ea580c);
+        }
+
+        .comparison-bar-fill.very-low {
+            background: linear-gradient(90deg, #ef4444, #dc2626);
+        }
+
+        .comparison-bar-fill.required {
+            background: linear-gradient(90deg, #6b7280, #4b5563);
+        }
+
+        .comparison-bar-fill.na {
+            background: linear-gradient(90deg, #9ca3af, #6b7280);
+        }
+
+        .comparison-item.not-applicable {
+            opacity: 0.7;
+            background: #f9fafb;
+            border-color: #d1d5db;
+        }
+
+        .comparison-item.not-applicable .comparison-name {
+            color: #6b7280;
+        }
+
+        .comparison-score {
+            font-size: 0.75em;
+            font-weight: bold;
+            color: #1976d2;
+            min-width: 35px;
+            text-align: right;
+        }
+
+        .comparison-weight {
+            font-size: 0.75em;
+            color: #666;
+        }
+
+        @media (max-width: 600px) {
+            .score-visualization {
+                grid-template-columns: 1fr;
+            }
+            
+            .overall-score-card {
+                order: 2;
+            }
+            
+            .variables-chart {
+                order: 1;
+            }
+        }
     </style>
 </head>
 <body>

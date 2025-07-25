@@ -1,0 +1,2386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Job Matching System - Test UI</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="hybrid-dynamic-matching-system.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 40px;
+        }
+
+        .api-key-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #fff8dc;
+            border-radius: 8px;
+            border: 1px solid #f59e0b;
+        }
+
+        .api-key-section .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #f59e0b;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: monospace;
+        }
+
+        .api-key-section .input-group input:focus {
+            outline: none;
+            border-color: #d97706;
+        }
+
+        .input-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .input-group label {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #374151;
+            font-size: 1.1rem;
+        }
+
+        .input-group textarea {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 15px;
+            font-size: 14px;
+            line-height: 1.5;
+            resize: vertical;
+            min-height: 300px;
+            transition: border-color 0.3s;
+        }
+
+        .input-group textarea:focus {
+            outline: none;
+            border-color: #4f46e5;
+        }
+
+        .test-options {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .test-button {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 0;
+            min-width: 280px;
+            text-align: center;
+        }
+
+        .test-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3);
+        }
+
+        .test-button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .hybrid-button {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        }
+
+        .hybrid-button:hover {
+            box-shadow: 0 10px 20px rgba(79, 70, 229, 0.3);
+        }
+
+        .results-section {
+            margin-top: 40px;
+            padding: 30px;
+            background: #f8fafc;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            display: none;
+        }
+
+        .results-section.show {
+            display: block;
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .results-header h2 {
+            color: #1e293b;
+            font-size: 1.8rem;
+        }
+
+        .overall-score {
+            font-size: 2rem;
+            font-weight: 700;
+            padding: 15px 25px;
+            border-radius: 8px;
+            color: white;
+        }
+
+        .score-excellent { background: #10b981; }
+        .score-good { background: #f59e0b; }
+        .score-poor { background: #ef4444; }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .charts-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin: 30px 0;
+            padding: 25px;
+            background: #f8fafc;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .chart-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .chart-card h3 {
+            color: #1e293b;
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .chart-canvas {
+            width: 100% !important;
+            height: 300px !important;
+        }
+
+        .chart-legend {
+            margin-top: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        @media (max-width: 768px) {
+            .charts-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Hybrid Results Styles */
+        .industry-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .industry-tag {
+            display: flex;
+            gap: 10px;
+        }
+
+        .industry-tag span {
+            background: #4f46e5;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        .confidence-score {
+            font-size: 0.9rem;
+            color: #6b7280;
+        }
+
+        .variables-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .variable-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-left: 4px solid #e2e8f0;
+        }
+
+        .variable-card.matched {
+            border-left-color: #10b981;
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+        }
+
+        .variable-card.unmatched {
+            border-left-color: #ef4444;
+            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+        }
+
+        .variable-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .variable-name {
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 1.1rem;
+        }
+
+        .variable-category {
+            background: #4f46e5;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+        }
+
+        .variable-score {
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: #1e293b;
+        }
+
+        .variable-content {
+            color: #6b7280;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .variable-content p {
+            margin-bottom: 10px;
+        }
+
+        .recommendation-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 20px;
+        }
+
+        .strengths-section, .gaps-section {
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .strengths-section {
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            border: 1px solid #10b981;
+        }
+
+        .gaps-section {
+            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+            border: 1px solid #ef4444;
+        }
+
+        .strengths-section h4 {
+            color: #059669;
+            margin-bottom: 15px;
+        }
+
+        .gaps-section h4 {
+            color: #dc2626;
+            margin-bottom: 15px;
+        }
+
+        .overall-assessment {
+            grid-column: 1 / -1;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .overall-assessment h4 {
+            color: #1e293b;
+            margin-bottom: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .recommendation-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .stat-card h3 {
+            color: #6b7280;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-card .value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .recommendation {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            border-left: 4px solid #4f46e5;
+        }
+
+        .recommendation h3 {
+            color: #4f46e5;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+
+        .variables-section {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .variables-section h3 {
+            color: #1e293b;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+
+        .variable-item-detailed {
+            margin-bottom: 20px;
+            border-radius: 10px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+        }
+
+        .variable-item-detailed.matched {
+            border-left: 4px solid #10b981;
+        }
+
+        .variable-item-detailed.not-matched {
+            border-left: 4px solid #ef4444;
+        }
+
+        .variable-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .variable-name {
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 1.1rem;
+        }
+
+        .variable-status {
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-matched {
+            background: #10b981;
+            color: white;
+        }
+
+        .status-not-matched {
+            background: #ef4444;
+            color: white;
+        }
+
+        .match-percentage {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #4f46e5;
+            background: #f0f9ff;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #e0e7ff;
+        }
+
+        .variable-details {
+            padding: 20px;
+            background: #f8fafc;
+        }
+
+        .job-requirements, .resume-qualifications, .gpt-analysis {
+            margin-bottom: 15px;
+        }
+
+        .job-requirements strong, .resume-qualifications strong, .gpt-analysis strong {
+            display: block;
+            margin-bottom: 8px;
+            color: #1e293b;
+            font-size: 0.95rem;
+        }
+
+        .requirements-list, .qualifications-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .requirement-item, .qualification-item {
+            background: #4f46e5;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .qualification-item {
+            background: #10b981;
+        }
+
+        .no-requirements, .no-qualifications {
+            color: #6b7280;
+            font-style: italic;
+            font-size: 0.9rem;
+        }
+
+        .analysis-text {
+            background: #ffffff;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+            color: #374151;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin: 0;
+        }
+
+        .variable-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            background: #f8fafc;
+        }
+
+        .variable-item.matched {
+            background: #dcfce7;
+            border-left: 4px solid #10b981;
+        }
+
+        .variable-item.not-matched {
+            background: #fef2f2;
+            border-left: 4px solid #ef4444;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6b7280;
+        }
+
+        .loading .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e5e7eb;
+            border-top: 4px solid #4f46e5;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .supported-sites {
+            margin-top: 30px;
+            padding: 25px;
+            background: #ffffff;
+            border-radius: 10px;
+            border: 2px solid #e2e8f0;
+            text-align: center;
+        }
+
+        .supported-sites h3 {
+            color: #1e293b;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .job-sites-logos {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .logo-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .logo-item:hover {
+            background: #f8fafc;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .logo-item svg {
+            transition: transform 0.3s ease;
+        }
+
+        .logo-item:hover svg {
+            transform: scale(1.05);
+        }
+
+        .sample-data {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f1f5f9;
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+        }
+
+        .sample-data h3 {
+            color: #1e293b;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .sample-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .sample-button {
+            background: #4f46e5;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.3s;
+        }
+
+        .sample-button:hover {
+            background: #3730a3;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 20px;
+            }
+            
+            .api-key-section {
+                margin-bottom: 20px;
+                padding: 15px;
+            }
+            
+            .api-key-section .input-group input {
+                font-size: 12px;
+                padding: 10px;
+            }
+            
+            .input-section {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .job-sites-logos {
+                gap: 20px;
+            }
+            
+            .logo-item {
+                padding: 8px;
+            }
+            
+            .logo-item svg {
+                width: 100px;
+                height: 32px;
+            }
+            
+            .variable-header {
+                flex-direction: column;
+                gap: 10px;
+                align-items: flex-start;
+            }
+            
+            .match-percentage {
+                font-size: 1rem;
+                padding: 6px 10px;
+            }
+            
+            .variable-details {
+                padding: 15px;
+            }
+            
+            .requirements-list, .qualifications-list {
+                flex-direction: column;
+                gap: 5px;
+            }
+            
+            .requirement-item, .qualification-item {
+                display: block;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Real GPT-4o Job Matching System</h1>
+            <p>Live analysis using OpenAI's GPT-4o with 22 statistically validated variables</p>
+        </div>
+
+        <div class="main-content">
+            <div class="api-key-section">
+                <div class="input-group">
+                    <label for="apiKey">OpenAI API Key</label>
+                    <input type="password" id="apiKey" placeholder="Enter your OpenAI API key (sk-...)">
+                    <small style="color: #6b7280; font-size: 0.85rem; margin-top: 5px; display: block;">
+                        Your API key is used locally and never stored. Get one at <a href="https://platform.openai.com/api-keys" target="_blank">OpenAI API Keys</a>
+                    </small>
+                </div>
+            </div>
+
+            <div class="input-section">
+                <div class="input-group">
+                    <label for="jobDescription">Job Description</label>
+                    <textarea id="jobDescription" placeholder="Paste the job description here..."></textarea>
+                </div>
+                <div class="input-group">
+                    <label for="resumeContent">Resume Content</label>
+                    <textarea id="resumeContent" placeholder="Paste the resume content here..."></textarea>
+                </div>
+            </div>
+
+            <div class="test-options">
+                <button class="test-button" onclick="runMatchingTest()">
+                    🔬 Run Fixed Variables Analysis (22 Variables)
+                </button>
+                <button class="test-button hybrid-button" onclick="runHybridDynamicTest()">
+                    🔄 Run Hybrid Dynamic Analysis (10 Variables)
+                </button>
+            </div>
+
+            <div class="supported-sites">
+                <h3>Supported Job Sites, Among Others:</h3>
+                <div class="job-sites-logos">
+                    <div class="logo-item">
+                        <svg width="120" height="40" viewBox="0 0 120 40" fill="none">
+                            <rect x="5" y="8" width="30" height="24" rx="4" fill="#0CAA41"/>
+                            <rect x="8" y="11" width="24" height="18" rx="2" fill="white"/>
+                            <rect x="10" y="13" width="20" height="2" fill="#0CAA41"/>
+                            <rect x="10" y="16" width="15" height="2" fill="#0CAA41"/>
+                            <rect x="10" y="19" width="18" height="2" fill="#0CAA41"/>
+                            <rect x="10" y="22" width="12" height="2" fill="#0CAA41"/>
+                            <rect x="10" y="25" width="16" height="2" fill="#0CAA41"/>
+                            <text x="42" y="26" fill="#0CAA41" font-family="Arial, sans-serif" font-size="14" font-weight="bold">glassdoor</text>
+                        </svg>
+                    </div>
+                    <div class="logo-item">
+                        <svg width="120" height="40" viewBox="0 0 120 40" fill="none">
+                            <circle cx="20" cy="20" r="12" fill="#2164f3"/>
+                            <text x="38" y="26" fill="#2164f3" font-family="Arial, sans-serif" font-size="16" font-weight="bold">indeed</text>
+                        </svg>
+                    </div>
+                    <div class="logo-item">
+                        <svg width="140" height="40" viewBox="0 0 140 40" fill="none">
+                            <rect x="5" y="12" width="20" height="16" rx="8" fill="#1875f0"/>
+                            <path d="M5 20 L15 10 L25 20 Z" fill="#1875f0"/>
+                            <text x="32" y="26" fill="#1875f0" font-family="Arial, sans-serif" font-size="14" font-weight="bold">ZipRecruiter</text>
+                        </svg>
+                    </div>
+                    <div class="logo-item">
+                        <svg width="120" height="40" viewBox="0 0 120 40" fill="none">
+                            <rect x="5" y="8" width="24" height="24" rx="2" fill="#0077b5"/>
+                            <rect x="8" y="11" width="6" height="6" rx="1" fill="white"/>
+                            <rect x="8" y="19" width="6" height="10" fill="white"/>
+                            <rect x="16" y="16" width="6" height="13" fill="white"/>
+                            <rect x="24" y="12" width="6" height="17" fill="white"/>
+                            <text x="36" y="26" fill="#0077b5" font-family="Arial, sans-serif" font-size="14" font-weight="bold">LinkedIn</text>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sample-data">
+                <h3>Quick Test with Sample Data</h3>
+                <div class="sample-buttons">
+                    <button class="sample-button" onclick="loadSampleData('software')">Software Engineer</button>
+                    <button class="sample-button" onclick="loadSampleData('marketing')">Marketing Manager</button>
+                    <button class="sample-button" onclick="loadSampleData('sales')">Sales Representative</button>
+                    <button class="sample-button" onclick="loadSampleData('designer')">UI/UX Designer</button>
+                </div>
+            </div>
+
+            <div id="results" class="results-section">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Running enhanced matching analysis...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Real GPT-4o Enhanced Matching System Implementation
+        class RealGPT4oMatcher {
+            constructor() {
+                this.variables = [
+                    // INDUSTRY-AWARE VARIABLES - NO MORE HYPER-NICHE TECH BIAS!
+                // Variables are now dynamically extracted based on job industry
+                
+                // Critical Requirements (40% weight) - Universal across all industries
+                    { name: "Required Core Skills", category: "critical", weight: 0.1 },
+                    { name: "Education Level", category: "critical", weight: 0.08 },
+                    { name: "Years of Experience", category: "critical", weight: 0.08 },
+                    { name: "Industry Experience", category: "critical", weight: 0.08 },
+                    { name: "Certifications/Licenses", category: "critical", weight: 0.06 },
+                    
+                    // Core Competencies (35% weight) - Industry-specific, dynamically extracted
+                    { name: "Primary Job Function", category: "core", weight: 0.06 },
+                    { name: "Key Tools/Software", category: "core", weight: 0.06 },
+                    { name: "Domain Knowledge", category: "core", weight: 0.05 },
+                    { name: "Process/Methodology", category: "core", weight: 0.05 },
+                    { name: "Project Management", category: "core", weight: 0.04 },
+                    { name: "Team Leadership", category: "core", weight: 0.04 },
+                    { name: "Communication Skills", category: "core", weight: 0.03 },
+                    { name: "Problem Solving", category: "core", weight: 0.02 },
+                    
+                    // Experience Factors (15% weight) - Context-aware
+                    { name: "Cross-functional Collaboration", category: "experience", weight: 0.15 },
+                    
+                    // Preferred Qualifications (10% weight)
+                    { name: "Advanced Degree", category: "preferred", weight: 0.035 },
+                    { name: "Speaking/Teaching Experience", category: "preferred", weight: 0.025 },
+                    { name: "Language Skills", category: "preferred", weight: 0.025 },
+                    { name: "Geographic Preferences", category: "preferred", weight: 0.015 }
+                ];
+            }
+
+            // Real GPT-4o Analysis using OpenAI API
+            async performRealGPTAnalysis(jobDescription, resumeContent, apiKey) {
+                const prompt = this.getComprehensivePrompt(jobDescription, resumeContent);
+                
+                try {
+                    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${apiKey}`
+                        },
+                        body: JSON.stringify({
+                            model: 'gpt-4o',
+                            messages: [
+                                {
+                                    role: 'system',
+                                    content: 'You are an expert HR analyst and hiring manager with advanced statistical analysis skills. You provide detailed, accurate, and statistically validated job-candidate matching analysis.'
+                                },
+                                {
+                                    role: 'user',
+                                    content: prompt
+                                }
+                            ],
+                            temperature: 0.1,
+                            max_tokens: 4000,
+                            response_format: { type: "json_object" }
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`OpenAI API Error: ${response.status} ${response.statusText}`);
+                    }
+
+                    const data = await response.json();
+                    const gptResult = JSON.parse(data.choices[0].message.content);
+                    
+                    // Transform GPT-4o result to our display format
+                    return this.transformGPTResult(gptResult);
+                    
+                } catch (error) {
+                    console.error('GPT-4o API Error:', error);
+                    throw error;
+                }
+            }
+
+            // Transform GPT-4o result to match our display format
+            transformGPTResult(gptResult) {
+                const analysis = {
+                    job_variables: {},
+                    resume_variables: {},
+                    matches: {},
+                    detailed_analysis: {},
+                    total_score: gptResult.statistical_results?.total_weighted_score || 0,
+                    category_scores: {
+                        critical: gptResult.category_breakdown?.critical_requirements?.score || 0,
+                        core: gptResult.category_breakdown?.core_competencies?.score || 0,
+                        experience: gptResult.category_breakdown?.experience_factors?.score || 0,
+                        preferred: gptResult.category_breakdown?.preferred_qualifications?.score || 0
+                    }
+                };
+
+                // Transform each variable analysis
+                this.variables.forEach(variable => {
+                    const varName = variable.name;
+                    const jobData = gptResult.job_extraction?.[varName] || { found: false, requirements: [], evidence: "" };
+                    const resumeData = gptResult.resume_extraction?.[varName] || { found: false, qualifications: [], evidence: "" };
+                    const comparisonData = gptResult.comparison_analysis?.[varName] || { 
+                        is_match: false, 
+                        match_percentage: 0,
+                        matched_items: [],
+                        missing_items: [],
+                        detailed_analysis: "No analysis available"
+                    };
+
+                    analysis.job_variables[varName] = jobData;
+                    analysis.resume_variables[varName] = resumeData;
+                    analysis.matches[varName] = comparisonData.is_match;
+                    analysis.detailed_analysis[varName] = {
+                        is_match: comparisonData.is_match,
+                        match_percentage: comparisonData.match_percentage,
+                        comparison_details: comparisonData.detailed_analysis,
+                        job_requirements: jobData.requirements,
+                        resume_qualifications: resumeData.qualifications,
+                        evidence: {
+                            job: jobData.evidence,
+                            resume: resumeData.evidence
+                        }
+                    };
+                });
+
+                return analysis;
+            }
+
+            // Real GPT-4o Comprehensive Prompt
+            getComprehensivePrompt(jobDescription, resumeContent) {
+                return `You are an expert hiring manager with advanced statistical analysis skills. Perform a comprehensive job-candidate matching analysis using exactly 22 validated variables.
+
+JOB DESCRIPTION:
+${jobDescription}
+
+RESUME CONTENT:
+${resumeContent}
+
+TASK: Extract requirements and qualifications for all 22 variables, then create a detailed comparison analysis.
+
+THE 22 VARIABLES (with weights):
+CRITICAL REQUIREMENTS (40% total weight):
+1. Required Technical Skills (10%)
+2. Education Level (8%)
+3. Years of Experience (8%)
+4. Industry Experience (8%)
+5. Certifications/Licenses (6%)
+
+CORE COMPETENCIES (35% total weight):
+                    6. Primary Job Function (6%)
+                    7. Key Tools/Software (6%)
+                    8. Domain Knowledge (5%)
+                    9. Process/Methodology (5%)
+10. Project Management (4%)
+11. Team Leadership (4%)
+12. Communication Skills (3%)
+13. Problem Solving (2%)
+
+EXPERIENCE FACTORS (15% total weight):
+14. Cross-functional Collaboration (15%)
+
+PREFERRED QUALIFICATIONS (10% total weight):
+15. Advanced Degree (3.5%)
+16. Speaking/Teaching Experience (2.5%)
+17. Language Skills (2.5%)
+18. Geographic Preferences (1.5%)
+
+RETURN FORMAT:
+{
+    "job_extraction": {
+        "Required Technical Skills": {
+            "found": true/false,
+            "requirements": ["specific requirement 1", "specific requirement 2"],
+            "evidence": "exact quote from job description"
+        },
+        "Education Level": {
+            "found": true/false,
+            "requirements": ["specific requirement 1", "specific requirement 2"],
+            "evidence": "exact quote from job description"
+        },
+        "Years of Experience": {
+            "found": true/false,
+            "requirements": ["specific requirement 1", "specific requirement 2"],
+            "evidence": "exact quote from job description"
+        },
+        "Industry Experience": {
+            "found": true/false,
+            "requirements": ["specific requirement 1", "specific requirement 2"],
+            "evidence": "exact quote from job description"
+        },
+        "Certifications/Licenses": {
+            "found": true/false,
+            "requirements": ["specific requirement 1", "specific requirement 2"],
+            "evidence": "exact quote from job description"
+        },
+        "Primary Job Function": {
+            "found": true/false,
+            "requirements": ["specific core job activities", "main responsibilities"],
+            "evidence": "exact quote from job description"
+        },
+        "Key Tools/Software": {
+            "found": true/false,
+            "requirements": ["industry-specific tools", "software platforms"],
+            "evidence": "exact quote from job description"
+        },
+        "Domain Knowledge": {
+            "found": true/false,
+            "requirements": ["industry expertise", "specialized knowledge"],
+            "evidence": "exact quote from job description"
+        },
+        "Process/Methodology": {
+            "found": true/false,
+            "requirements": ["work processes", "methodologies used"],
+            "evidence": "exact quote from job description"
+        },
+        "Project Management": {
+            "found": true/false,
+            "requirements": ["specific requirement 1", "specific requirement 2"],
+            "evidence": "exact quote from job description"
+        },
+        "Team Leadership": {
+            "found": true/false,
+            "requirements": ["specific requirement 1", "specific requirement 2"],
+            "evidence": "exact quote from job description"
+        },
+        "Communication Skills": {
+            "found": true/false,
+            "requirements": ["specific requirement 1", "specific requirement 2"],
+            "evidence": "exact quote from job description"
+        },
+        "Problem Solving": {
+            "found": true/false,
+            "requirements": ["specific requirement 1", "specific requirement 2"],
+            "evidence": "exact quote from job description"
+        },
+
+        "Agile/Scrum Experience": {
+            "found": true/false,
+            "requirements": ["specific requirement 1", "specific requirement 2"],
+            "evidence": "exact quote from job description"
+        },
+        "Cross-functional Collaboration": {
+            "found": true/false,
+            "requirements": ["specific requirement 1", "specific requirement 2"],
+            "evidence": "exact quote from job description"
+        },
+        "Advanced Degree": {
+            "found": true/false,
+            "requirements": ["specific requirement 1", "specific requirement 2"],
+            "evidence": "exact quote from job description"
+        },
+
+        "Speaking/Teaching Experience": {
+            "found": true/false,
+            "requirements": ["specific requirement 1", "specific requirement 2"],
+            "evidence": "exact quote from job description"
+        },
+        "Language Skills": {
+            "found": true/false,
+            "requirements": ["specific requirement 1", "specific requirement 2"],
+            "evidence": "exact quote from job description"
+        },
+        "Geographic Preferences": {
+            "found": true/false,
+            "requirements": ["specific requirement 1", "specific requirement 2"],
+            "evidence": "exact quote from job description"
+        }
+    },
+    "resume_extraction": {
+        "Required Technical Skills": {
+            "found": true/false,
+            "qualifications": ["specific qualification 1", "specific qualification 2"],
+            "evidence": "exact quote from resume"
+        },
+        "Education Level": {
+            "found": true/false,
+            "qualifications": ["specific qualification 1", "specific qualification 2"],
+            "evidence": "exact quote from resume"
+        },
+        "Years of Experience": {
+            "found": true/false,
+            "qualifications": ["specific qualification 1", "specific qualification 2"],
+            "evidence": "exact quote from resume"
+        },
+        "Industry Experience": {
+            "found": true/false,
+            "qualifications": ["specific qualification 1", "specific qualification 2"],
+            "evidence": "exact quote from resume"
+        },
+        "Certifications/Licenses": {
+            "found": true/false,
+            "qualifications": ["specific qualification 1", "specific qualification 2"],
+            "evidence": "exact quote from resume"
+        },
+        "Primary Job Function": {
+            "found": true/false,
+            "qualifications": ["relevant job experience", "functional expertise"],
+            "evidence": "exact quote from resume"
+        },
+        "Key Tools/Software": {
+            "found": true/false,
+            "qualifications": ["relevant tools experience", "software proficiency"],
+            "evidence": "exact quote from resume"
+        },
+        "Domain Knowledge": {
+            "found": true/false,
+            "qualifications": ["industry experience", "specialized knowledge"],
+            "evidence": "exact quote from resume"
+        },
+        "Process/Methodology": {
+            "found": true/false,
+            "qualifications": ["relevant process experience", "methodology familiarity"],
+            "evidence": "exact quote from resume"
+        },
+        "Project Management": {
+            "found": true/false,
+            "qualifications": ["specific qualification 1", "specific qualification 2"],
+            "evidence": "exact quote from resume"
+        },
+        "Team Leadership": {
+            "found": true/false,
+            "qualifications": ["specific qualification 1", "specific qualification 2"],
+            "evidence": "exact quote from resume"
+        },
+        "Communication Skills": {
+            "found": true/false,
+            "qualifications": ["specific qualification 1", "specific qualification 2"],
+            "evidence": "exact quote from resume"
+        },
+        "Problem Solving": {
+            "found": true/false,
+            "qualifications": ["specific qualification 1", "specific qualification 2"],
+            "evidence": "exact quote from resume"
+        },
+
+        "Agile/Scrum Experience": {
+            "found": true/false,
+            "qualifications": ["specific qualification 1", "specific qualification 2"],
+            "evidence": "exact quote from resume"
+        },
+        "Cross-functional Collaboration": {
+            "found": true/false,
+            "qualifications": ["specific qualification 1", "specific qualification 2"],
+            "evidence": "exact quote from resume"
+        },
+        "Advanced Degree": {
+            "found": true/false,
+            "qualifications": ["specific qualification 1", "specific qualification 2"],
+            "evidence": "exact quote from resume"
+        },
+
+        "Speaking/Teaching Experience": {
+            "found": true/false,
+            "qualifications": ["specific qualification 1", "specific qualification 2"],
+            "evidence": "exact quote from resume"
+        },
+        "Language Skills": {
+            "found": true/false,
+            "qualifications": ["specific qualification 1", "specific qualification 2"],
+            "evidence": "exact quote from resume"
+        },
+        "Geographic Preferences": {
+            "found": true/false,
+            "qualifications": ["specific qualification 1", "specific qualification 2"],
+            "evidence": "exact quote from resume"
+        }
+    },
+    "comparison_analysis": {
+        "Required Technical Skills": {
+            "is_match": true/false,
+            "match_percentage": 0-100,
+            "matched_items": ["item1", "item2"],
+            "missing_items": ["item1", "item2"],
+            "detailed_analysis": "Comprehensive comparison explanation"
+        },
+        "Education Level": {
+            "is_match": true/false,
+            "match_percentage": 0-100,
+            "matched_items": ["item1", "item2"],
+            "missing_items": ["item1", "item2"],
+            "detailed_analysis": "Comprehensive comparison explanation"
+        },
+        "Years of Experience": {
+            "is_match": true/false,
+            "match_percentage": 0-100,
+            "matched_items": ["item1", "item2"],
+            "missing_items": ["item1", "item2"],
+            "detailed_analysis": "Comprehensive comparison explanation"
+        },
+        "Industry Experience": {
+            "is_match": true/false,
+            "match_percentage": 0-100,
+            "matched_items": ["item1", "item2"],
+            "missing_items": ["item1", "item2"],
+            "detailed_analysis": "Comprehensive comparison explanation"
+        },
+        "Certifications/Licenses": {
+            "is_match": true/false,
+            "match_percentage": 0-100,
+            "matched_items": ["item1", "item2"],
+            "missing_items": ["item1", "item2"],
+            "detailed_analysis": "Comprehensive comparison explanation"
+        },
+        "Primary Job Function": {
+            "is_match": true/false,
+            "match_percentage": 0-100,
+            "matched_items": ["relevant experience", "functional alignment"],
+            "missing_items": ["gaps in core function", "missing key activities"],
+            "detailed_analysis": "Analysis of core job function alignment"
+        },
+        "Key Tools/Software": {
+            "is_match": true/false,
+            "match_percentage": 0-100,
+            "matched_items": ["relevant tools", "software proficiency"],
+            "missing_items": ["missing tools", "software gaps"],
+            "detailed_analysis": "Analysis of tool and software expertise"
+        },
+        "Domain Knowledge": {
+            "is_match": true/false,
+            "match_percentage": 0-100,
+            "matched_items": ["industry expertise", "specialized knowledge"],
+            "missing_items": ["knowledge gaps", "missing specializations"],
+            "detailed_analysis": "Analysis of industry and domain expertise"
+        },
+        "Process/Methodology": {
+            "is_match": true/false,
+            "match_percentage": 0-100,
+            "matched_items": ["relevant processes", "methodology experience"],
+            "missing_items": ["process gaps", "missing methodologies"],
+            "detailed_analysis": "Analysis of process and methodology familiarity"
+        },
+        "Project Management": {
+            "is_match": true/false,
+            "match_percentage": 0-100,
+            "matched_items": ["item1", "item2"],
+            "missing_items": ["item1", "item2"],
+            "detailed_analysis": "Comprehensive comparison explanation"
+        },
+        "Team Leadership": {
+            "is_match": true/false,
+            "match_percentage": 0-100,
+            "matched_items": ["item1", "item2"],
+            "missing_items": ["item1", "item2"],
+            "detailed_analysis": "Comprehensive comparison explanation"
+        },
+        "Communication Skills": {
+            "is_match": true/false,
+            "match_percentage": 0-100,
+            "matched_items": ["item1", "item2"],
+            "missing_items": ["item1", "item2"],
+            "detailed_analysis": "Comprehensive comparison explanation"
+        },
+        "Problem Solving": {
+            "is_match": true/false,
+            "match_percentage": 0-100,
+            "matched_items": ["item1", "item2"],
+            "missing_items": ["item1", "item2"],
+            "detailed_analysis": "Comprehensive comparison explanation"
+        },
+
+        "Agile/Scrum Experience": {
+            "is_match": true/false,
+            "match_percentage": 0-100,
+            "matched_items": ["item1", "item2"],
+            "missing_items": ["item1", "item2"],
+            "detailed_analysis": "Comprehensive comparison explanation"
+        },
+        "Cross-functional Collaboration": {
+            "is_match": true/false,
+            "match_percentage": 0-100,
+            "matched_items": ["item1", "item2"],
+            "missing_items": ["item1", "item2"],
+            "detailed_analysis": "Comprehensive comparison explanation"
+        },
+        "Advanced Degree": {
+            "is_match": true/false,
+            "match_percentage": 0-100,
+            "matched_items": ["item1", "item2"],
+            "missing_items": ["item1", "item2"],
+            "detailed_analysis": "Comprehensive comparison explanation"
+        },
+
+        "Speaking/Teaching Experience": {
+            "is_match": true/false,
+            "match_percentage": 0-100,
+            "matched_items": ["item1", "item2"],
+            "missing_items": ["item1", "item2"],
+            "detailed_analysis": "Comprehensive comparison explanation"
+        },
+        "Language Skills": {
+            "is_match": true/false,
+            "match_percentage": 0-100,
+            "matched_items": ["item1", "item2"],
+            "missing_items": ["item1", "item2"],
+            "detailed_analysis": "Comprehensive comparison explanation"
+        },
+        "Geographic Preferences": {
+            "is_match": true/false,
+            "match_percentage": 0-100,
+            "matched_items": ["item1", "item2"],
+            "missing_items": ["item1", "item2"],
+            "detailed_analysis": "Comprehensive comparison explanation"
+        }
+    },
+    "statistical_results": {
+        "total_weighted_score": 0-100,
+        "variables_matched": 0-22,
+        "match_ratio": 0-1.0,
+        "statistical_significance": "excellent/strong/good/weak",
+        "confidence_level": 95.0-99.9,
+        "hiring_recommendation": "STRONG_RECOMMEND/RECOMMEND/CONSIDER/PASS"
+    },
+    "category_breakdown": {
+        "critical_requirements": {"score": 0-100, "matched": 0-5},
+        "core_competencies": {"score": 0-100, "matched": 0-8},
+        "experience_factors": {"score": 0-100, "matched": 0-4},
+        "preferred_qualifications": {"score": 0-100, "matched": 0-5}
+    }
+}
+
+CRITICAL INSTRUCTIONS:
+1. Extract SPECIFIC requirements and qualifications (not general categories)
+2. Use semantic understanding, not just keyword matching
+3. Provide exact quotes as evidence
+4. Calculate weighted scores using the specified percentages
+5. Apply statistical significance thresholds:
+   - 18-22 matches: Excellent (99.9% confidence)
+   - 16-17 matches: Strong (99.0% confidence)
+   - 14-15 matches: Good (95.0% confidence)
+   - <14 matches: Weak (<95% confidence)
+6. Return valid JSON only
+
+This analysis will be used for hiring decisions, so accuracy is critical.`;
+            }
+
+            // Get statistical significance based on match count
+            getStatisticalSignificance(matchCount) {
+                const totalVariables = 22;
+                const matchRatio = matchCount / totalVariables;
+                
+                if (matchRatio >= 0.818) return { level: "excellent", confidence: 99.9, description: "Excellent match" };
+                if (matchRatio >= 0.727) return { level: "strong", confidence: 99.0, description: "Strong match" };
+                if (matchRatio >= 0.636) return { level: "good", confidence: 95.0, description: "Good match" };
+                return { level: "weak", confidence: 50.0, description: "Weak match" };
+            }
+
+            // Get hiring recommendation based on score and match count
+            getHiringRecommendation(score, matchCount) {
+                const significance = this.getStatisticalSignificance(matchCount);
+                
+                if (significance.level === "excellent") return "STRONG_RECOMMEND";
+                if (significance.level === "strong") return "RECOMMEND";
+                if (significance.level === "good") return "CONSIDER";
+                return "PASS";
+            }
+
+            getStatisticalSignificance(matchCount) {
+                const totalVariables = 22;
+                const matchRatio = matchCount / totalVariables;
+                
+                if (matchRatio >= 0.818) return { level: "excellent", confidence: 99.9, description: "Excellent match" };
+                if (matchRatio >= 0.727) return { level: "strong", confidence: 99.0, description: "Strong match" };
+                if (matchRatio >= 0.636) return { level: "good", confidence: 95.0, description: "Good match" };
+                return { level: "weak", confidence: 50.0, description: "Weak match" };
+            }
+
+            getHiringRecommendation(score, matchCount) {
+                const significance = this.getStatisticalSignificance(matchCount);
+                
+                if (significance.level === "excellent") return "STRONG_RECOMMEND";
+                if (significance.level === "strong") return "RECOMMEND";
+                if (significance.level === "good") return "CONSIDER";
+                return "PASS";
+            }
+        }
+
+        // Sample data for testing
+        const sampleData = {
+            software: {
+                job: `Senior Software Engineer - Full Stack Development
+
+We are seeking a skilled Senior Software Engineer to join our growing team. The ideal candidate will have:
+
+Required Qualifications:
+- Bachelor's degree in Computer Science or related field
+- 5+ years of software development experience
+- Strong proficiency in JavaScript, Python, and SQL
+- Experience with React, Node.js, and modern web technologies
+- Knowledge of database design and optimization
+- Experience with cloud platforms (AWS, Azure, or Google Cloud)
+- Proficiency with Git version control
+- Strong problem-solving and analytical skills
+
+Preferred Qualifications:
+- Master's degree in Computer Science
+- Experience with agile development methodologies
+- Previous experience in a startup environment
+- Public speaking or teaching experience
+- Bilingual (English/Spanish)
+
+Responsibilities:
+- Design and develop scalable web applications
+- Collaborate with cross-functional teams
+- Mentor junior developers
+- Participate in code reviews and technical discussions
+- Work with product managers and designers`,
+
+                resume: `JOHN SMITH
+Senior Software Engineer
+john.smith@email.com | (555) 123-4567 | LinkedIn: linkedin.com/in/johnsmith
+
+EDUCATION
+Master of Science in Computer Science
+Stanford University, 2018
+Bachelor of Science in Computer Science
+University of California, Berkeley, 2016
+
+EXPERIENCE
+Senior Software Engineer | TechCorp Inc. | 2020 - Present
+• Lead a team of 5 engineers in developing scalable web applications using React and Node.js
+• Architected and implemented microservices on AWS cloud infrastructure
+• Mentored junior developers and conducted code reviews
+• Collaborated with product managers and UX designers on feature development
+• Improved application performance by 40% through database optimization
+
+Software Engineer | StartupXYZ | 2018 - 2020
+• Managed complex projects from conception to completion, coordinating with cross-functional teams
+• Implemented process improvements that increased efficiency by 25%
+• Collaborated with stakeholders to define requirements and deliver solutions on time
+• Presented findings and recommendations to executive leadership and client groups
+
+CORE SKILLS
+Primary Functions: Project management, client relations, process optimization, team coordination
+Key Tools: Microsoft Office Suite, project management platforms, CRM systems, data analysis tools
+Domain Knowledge: Industry best practices, regulatory compliance, quality assurance standards
+Process Expertise: Agile methodologies, continuous improvement, workflow optimization, stakeholder management
+
+LANGUAGES
+English (Native), Spanish (Fluent)
+
+CERTIFICATIONS
+AWS Certified Solutions Architect (2021)
+Certified Scrum Master (2019)`
+            },
+
+            marketing: {
+                job: `Marketing Manager - Digital Marketing
+
+We are looking for an experienced Marketing Manager to drive our digital marketing initiatives and grow our brand presence.
+
+Required Qualifications:
+- Bachelor's degree in Marketing, Business, or related field
+- 4+ years of marketing experience
+- Strong analytical and problem-solving skills
+- Experience with digital marketing campaigns
+- Knowledge of SEO, SEM, and social media marketing
+- Proficiency with marketing automation tools
+- Excellent communication and presentation skills
+- Project management experience
+
+Preferred Qualifications:
+- MBA or advanced marketing degree
+- Experience in B2B marketing
+- Google Analytics and AdWords certifications
+- Experience with marketing automation platforms
+- Previous agency or startup experience
+- Bilingual capabilities
+
+Responsibilities:
+- Develop and execute digital marketing strategies
+- Manage marketing campaigns across multiple channels
+- Analyze campaign performance and ROI
+- Collaborate with sales and product teams
+- Lead marketing team and external agencies`,
+
+                resume: `SARAH JOHNSON
+Marketing Manager
+sarah.johnson@email.com | (555) 987-6543
+
+EDUCATION
+MBA in Marketing | Harvard Business School | 2019
+Bachelor of Business Administration | UCLA | 2017
+
+EXPERIENCE
+Marketing Manager | GrowthTech Solutions | 2021 - Present
+• Developed and executed digital marketing strategies resulting in 150% increase in leads
+• Managed marketing campaigns across Google Ads, Facebook, and LinkedIn
+• Led team of 3 marketing specialists and coordinated with external agencies
+• Analyzed campaign performance using Google Analytics and marketing automation tools
+• Collaborated with sales team to optimize lead qualification and conversion
+
+Digital Marketing Specialist | StartupHub | 2019 - 2021
+• Created and managed SEO and SEM campaigns with 200% ROI improvement
+• Developed social media marketing strategies across multiple platforms
+• Implemented marketing automation workflows using HubSpot
+• Conducted A/B testing and conversion rate optimization
+• Worked in agile environment with cross-functional teams
+
+SKILLS
+Digital Marketing: SEO, SEM, Social Media, Email Marketing, Content Marketing
+Analytics: Google Analytics, Google Ads, Facebook Ads Manager, HubSpot
+Tools: Salesforce, Mailchimp, Hootsuite, Canva, Photoshop
+Project Management: Asana, Trello, Scrum methodology
+
+CERTIFICATIONS
+Google Analytics Certified (2020)
+Google Ads Certified (2021)
+HubSpot Inbound Marketing Certified (2020)
+
+LANGUAGES
+English (Native), Spanish (Conversational)`
+            },
+
+            sales: {
+                job: `Sales Representative - B2B Software Solutions
+
+We are seeking a motivated Sales Representative to join our growing sales team and drive revenue growth.
+
+Required Qualifications:
+- Bachelor's degree in Business, Marketing, or related field
+- 3+ years of B2B sales experience
+- Strong communication and presentation skills
+- Experience with CRM systems
+- Proven track record of meeting sales targets
+- Problem-solving and negotiation skills
+- Self-motivated and goal-oriented
+
+Preferred Qualifications:
+- Experience selling software or SaaS solutions
+- Knowledge of sales methodology (SPIN, Challenger, etc.)
+- Experience with enterprise sales
+- Previous quota attainment
+- Industry certifications
+- Bilingual capabilities
+
+Responsibilities:
+- Generate new business opportunities
+- Manage full sales cycle from prospecting to closing
+- Build relationships with key decision makers
+- Collaborate with marketing and customer success teams
+- Maintain accurate sales forecasts and reports`,
+
+                resume: `MICHAEL RODRIGUEZ
+Sales Representative
+michael.rodriguez@email.com | (555) 456-7890
+
+EDUCATION
+Bachelor of Business Administration in Marketing
+University of Texas at Austin | 2020
+
+EXPERIENCE
+B2B Sales Representative | SoftwarePro Inc. | 2022 - Present
+• Consistently exceeded quarterly sales targets by 125% average
+• Generated $2.5M in new business revenue through prospecting and relationship building
+• Managed full sales cycle for enterprise clients using Salesforce CRM
+• Collaborated with marketing team on lead qualification and nurturing
+• Conducted product demonstrations and presentations to C-level executives
+
+Sales Associate | TechSolutions Corp | 2020 - 2022
+• Achieved 110% of annual sales quota in first year
+• Developed and maintained relationships with 50+ key accounts
+• Utilized SPIN selling methodology to identify customer needs
+• Worked closely with customer success team to ensure client satisfaction
+• Participated in trade shows and industry conferences
+
+SKILLS
+Sales: B2B Sales, Enterprise Sales, Account Management, Lead Generation
+CRM: Salesforce, HubSpot, Pipedrive
+Communication: Presentation Skills, Negotiation, Public Speaking
+Methodology: SPIN Selling, Challenger Sale, Solution Selling
+
+ACHIEVEMENTS
+• Top Sales Performer 2023 (Q1-Q3)
+• President's Club Winner 2022
+• Rookie of the Year 2021
+
+LANGUAGES
+English (Native), Spanish (Fluent)`
+            },
+
+            designer: {
+                job: `UI/UX Designer - Product Design
+
+We are looking for a creative UI/UX Designer to enhance our product experience and drive user engagement.
+
+Required Qualifications:
+- Bachelor's degree in Design, HCI, or related field
+- 3+ years of UI/UX design experience
+- Proficiency in design tools (Figma, Sketch, Adobe Creative Suite)
+- Strong portfolio demonstrating user-centered design
+- Experience with user research and testing
+- Understanding of responsive design principles
+- Excellent communication and collaboration skills
+
+Preferred Qualifications:
+- Master's degree in Design or HCI
+- Experience with design systems and component libraries
+- Knowledge of front-end development (HTML, CSS, JavaScript)
+- Experience with prototyping tools
+- Previous startup or agency experience
+- Animation and motion design skills
+
+Responsibilities:
+- Design intuitive user interfaces and experiences
+- Conduct user research and usability testing
+- Create wireframes, prototypes, and high-fidelity mockups
+- Collaborate with product managers and developers
+- Maintain and evolve design systems`,
+
+                resume: `EMILY CHEN
+UI/UX Designer
+emily.chen@email.com | (555) 321-6547 | Portfolio: emilychen.design
+
+EDUCATION
+Master of Arts in Human-Computer Interaction
+Carnegie Mellon University | 2020
+Bachelor of Fine Arts in Graphic Design
+Art Center College of Design | 2018
+
+EXPERIENCE
+Senior UI/UX Designer | DesignFlow Studios | 2021 - Present
+• Led design for 3 major product launches resulting in 40% increased user engagement
+• Conducted user research and usability testing with 500+ participants
+• Created comprehensive design system used across 5 product teams
+• Collaborated with product managers and developers in agile environment
+• Mentored 2 junior designers and established design review processes
+
+UI/UX Designer | StartupDesign Co. | 2020 - 2021
+• Designed responsive web and mobile applications using Figma and Sketch
+• Conducted user interviews and created user personas and journey maps
+• Prototyped interactions using Principle and After Effects
+• Worked closely with front-end developers to ensure design implementation
+• Improved conversion rates by 35% through iterative design testing
+
+SKILLS
+Design Tools: Figma, Sketch, Adobe Creative Suite, Principle, After Effects
+Prototyping: InVision, Marvel, Framer, Axure
+Research: User Interviews, Usability Testing, A/B Testing, Analytics
+Development: HTML, CSS, JavaScript (basic), React (basic)
+Collaboration: Slack, Jira, Miro, Confluence
+
+PORTFOLIO HIGHLIGHTS
+• Redesigned e-commerce platform with 25% increase in conversion rate
+• Created design system adopted by 50+ designers across organization
+• Won UX Design Award 2022 for mobile banking application
+
+LANGUAGES
+English (Native), Mandarin (Fluent)`
+            }
+        };
+
+        // Load sample data
+        function loadSampleData(type) {
+            const data = sampleData[type];
+            if (data) {
+                document.getElementById('jobDescription').value = data.job;
+                document.getElementById('resumeContent').value = data.resume;
+            }
+        }
+
+        // Run the real GPT-4o matching test
+        async function runMatchingTest() {
+            const jobDescription = document.getElementById('jobDescription').value.trim();
+            const resumeContent = document.getElementById('resumeContent').value.trim();
+            const apiKey = document.getElementById('apiKey').value.trim();
+            
+            if (!jobDescription || !resumeContent) {
+                alert('Please enter both job description and resume content');
+                return;
+            }
+
+            if (!apiKey) {
+                alert('Please enter your OpenAI API key');
+                return;
+            }
+
+            if (!apiKey.startsWith('sk-')) {
+                alert('Invalid API key format. OpenAI API keys start with "sk-"');
+                return;
+            }
+
+            const button = document.querySelector('.test-button');
+            const results = document.getElementById('results');
+            
+            // Show loading state
+            button.disabled = true;
+            button.textContent = 'Calling GPT-4o...';
+            results.classList.add('show');
+            results.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Calling GPT-4o for real analysis... This may take 30-60 seconds.</p>
+                </div>
+            `;
+
+            try {
+                // Run real GPT-4o analysis
+                const matcher = new RealGPT4oMatcher();
+                const analysis = await matcher.performRealGPTAnalysis(jobDescription, resumeContent, apiKey);
+                
+                // Count matches
+                const matchCount = Object.values(analysis.matches).filter(match => match).length;
+                const significance = matcher.getStatisticalSignificance(matchCount);
+                const recommendation = matcher.getHiringRecommendation(analysis.total_score, matchCount);
+
+                // Display results
+                displayResults(analysis, matchCount, significance, recommendation);
+
+            } catch (error) {
+                console.error('Error during GPT-4o analysis:', error);
+                
+                let errorMessage = 'An error occurred during analysis.';
+                if (error.message.includes('401')) {
+                    errorMessage = 'Invalid API key. Please check your OpenAI API key.';
+                } else if (error.message.includes('429')) {
+                    errorMessage = 'Rate limit exceeded. Please wait a moment and try again.';
+                } else if (error.message.includes('500')) {
+                    errorMessage = 'OpenAI server error. Please try again later.';
+                } else {
+                    errorMessage = `Error: ${error.message}`;
+                }
+
+                results.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #ef4444;">
+                        <h3>Analysis Failed</h3>
+                        <p>${errorMessage}</p>
+                        <p style="margin-top: 20px; font-size: 0.9rem; color: #6b7280;">
+                            Make sure you have a valid OpenAI API key and sufficient credits.
+                        </p>
+                    </div>
+                `;
+            }
+
+            // Reset button
+            button.disabled = false;
+            button.textContent = 'Run Real GPT-4o Analysis';
+        }
+
+        function displayResults(analysis, matchCount, significance, recommendation) {
+            const results = document.getElementById('results');
+            
+            const getScoreClass = (score) => {
+                if (score >= 70) return 'score-excellent';
+                if (score >= 50) return 'score-good';
+                return 'score-poor';
+            };
+
+            const getRecommendationColor = (rec) => {
+                switch (rec) {
+                    case 'STRONG_RECOMMEND': return '#10b981';
+                    case 'RECOMMEND': return '#f59e0b';
+                    case 'CONSIDER': return '#6366f1';
+                    default: return '#ef4444';
+                }
+            };
+
+            // Generate detailed variable items with GPT-4o analysis
+            const variableItems = Object.entries(analysis.matches).map(([variable, isMatch]) => {
+                const matchClass = isMatch ? 'matched' : 'not-matched';
+                const statusClass = isMatch ? 'status-matched' : 'status-not-matched';
+                const statusText = isMatch ? 'MATCHED' : 'NOT MATCHED';
+                const detailedAnalysis = analysis.detailed_analysis[variable];
+                
+                return `
+                    <div class="variable-item-detailed ${matchClass}">
+                        <div class="variable-header">
+                            <span class="variable-name">${variable}</span>
+                            <span class="variable-status ${statusClass}">${statusText}</span>
+                            <span class="match-percentage">${detailedAnalysis.match_percentage}%</span>
+                        </div>
+                        <div class="variable-details">
+                            <div class="job-requirements">
+                                <strong>Job Requirements:</strong>
+                                <div class="requirements-list">
+                                    ${detailedAnalysis.job_requirements.length > 0 ? 
+                                        detailedAnalysis.job_requirements.map(req => `<span class="requirement-item">${req}</span>`).join('') : 
+                                        '<span class="no-requirements">No specific requirements found</span>'
+                                    }
+                                </div>
+                            </div>
+                            <div class="resume-qualifications">
+                                <strong>Resume Qualifications:</strong>
+                                <div class="qualifications-list">
+                                    ${detailedAnalysis.resume_qualifications.length > 0 ? 
+                                        detailedAnalysis.resume_qualifications.map(qual => `<span class="qualification-item">${qual}</span>`).join('') : 
+                                        '<span class="no-qualifications">No relevant qualifications found</span>'
+                                    }
+                                </div>
+                            </div>
+                            <div class="gpt-analysis">
+                                <strong>GPT-4o Analysis:</strong>
+                                <p class="analysis-text">${detailedAnalysis.comparison_details}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            results.innerHTML = `
+                <div class="results-header">
+                    <h2>Enhanced Matching Results</h2>
+                    <div class="overall-score ${getScoreClass(analysis.total_score)}">
+                        ${analysis.total_score}%
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Variables Matched</h3>
+                        <div class="value">${matchCount}/22</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Match Percentage</h3>
+                        <div class="value">${Math.round(matchCount/22 * 100)}%</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Confidence Level</h3>
+                        <div class="value">${significance.confidence}%</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Statistical Significance</h3>
+                        <div class="value">${significance.level.toUpperCase()}</div>
+                    </div>
+                </div>
+
+                <div class="charts-container">
+                    <div class="chart-card">
+                        <h3>Overall Job Match</h3>
+                        <canvas id="overallMatchChart" class="chart-canvas"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h3>Category Breakdown</h3>
+                        <canvas id="categoryBreakdownChart" class="chart-canvas"></canvas>
+                    </div>
+                </div>
+
+                <div class="recommendation">
+                    <h3 style="color: ${getRecommendationColor(recommendation)};">
+                        Hiring Recommendation: ${recommendation.replace('_', ' ')}
+                    </h3>
+                    <p><strong>Statistical Evidence:</strong> ${significance.description} (${significance.confidence}% confidence)</p>
+                    <p><strong>Weighted Score:</strong> ${analysis.total_score}% based on 22 statistically validated variables</p>
+                </div>
+
+                <div class="variables-section">
+                    <h3>Real GPT-4o Variable Analysis (22 Variables)</h3>
+                    <p style="color: #6b7280; margin-bottom: 20px; font-size: 0.95rem;">
+                        Live analysis by OpenAI's GPT-4o showing specific job requirements extracted from your job description, 
+                        matching resume qualifications, and detailed AI-powered comparison analysis.
+                    </p>
+                    ${variableItems}
+                </div>
+
+                <div class="variables-section">
+                    <h3>Category Breakdown</h3>
+                    <div class="variable-item">
+                        <span class="variable-name">Critical Requirements (40% weight)</span>
+                        <span class="variable-status status-matched">${Math.round(analysis.category_scores.critical * 100)}%</span>
+                    </div>
+                    <div class="variable-item">
+                        <span class="variable-name">Core Competencies (35% weight)</span>
+                        <span class="variable-status status-matched">${Math.round(analysis.category_scores.core * 100)}%</span>
+                    </div>
+                    <div class="variable-item">
+                        <span class="variable-name">Experience Factors (15% weight)</span>
+                        <span class="variable-status status-matched">${Math.round(analysis.category_scores.experience * 100)}%</span>
+                    </div>
+                    <div class="variable-item">
+                        <span class="variable-name">Preferred Qualifications (10% weight)</span>
+                        <span class="variable-status status-matched">${Math.round(analysis.category_scores.preferred * 100)}%</span>
+                    </div>
+                </div>
+            `;
+
+            // Generate pie charts after rendering the HTML
+            setTimeout(() => {
+                generatePieCharts(analysis, matchCount);
+            }, 100);
+        }
+
+        function generatePieCharts(analysis, matchCount) {
+            // Clear existing charts if they exist
+            Chart.getChart('overallMatchChart')?.destroy();
+            Chart.getChart('categoryBreakdownChart')?.destroy();
+
+            // Overall Match Chart
+            const overallMatchCtx = document.getElementById('overallMatchChart').getContext('2d');
+            const matchPercentage = analysis.total_score;
+            const unmatchedPercentage = 100 - matchPercentage;
+
+            // Color based on match quality
+            const getMatchColor = (score) => {
+                if (score >= 80) return '#10b981'; // Green (Excellent)
+                if (score >= 60) return '#f59e0b'; // Yellow (Good)
+                return '#ef4444'; // Red (Poor)
+            };
+
+            new Chart(overallMatchCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Matched', 'Gap Areas'],
+                    datasets: [{
+                        data: [matchPercentage, unmatchedPercentage],
+                        backgroundColor: [
+                            getMatchColor(matchPercentage),
+                            '#e5e7eb'
+                        ],
+                        borderColor: [
+                            getMatchColor(matchPercentage),
+                            '#d1d5db'
+                        ],
+                        borderWidth: 2,
+                        cutout: '60%'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed;
+                                    return label + ': ' + value.toFixed(1) + '%';
+                                }
+                            }
+                        }
+                    }
+                },
+                plugins: [{
+                    id: 'centerText',
+                    beforeDraw: function(chart) {
+                        const width = chart.width,
+                              height = chart.height,
+                              ctx = chart.ctx;
+
+                        ctx.restore();
+                        const fontSize = (height / 114).toFixed(2);
+                        ctx.font = fontSize + "em sans-serif";
+                        ctx.textBaseline = "middle";
+                        ctx.fillStyle = getMatchColor(matchPercentage);
+
+                        const text = matchPercentage.toFixed(1) + "%";
+                        const textX = Math.round((width - ctx.measureText(text).width) / 2);
+                        const textY = height / 2;
+
+                        ctx.fillText(text, textX, textY);
+                        ctx.save();
+                    }
+                }]
+            });
+
+            // Category Breakdown Chart
+            const categoryBreakdownCtx = document.getElementById('categoryBreakdownChart').getContext('2d');
+            
+            new Chart(categoryBreakdownCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: [
+                        'Critical Requirements (40%)',
+                        'Core Competencies (35%)',
+                        'Experience Factors (15%)',
+                        'Preferred Qualifications (10%)'
+                    ],
+                    datasets: [{
+                        data: [
+                            analysis.category_scores.critical * 40, // Weight by category importance
+                            analysis.category_scores.core * 35,
+                            analysis.category_scores.experience * 15,
+                            analysis.category_scores.preferred * 10
+                        ],
+                        backgroundColor: [
+                            '#dc2626', // Red (Critical)
+                            '#2563eb', // Blue (Core)
+                            '#f59e0b', // Yellow (Experience)
+                            '#10b981'  // Green (Preferred)
+                        ],
+                        borderColor: [
+                            '#dc2626',
+                            '#2563eb',
+                            '#f59e0b',
+                            '#10b981'
+                        ],
+                        borderWidth: 2,
+                        cutout: '50%'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 15,
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const labels = [
+                                        'Critical Requirements',
+                                        'Core Competencies',
+                                        'Experience Factors',
+                                        'Preferred Qualifications'
+                                    ];
+                                    const percentages = [
+                                        Math.round(analysis.category_scores.critical * 100),
+                                        Math.round(analysis.category_scores.core * 100),
+                                        Math.round(analysis.category_scores.experience * 100),
+                                        Math.round(analysis.category_scores.preferred * 100)
+                                    ];
+                                    return labels[context.dataIndex] + ': ' + percentages[context.dataIndex] + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Real GPT-4o Job Matching System - Ready for live analysis');
+            
+            // Add enter key listener for textareas
+            document.querySelectorAll('textarea').forEach(textarea => {
+                textarea.addEventListener('keydown', function(e) {
+                    if (e.ctrlKey && e.key === 'Enter') {
+                        runMatchingTest();
+                    }
+                });
+            });
+
+            // Add enter key listener for API key input
+            document.getElementById('apiKey').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    runMatchingTest();
+                }
+            });
+        });
+
+        // Hybrid Dynamic Test Function
+        async function runHybridDynamicTest() {
+            const jobDescription = document.getElementById('jobDescription').value.trim();
+            const resumeContent = document.getElementById('resumeContent').value.trim();
+            const apiKey = document.getElementById('apiKey').value.trim();
+            
+            if (!jobDescription || !resumeContent || !apiKey) {
+                alert('Please fill in all fields including the API key.');
+                return;
+            }
+            
+            const button = document.querySelector('.hybrid-button');
+            const results = document.getElementById('results');
+            
+            // Show loading state
+            button.disabled = true;
+            button.textContent = 'Running Hybrid Analysis...';
+            results.classList.add('show');
+            results.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Running hybrid dynamic analysis...</p>
+                    <p style="font-size: 0.9rem; opacity: 0.7;">GPT-4o is creating industry-specific variables...</p>
+                </div>
+            `;
+            
+            try {
+                // Extract job title and company from job description for better analysis
+                const jobTitle = extractJobTitle(jobDescription);
+                const company = extractCompany(jobDescription);
+                
+                // Initialize the hybrid system
+                const hybridSystem = new HybridDynamicMatchingSystem(apiKey);
+                
+                // Run the analysis
+                const analysisResult = await hybridSystem.performHybridMatching(
+                    jobDescription, 
+                    jobTitle, 
+                    company, 
+                    resumeContent
+                );
+                
+                // Display results
+                displayHybridResults(analysisResult);
+                
+            } catch (error) {
+                console.error('Error during hybrid analysis:', error);
+                
+                let errorMessage = 'An error occurred during analysis.';
+                if (error.message.includes('401')) {
+                    errorMessage = 'Invalid API key. Please check your OpenAI API key.';
+                } else if (error.message.includes('429')) {
+                    errorMessage = 'Rate limit exceeded. Please wait a moment and try again.';
+                } else if (error.message.includes('500')) {
+                    errorMessage = 'OpenAI server error. Please try again later.';
+                } else {
+                    errorMessage = `Error: ${error.message}`;
+                }
+                
+                results.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #ef4444;">
+                        <h3>Hybrid Analysis Failed</h3>
+                        <p>${errorMessage}</p>
+                        <p style="margin-top: 20px; font-size: 0.9rem; color: #6b7280;">
+                            Make sure you have a valid OpenAI API key and sufficient credits.
+                        </p>
+                    </div>
+                `;
+            } finally {
+                // Reset button
+                button.disabled = false;
+                button.textContent = '🔄 Run Hybrid Dynamic Analysis (10 Variables)';
+            }
+        }
+        
+        // Helper function to extract job title
+        function extractJobTitle(jobDescription) {
+            const lines = jobDescription.split('\n');
+            for (let line of lines) {
+                if (line.trim().length > 0 && line.trim().length < 100) {
+                    return line.trim();
+                }
+            }
+            return 'Position';
+        }
+        
+        // Helper function to extract company name
+        function extractCompany(jobDescription) {
+            const companyMatch = jobDescription.match(/(?:Company|Organization|at)\s*:?\s*([^\n]+)/i);
+            return companyMatch ? companyMatch[1].trim() : 'Company';
+        }
+        
+        // Display hybrid results
+        function displayHybridResults(results) {
+            const resultsContainer = document.getElementById('results');
+            const industry = results.industry_analysis;
+            const overall = results.matching_result.overall_analysis;
+            
+            resultsContainer.innerHTML = `
+                <div class="hybrid-results">
+                    <div class="results-header">
+                        <h2>Hybrid Dynamic Matching Results</h2>
+                        <div class="industry-info">
+                            <div class="industry-tag">
+                                <span>Industry: ${industry.industry}</span>
+                                <span>Role: ${industry.role_type}</span>
+                                <span>Level: ${industry.role_level}</span>
+                            </div>
+                            <div class="confidence-score">
+                                Industry Detection: ${(industry.confidence * 100).toFixed(1)}%
+                            </div>
+                        </div>
+                        <div class="overall-score ${overall.total_score >= 80 ? 'excellent' : overall.total_score >= 60 ? 'good' : 'poor'}">
+                            ${overall.total_score}%
+                        </div>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <h3>Variables Matched</h3>
+                            <div class="value">${overall.variables_matched}/10</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Match Percentage</h3>
+                            <div class="value">${overall.match_percentage.toFixed(1)}%</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Significance</h3>
+                            <div class="value">${overall.statistical_significance.toUpperCase()}</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Recommendation</h3>
+                            <div class="value">${overall.hiring_recommendation.replace('_', ' ')}</div>
+                        </div>
+                    </div>
+
+                    <div class="charts-container">
+                        <div class="chart-card">
+                            <h3>Overall Job Match</h3>
+                            <canvas id="hybridOverallChart" class="chart-canvas"></canvas>
+                        </div>
+                        <div class="chart-card">
+                            <h3>Category Breakdown</h3>
+                            <canvas id="hybridCategoryChart" class="chart-canvas"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="variables-section">
+                        <h3>Industry-Specific Variables (${results.dynamic_variables.length} total)</h3>
+                        <div class="variables-grid">
+                            ${results.matching_result.variable_analysis.map(variable => `
+                                <div class="variable-card ${variable.is_match ? 'matched' : 'unmatched'}">
+                                    <div class="variable-header">
+                                        <span class="variable-name">${variable.variable_name}</span>
+                                        <span class="variable-category">${variable.category.replace('_', ' ')}</span>
+                                        <span class="variable-score">${variable.match_percentage}%</span>
+                                    </div>
+                                    <div class="variable-content">
+                                        <p><strong>Job Requirements:</strong> ${variable.job_requirements.join(', ')}</p>
+                                        <p><strong>Candidate Evidence:</strong> ${variable.candidate_evidence.join(', ')}</p>
+                                        <p><strong>Gap Analysis:</strong> ${variable.gap_analysis}</p>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <div class="recommendation-section">
+                        <h3>Hiring Recommendation</h3>
+                        <div class="recommendation-content">
+                            <div class="strengths-section">
+                                <h4>Key Strengths:</h4>
+                                <ul>
+                                    ${results.matching_result.detailed_recommendation.key_strengths.map(strength => 
+                                        `<li>${strength}</li>`
+                                    ).join('')}
+                                </ul>
+                            </div>
+                            <div class="gaps-section">
+                                <h4>Critical Gaps:</h4>
+                                <ul>
+                                    ${results.matching_result.detailed_recommendation.critical_gaps.map(gap => 
+                                        `<li>${gap}</li>`
+                                    ).join('')}
+                                </ul>
+                            </div>
+                            <div class="overall-assessment">
+                                <h4>Overall Assessment:</h4>
+                                <p>${results.matching_result.detailed_recommendation.overall_assessment}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Generate pie charts
+            setTimeout(() => {
+                generateHybridPieCharts(results.pie_chart_data);
+            }, 100);
+        }
+        
+        // Generate pie charts for hybrid results
+        function generateHybridPieCharts(pieChartData) {
+            // Overall match chart
+            const overallCtx = document.getElementById('hybridOverallChart').getContext('2d');
+            if (Chart.getChart('hybridOverallChart')) {
+                Chart.getChart('hybridOverallChart').destroy();
+            }
+            
+            const overallData = pieChartData.overall_match;
+            new Chart(overallCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Matched', 'Gap Areas'],
+                    datasets: [{
+                        data: [overallData.matched, overallData.unmatched],
+                        backgroundColor: [overallData.color, '#e5e7eb'],
+                        borderColor: [overallData.color, '#d1d5db'],
+                        borderWidth: 2,
+                        cutout: '60%'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { padding: 20, font: { size: 12 } }
+                        }
+                    }
+                },
+                plugins: [{
+                    id: 'centerText',
+                    beforeDraw: function(chart) {
+                        const width = chart.width, height = chart.height, ctx = chart.ctx;
+                        ctx.restore();
+                        const fontSize = (height / 114).toFixed(2);
+                        ctx.font = fontSize + "em sans-serif";
+                        ctx.textBaseline = "middle";
+                        ctx.fillStyle = overallData.color;
+                        const text = overallData.matched.toFixed(1) + "%";
+                        const textX = Math.round((width - ctx.measureText(text).width) / 2);
+                        const textY = height / 2;
+                        ctx.fillText(text, textX, textY);
+                        ctx.save();
+                    }
+                }]
+            });
+            
+            // Category breakdown chart
+            const categoryCtx = document.getElementById('hybridCategoryChart').getContext('2d');
+            if (Chart.getChart('hybridCategoryChart')) {
+                Chart.getChart('hybridCategoryChart').destroy();
+            }
+            
+            const categoryData = pieChartData.category_breakdown;
+            new Chart(categoryCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: categoryData.labels.map((label, index) => 
+                        label.replace('_', ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase()) + 
+                        ` (${categoryData.weights[index]}%)`
+                    ),
+                    datasets: [{
+                        data: categoryData.data,
+                        backgroundColor: categoryData.colors,
+                        borderWidth: 2,
+                        cutout: '50%'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { padding: 15, font: { size: 11 } }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html> 

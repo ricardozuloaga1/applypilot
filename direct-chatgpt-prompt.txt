@@ -1,0 +1,36 @@
+You are an expert HR analyst with extensive experience across multiple industries. I need you to complete two tasks:
+
+**TASK 1: Identify Universal Job Requirements**
+Analyze typical job descriptions and identify the 20-30 most common requirements that appear across industries. Categorize them into these weighted categories:
+
+• CRITICAL_REQUIREMENTS (40% weight) - Essential requirements commonly mentioned
+• CORE_COMPETENCIES (35% weight) - Skills and abilities frequently required  
+• EXPERIENCE_FACTORS (15% weight) - Experience-related requirements that commonly appear
+• PREFERRED_QUALIFICATIONS (10% weight) - Nice-to-have qualifications that frequently appear
+
+For each variable, provide:
+- Name
+- Category
+- Frequency percentage
+- Description
+- Common phrases used in job postings
+
+**TASK 2: Generate a Catch-All Extraction Prompt**
+Create a comprehensive prompt that can extract job-specific requirements that are NOT covered by the universal variables you identified. This prompt should:
+
+1. Take a job description as input
+2. Identify job-specific requirements not covered by universal variables
+3. Extract unique industry-specific, company-specific, or role-specific requirements
+4. Ensure no duplication with universal variables
+5. Maintain evidence-based extraction (only what's explicitly mentioned)
+6. Categorize findings into the same 4 categories with weights
+7. Provide evidence from job posting for each extracted variable
+
+**TASK 3: Implementation Strategy**
+Explain how this two-part system (universal + dynamic variables) would work in practice, including:
+- How to combine both sets without duplication
+- How to weight universal vs dynamic variables
+- Quality control measures
+- Expected benefits
+
+Please provide detailed analysis and the requested catch-all prompt that can be implemented immediately. 

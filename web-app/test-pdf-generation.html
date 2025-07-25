@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PDF Generation Test</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+    <h1>PDF Generation Test</h1>
+    <button onclick="generatePDF()">Generate Test PDF</button>
+    
+    <div id="content" style="display: none;">
+        <h2>Test Resume</h2>
+        <p><strong>Name:</strong> John Doe</p>
+        <p><strong>Email:</strong> john.doe@example.com</p>
+        <p><strong>Phone:</strong> (555) 123-4567</p>
+        <p><strong>Location:</strong> New York, NY</p>
+        
+        <h3>Professional Summary</h3>
+        <p>Experienced professional with expertise in multiple domains.</p>
+        
+        <h3>Core Skills</h3>
+        <ul>
+            <li>Contract Management</li>
+            <li>Legal Operations</li>
+            <li>Compliance</li>
+            <li>Process Improvement</li>
+        </ul>
+            
+        <h3>Professional Experience</h3>
+        <div>
+            <h4>Professional Role</h4>
+            <p>Organization, Location | 2020 - Present</p>
+            <ul>
+                <li>Led strategic initiatives and operational improvements</li>
+                <li>Collaborated with cross-functional teams on key projects</li>
+                <li>Implemented process improvements and best practices</li>
+            </ul>
+            </div>
+            
+        <h3>Education</h3>
+        <div>
+            <h4>Bachelor's Degree</h4>
+            <p>University, Location | 2020</p>
+        </div>
+    </div>
+
+    <script>
+        async function generatePDF() {
+            try {
+                console.log('Starting PDF generation test...');
+            
+                const content = document.getElementById('content');
+                content.style.display = 'block';
+            
+            const opt = {
+                    margin: [0.5, 0.5, 0.5, 0.5],
+                filename: 'test-resume.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { 
+                        scale: 1,
+                    logging: true, 
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#ffffff'
+                },
+                    jsPDF: { 
+                        unit: 'in', 
+                        format: 'letter', 
+                        orientation: 'portrait'
+                    }
+            };
+            
+                console.log('PDF options:', opt);
+            
+                await html2pdf().from(content).set(opt).save();
+                console.log('PDF generated successfully!');
+                alert('PDF generated successfully!');
+                
+            } catch (error) {
+                console.error('PDF generation failed:', error);
+                alert('PDF generation failed: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html> 
